@@ -4,6 +4,7 @@ from firebase_admin import auth as firebase_auth
 from datetime import datetime
 from app.config.firebase import get_db
 from app.middleware.authRequired import auth_required
+from app.middleware.roleRequired import role_required, admin_required, staff_required
 from google.cloud.firestore_v1.base_query import FieldFilter  # ✅ FIX Firestore warning
 import logging
 
@@ -71,7 +72,6 @@ def register_routes(app):
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
-
 
     @app.route('/api/admin/users', methods=['POST'], endpoint='admin_create_user')
     @auth_required
@@ -152,7 +152,6 @@ def register_routes(app):
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
 
-
     @app.route('/api/admin/users/<target_uid>', methods=['GET'], endpoint='admin_get_user')
     @auth_required
     def admin_get_user(target_uid):
@@ -185,7 +184,6 @@ def register_routes(app):
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
-
 
     @app.route('/api/admin/users/<target_uid>', methods=['PUT'], endpoint='admin_update_user')
     @auth_required
@@ -224,7 +222,6 @@ def register_routes(app):
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
-
 
     @app.route('/api/admin/users/<target_uid>', methods=['DELETE'], endpoint='admin_delete_user')
     @auth_required
@@ -266,3 +263,121 @@ def register_routes(app):
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'error': str(e)}), 500
+        
+    
+    # =========================================================================
+    # ADMIN-ONLY ENDPOINTS
+    # =========================================================================
+    
+    @app.route('/api/admin/users/assign-role', methods=['PUT', 'OPTIONS'])
+    @admin_required
+    def assign_user_role():
+        """Admin: Assign or change user role"""
+        if request.method == 'OPTIONS':
+            return ('', 204)
+        try:
+            data = request.get_json()
+            target_user_id = data.get('userId')
+            new_role = data.get('role')
+            
+            if not target_user_id or not new_role:
+                return jsonify({'success': False, 'error': 'userId and role are required'}), 400
+            
+            # Validate role
+            valid_roles = ['admin', 'staff', 'doctor', 'nurse', 'receptionist', 'patient']
+            if new_role not in valid_roles:
+                return jsonify({'success': False, 'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}'}), 400
+            
+            db = get_db()
+            user_ref = db.collection('users').document(target_user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                return jsonify({'success': False, 'error': 'User not found'}), 404
+            
+            # Update role
+            update_data = {
+                'role': new_role,
+                'updatedAt': datetime.now(timezone.utc)
+            }
+            
+            # If assigning staff role, optionally add department
+            if new_role in ['staff', 'doctor', 'nurse', 'receptionist']:
+                department = data.get('department')
+                if department:
+                    update_data['department'] = department
+            
+            user_ref.update(update_data)
+            
+            logger.info(f"✅ Admin assigned role '{new_role}' to user {target_user_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'User role updated to {new_role}',
+                'data': update_data
+            }), 200
+        except Exception as e:
+            logger.error(f"Assign role error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to assign role'}), 500
+    
+    @app.route('/api/admin/users/deactivate/<user_id>', methods=['PUT', 'OPTIONS'])
+    @admin_required
+    def deactivate_user(user_id):
+        """Admin: Deactivate a user account"""
+        if request.method == 'OPTIONS':
+            return ('', 204)
+        try:
+            # Prevent deactivating yourself
+            if user_id == request.user_id:
+                return jsonify({'success': False, 'error': 'Cannot deactivate your own account'}), 400
+            
+            db = get_db()
+            user_ref = db.collection('users').document(user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                return jsonify({'success': False, 'error': 'User not found'}), 404
+            
+            user_ref.update({
+                'isActive': False,
+                'updatedAt': datetime.now(timezone.utc)
+            })
+            
+            logger.info(f"✅ Admin deactivated user {user_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'User deactivated successfully'
+            }), 200
+        except Exception as e:
+            logger.error(f"Deactivate user error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to deactivate user'}), 500
+    
+    @app.route('/api/admin/users/activate/<user_id>', methods=['PUT', 'OPTIONS'])
+    @admin_required
+    def activate_user(user_id):
+        """Admin: Activate a user account"""
+        if request.method == 'OPTIONS':
+            return ('', 204)
+        try:
+            db = get_db()
+            user_ref = db.collection('users').document(user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                return jsonify({'success': False, 'error': 'User not found'}), 404
+            
+            user_ref.update({
+                'isActive': True,
+                'updatedAt': datetime.now(timezone.utc)
+            })
+            
+            logger.info(f"✅ Admin activated user {user_id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'User activated successfully'
+            }), 200
+        except Exception as e:
+            logger.error(f"Activate user error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to activate user'}), 500

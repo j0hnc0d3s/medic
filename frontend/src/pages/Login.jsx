@@ -14,7 +14,7 @@ import doctor1 from '../assets/doctor1.png';
 import logo from '../assets/logo.png';
 
 // Your backend API URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173'
+const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:5173'
 
 const Login = () => {
   const [email, setEmail] = useState('')

@@ -157,29 +157,3 @@ export const deactivateUser = (userId) => {
 export const activateUser = (userId) => {
   return put(`/api/admin/users/activate/${userId}`)
 }
-
-// ========== Usage Examples ==========
-
-/*
-// In your components:
-
-import { getCurrentUser, getAllPatients, assignUserRole } from '../services/api'
-
-// Get current user
-const userData = await getCurrentUser()
-console.log(userData)
-
-// Get all patients (staff only)
-const patients = await getAllPatients()
-console.log(patients)
-
-// Assign role (admin only)
-await assignUserRole('user123', 'doctor', 'Emergency')
-
-// Handle errors
-try {
-  const user = await getCurrentUser()
-} catch (error) {
-  console.error('Error:', error.message)
-}
-*/
