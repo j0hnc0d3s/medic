@@ -30,7 +30,7 @@
   width: 100%;
   margin-bottom: 40px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .doctor-img {
@@ -45,9 +45,8 @@
 .hero-image::before {
   content: '';
   display: block;
-  width: 400px;
+  width: 600px;
   height: 450px;
-  background: linear-gradient(180deg, rgba(100, 170, 200, 0.2) 0%, rgba(150, 200, 220, 0.3) 100%);
   border-radius: 20px;
   opacity: 0.5;
 }
@@ -146,6 +145,12 @@
 .medic-logo svg {
   width: 48px;
   height: 48px;
+}
+
+
+.medic-logo-img {
+  width: 70px;
+  height: 60px;
 }
 
 .login-title {

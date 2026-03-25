@@ -211,13 +211,11 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      {/* Left Side - Carousel */}
       <div className="login-left">
         <div className="carousel-content">
           <div className="hero-image">
-            {/* Watercolor doctor illustration */}
             <img 
-              src="/assets/doctor1.png" 
+              src={doctor1} 
               alt="Healthcare Professional" 
               className="doctor-img"
             />
@@ -262,10 +260,11 @@ const Login = () => {
         <div className="login-card">
           {/* Medic Logo */}
           <div className="medic-logo">
-            <img src="/assets/logo.png" className="medic-logo" alt="Medic Logo" />
+            <img src={logo} className="medic-logo-img" alt="Medic Logo" />
           </div>
 
           <h1 className="login-title">Create an account</h1>
+  
           <p className="login-subtitle">
             Access your tasks, notes, and projects anytime, anywhere—and keep everything flowing in one place.
           </p>
