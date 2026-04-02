@@ -37,19 +37,8 @@
   width: 100%;
   max-width: 450px;
   height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
 }
 
-/* If you don't have the image, here's a placeholder background */
-.hero-image::before {
-  content: '';
-  display: block;
-  width: 600px;
-  height: 450px;
-  border-radius: 20px;
-  opacity: 0.5;
-}
 
 .carousel-text {
   margin-top: 20px;
@@ -58,7 +47,6 @@
 .carousel-subtitle {
   font-size: 16px;
   font-weight: 400;
-  color: #4A5568;
   margin-bottom: 10px;
 }
 
@@ -149,8 +137,9 @@
 
 
 .medic-logo-img {
-  width: 70px;
-  height: 60px;
+  height: 50px;
+  right: 30px;
+  position: relative;
 }
 
 .login-title {
@@ -337,11 +326,6 @@
 @media (max-width: 768px) {
   .login-left {
     padding: 30px;
-  }
-
-  .hero-image::before {
-    width: 300px;
-    height: 350px;
   }
 
   .carousel-title {

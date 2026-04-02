@@ -1,1 +1,59 @@
-/*  */
+.settings {
+  display: flex;
+  flex-direction: column;
+  height: 250vh;
+  background: transparent;  /* ✅ White background for the whole container */
+}
+
+.setting {
+  padding: 32px;
+  min-width: 1600px;
+  width: 98%;
+  min-height: calc(95vh - 96px);
+  background: var(--bg-accent);
+  border: 1px solid #E5E7EB;
+  padding: 30px;
+  margin-top: 20px;
+  border-radius: 25px;
+  align-self: center;
+}
+
+.settings-title, .card-description, .toggle-label, .form-label, .forminput, .form-textarea {
+  color: #000000;
+}
+
+.settings-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.toggle-group.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 50px;
+}
+
+
+
+.card-header.clinic{
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-start;
+}

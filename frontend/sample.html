@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #F8F9FA;
+  padding: 20px;
+}
+
+.screen-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  border: 0.5px solid #E5E7EB;
+  flex-wrap: wrap;
+}
+
+.screen-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+
+.screen-btn.active {
+  background: #1F4788;
+  color: white;
+}
+
+.screen-btn:hover:not(.active) {
+  background: #F3F4F6;
+}
+
+.mockup {
+  background: white;
+  border-radius: 16px;
+  border: 0.5px solid #E5E7EB;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.mockup-header {
+  padding: 20px 24px;
+  border-bottom: 0.5px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mockup-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: #1F4788;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #163866;
+}
+
+.btn-secondary {
+  background: white;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+.btn-secondary:hover {
+  background: #F9FAFB;
+}
+
+.mockup-content {
+  padding: 24px;
+  min-height: 500px;
+}
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Dashboard */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.stat-card h3 {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-number {
+  font-size: 36px;
+  font-weight: 600;
+  color: #1F4788;
+  margin-bottom: 8px;
+}
+
+.stat-detail {
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.stat-comparison {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.stat-comparison.up {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22C55E;
+}
+
+.finance-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.finance-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.finance-label {
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.finance-amount {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.finance-amount.income { color: #22C55E; }
+.finance-amount.expense { color: #EF4444; }
+
+.birthday-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.birthday-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
+}
+
+.birthday-icon {
+  font-size: 24px;
+}
+
+.birthday-info {
+  flex: 1;
+}
+
+.birthday-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.birthday-date {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #1F4788;
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table th {
+  background: #F9FAFB;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.data-table td {
+  padding: 16px;
+  border-bottom: 1px solid #F3F4F6;
+  font-size: 14px;
+  color: #111827;
+}
+
+.data-table tr:hover {
+  background: #F9FAFB;
+}
+
+.table-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2D9C9C;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  padding: 6px 12px;
+  border: 1px solid #E5E7EB;
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #F9FAFB;
+  border-color: #1F4788;
+}
+
+/* Form */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-input, .form-select, .form-textarea {
+  padding: 10px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: #1F4788;
+}
+
+/* Patient Detail */
+.detail-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2D9C9C 0%, #1F7A7A 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.detail-info h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.detail-meta {
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 12px;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #111827;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab.active {
+  color: #1F4788;
+  border-bottom-color: #1F4788;
+}
+
+.tab:hover:not(.active) {
+  color: #374151;
+}
+
+/* Chart Placeholder */
+.chart-placeholder {
+  height: 300px;
+  background: #F9FAFB;
+  border: 2px dashed #E5E7EB;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  font-size: 14px;
+}
+
+/* Report Filters */
+.report-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6B7280;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.empty-subtext {
+  font-size: 14px;
+  color: #9CA3AF;
+}
+</style>
+</head>
+<body>
+
+<div class="screen-nav">
+  <button class="screen-btn active" onclick="showScreen(0)">1. Dashboard</button>
+  <button class="screen-btn" onclick="showScreen(1)">2. Patients Database</button>
+  <button class="screen-btn" onclick="showScreen(2)">3. Patient Detail</button>
+  <button class="screen-btn" onclick="showScreen(3)">4. Add Patient</button>
+  <button class="screen-btn" onclick="showScreen(4)">5. Finances - Income</button>
+  <button class="screen-btn" onclick="showScreen(5)">6. Finances - Expenditure</button>
+  <button class="screen-btn" onclick="showScreen(6)">7. Reports</button>
+  <button class="screen-btn" onclick="showScreen(7)">8. Settings</button>
+</div>
+
+<div class="mockup">
+  
+  <!-- Screen 1: Dashboard -->
+  <div class="screen active" id="screen-0">
+    <div class="mockup-header">
+      <div class="mockup-title">Dashboard</div>
+    </div>
+    <div class="mockup-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Patients This Week</h3>
+          <div class="stat-number">47</div>
+          <div class="stat-detail">vs 42 last week</div>
+          <span class="stat-comparison up">↑ +5 patients</span>
+        </div>
+
+        <div class="stat-card">
+          <h3>Financial Summary</h3>
+          <div class="finance-summary">
+            <div class="finance-row">
+              <span class="finance-label">Total Income</span>
+              <span class="finance-amount income">$12,450</span>
+            </div>
+            <div class="finance-row">
+              <span class="finance-label">Total Expenses</span>
+              <span class="finance-amount expense">$8,200</span>
+            </div>
+            <div class="finance-row">
+              <span class="finance-label">Net Profit</span>
+              <span class="finance-amount income">$4,250</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Upcoming Birthdays</h3>
+          <div class="birthday-list">
+            <div class="birthday-item">
+              <span class="birthday-icon">🎂</span>
+              <div class="birthday-info">
+                <div class="birthday-name">John Smith</div>
+                <div class="birthday-date">March 28 (Tomorrow)</div>
+              </div>
+            </div>
+            <div class="birthday-item">
+              <span class="birthday-icon">🎂</span>
+              <div class="birthday-info">
+                <div class="birthday-name">Mary Johnson</div>
+                <div class="birthday-date">April 2</div>
+              </div>
+            </div>
+            <div class="birthday-item">
+              <span class="birthday-icon">🎂</span>
+              <div class="birthday-info">
+                <div class="birthday-name">Robert Brown</div>
+                <div class="birthday-date">April 5</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Quick Actions</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" style="width: 100%;">+ Add New Patient</button>
+            <button class="btn btn-secondary" style="width: 100%;">Record Income</button>
+            <button class="btn btn-secondary" style="width: 100%;">Generate Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Patients Database -->
+  <div class="screen" id="screen-1">
+    <div class="mockup-header">
+      <div class="mockup-title">Patient Records</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Export CSV</button>
+        <button class="btn btn-primary">+ Add Patient</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="Search patients by name, phone, or email...">
+        <select class="form-select" style="width: 200px;">
+          <option>All Patients</option>
+          <option>Visited This Week</option>
+          <option>Visited This Month</option>
+          <option>Not Visited (3+ months)</option>
+        </select>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Date of Birth</th>
+            <th>Phone</th>
+            <th>Last Visit</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="table-avatar">JS</div>
+                <span style="font-weight: 500;">John Smith</span>
+              </div>
+            </td>
+            <td>March 15, 1985</td>
+            <td>+1 876-555-0123</td>
+            <td>March 25, 2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">View</button>
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Summary</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="table-avatar" style="background: #FF6B6B;">MJ</div>
+                <span style="font-weight: 500;">Mary Johnson</span>
+              </div>
+            </td>
+            <td>June 22, 1992</td>
+            <td>+1 876-555-0456</td>
+            <td>March 20, 2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">View</button>
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Summary</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="table-avatar" style="background: #1F4788;">RB</div>
+                <span style="font-weight: 500;">Robert Brown</span>
+              </div>
+            </td>
+            <td>April 5, 1978</td>
+            <td>+1 876-555-0789</td>
+            <td>February 10, 2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">View</button>
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Summary</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Screen 3: Patient Detail -->
+  <div class="screen" id="screen-2">
+    <div class="mockup-header">
+      <div class="mockup-title">Patient Details</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Generate Summary PDF</button>
+        <button class="btn btn-primary">Edit Patient</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="detail-card">
+        <div class="detail-header">
+          <div class="detail-avatar">JS</div>
+          <div class="detail-info">
+            <h2>John Smith</h2>
+            <div class="detail-meta">Male • 41 years old • Born March 15, 1985</div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">+1 876-555-0123</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">john.smith@example.com</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Address</span>
+            <span class="info-value">123 Main St, Kingston</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Last Visit</span>
+            <span class="info-value">March 25, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Medical History</h3>
+        <p style="color: #374151; line-height: 1.6;">
+          Hypertension (controlled with medication). History of seasonal allergies. 
+          No known drug allergies. Family history of diabetes (father).
+        </p>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Visit History</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="padding: 16px; background: #F9FAFB; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-weight: 600;">General Checkup</span>
+              <span style="color: #6B7280; font-size: 14px;">March 25, 2026</span>
+            </div>
+            <p style="color: #6B7280; font-size: 14px;">
+              Blood pressure: 125/82. Weight: 180 lbs. Patient reports feeling well. 
+              Renewed prescription for hypertension medication.
+            </p>
+          </div>
+          <div style="padding: 16px; background: #F9FAFB; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-weight: 600;">Follow-up Appointment</span>
+              <span style="color: #6B7280; font-size: 14px;">February 10, 2026</span>
+            </div>
+            <p style="color: #6B7280; font-size: 14px;">
+              Follow-up on blood pressure management. BP stable at 128/80. 
+              Patient compliant with medication.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 4: Add Patient -->
+  <div class="screen" id="screen-3">
+    <div class="mockup-header">
+      <div class="mockup-title">Add New Patient</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">Save Patient</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          <input type="text" class="form-input" placeholder="John">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name *</label>
+          <input type="text" class="form-input" placeholder="Smith">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth *</label>
+          <input type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-select">
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+            <option>Prefer not to say</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input type="tel" class="form-input" placeholder="+1 876-555-0123">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="john.smith@example.com">
+        </div>
+        <div class="form-group full-width">
+          <label class="form-label">Address</label>
+          <input type="text" class="form-input" placeholder="123 Main St, Kingston">
+        </div>
+        <div class="form-group full-width">
+          <label class="form-label">Medical History</label>
+          <textarea class="form-textarea" placeholder="Any relevant medical history, conditions, allergies, etc."></textarea>
+        </div>
+        <div class="form-group full-width">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" placeholder="Additional notes (e.g., preferred appointment times, special requirements)"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 5: Finances - Income -->
+  <div class="screen" id="screen-4">
+    <div class="mockup-header">
+      <div class="mockup-title">Finances - Income</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Export CSV</button>
+        <button class="btn btn-primary">+ Add Income</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="tabs">
+        <button class="tab active">Income</button>
+        <button class="tab" onclick="showScreen(5)">Expenditure</button>
+      </div>
+
+      <div style="margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); border-radius: 12px; color: white;">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Income (This Month)</div>
+        <div style="font-size: 36px; font-weight: 600;">$12,450.00</div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>March 25, 2026</td>
+            <td>Consultation - John Smith</td>
+            <td><span style="padding: 4px 12px; background: rgba(31, 71, 136, 0.1); color: #1F4788; border-radius: 50px; font-size: 12px;">Consultation</span></td>
+            <td style="font-weight: 600; color: #22C55E;">$150.00</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>March 24, 2026</td>
+            <td>Blood work - Mary Johnson</td>
+            <td><span style="padding: 4px 12px; background: rgba(45, 156, 156, 0.1); color: #2D9C9C; border-radius: 50px; font-size: 12px;">Procedure</span></td>
+            <td style="font-weight: 600; color: #22C55E;">$85.00</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>March 23, 2026</td>
+            <td>Medication sales</td>
+            <td><span style="padding: 4px 12px; background: rgba(107, 114, 128, 0.1); color: #6B7280; border-radius: 50px; font-size: 12px;">Medication</span></td>
+            <td style="font-weight: 600; color: #22C55E;">$220.00</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Screen 6: Finances - Expenditure -->
+  <div class="screen" id="screen-5">
+    <div class="mockup-header">
+      <div class="mockup-title">Finances - Expenditure</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Export CSV</button>
+        <button class="btn btn-primary">+ Add Expense</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="tabs">
+        <button class="tab" onclick="showScreen(4)">Income</button>
+        <button class="tab active">Expenditure</button>
+      </div>
+
+      <div style="margin-bottom: 24px; padding: 20px; background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); border-radius: 12px; color: white;">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Expenses (This Month)</div>
+        <div style="font-size: 36px; font-weight: 600;">$8,200.00</div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>March 20, 2026</td>
+            <td>Medical supplies - gauze, bandages</td>
+            <td><span style="padding: 4px 12px; background: rgba(31, 71, 136, 0.1); color: #1F4788; border-radius: 50px; font-size: 12px;">Supplies</span></td>
+            <td style="font-weight: 600; color: #EF4444;">$85.50</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>March 15, 2026</td>
+            <td>Electricity bill</td>
+            <td><span style="padding: 4px 12px; background: rgba(245, 158, 11, 0.1); color: #F59E0B; border-radius: 50px; font-size: 12px;">Utilities</span></td>
+            <td style="font-weight: 600; color: #EF4444;">$450.00</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>March 1, 2026</td>
+            <td>Clinic rent</td>
+            <td><span style="padding: 4px 12px; background: rgba(107, 114, 128, 0.1); color: #6B7280; border-radius: 50px; font-size: 12px;">Rent</span></td>
+            <td style="font-weight: 600; color: #EF4444;">$2,500.00</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon">Edit</button>
+                <button class="btn-icon">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Screen 7: Reports -->
+  <div class="screen" id="screen-6">
+    <div class="mockup-header">
+      <div class="mockup-title">Reports</div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">Download PDF</button>
+        <button class="btn btn-primary">Generate Report</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="tabs">
+        <button class="tab active">Weekly Patients</button>
+        <button class="tab">Financial Report</button>
+      </div>
+
+      <div class="report-filters">
+        <div class="filter-group">
+          <span class="filter-label">Report Type</span>
+          <select class="form-select">
+            <option>Weekly Patient Report</option>
+            <option>Monthly Patient Report</option>
+            <option>Custom Date Range</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Week Starting</span>
+          <input type="date" class="form-input" value="2026-03-24">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Week Ending</span>
+          <input type="date" class="form-input" value="2026-03-30">
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Weekly Patient Report</h3>
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 14px; color: #6B7280; margin-bottom: 4px;">Week of March 24 - March 30, 2026</div>
+          <div style="font-size: 36px; font-weight: 600; color: #1F4788;">47 Patients</div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <div style="font-weight: 600; margin-bottom: 12px;">Daily Breakdown:</div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">MON</div>
+              <div style="font-size: 20px; font-weight: 600; color: #1F4788;">8</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">TUE</div>
+              <div style="font-size: 20px; font-weight: 600; color: #1F4788;">12</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">WED</div>
+              <div style="font-size: 20px; font-weight: 600; color: #1F4788;">9</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">THU</div>
+              <div style="font-size: 20px; font-weight: 600; color: #1F4788;">11</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">FRI</div>
+              <div style="font-size: 20px; font-weight: 600; color: #1F4788;">7</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px; opacity: 0.5;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">SAT</div>
+              <div style="font-size: 20px; font-weight: 600; color: #6B7280;">0</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: #F9FAFB; border-radius: 8px; opacity: 0.5;">
+              <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;">SUN</div>
+              <div style="font-size: 20px; font-weight: 600; color: #6B7280;">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-placeholder">
+          📊 Bar Chart: Patients per Day (Use Chart.js)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 8: Settings -->
+  <div class="screen" id="screen-7">
+    <div class="mockup-header">
+      <div class="mockup-title">Settings</div>
+      <div class="header-actions">
+        <button class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+    <div class="mockup-content">
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Birthday Greetings</h3>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+          <input type="checkbox" id="enable-birthday" checked style="width: 20px; height: 20px; cursor: pointer;">
+          <label for="enable-birthday" style="cursor: pointer; font-weight: 500;">Enable automatic birthday greetings</label>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label">Email Subject</label>
+          <input type="text" class="form-input" value="Happy Birthday from Medic Clinic! 🎉">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Message</label>
+          <textarea class="form-textarea" style="min-height: 150px;">Dear {firstName},
+
+Wishing you a wonderful birthday! 🎂
+
+We hope you have an amazing day filled with joy and celebration.
+
+Best wishes,
+The Medic Clinic Team</textarea>
+          <div style="font-size: 12px; color: #6B7280; margin-top: 8px;">
+            Available variables: {firstName}, {lastName}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">Clinic Information</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Clinic Name</label>
+            <input type="text" class="form-input" value="Medic Clinic">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-input" value="+1 876-555-0000">
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-input" value="456 Healthcare Ave, Kingston, Jamaica">
+          </div>
+          <div class="form-group full-width">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="info@medicclinic.com">
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin-bottom: 16px; font-size: 18px;">User Management</h3>
+        <div style="margin-bottom: 16px;">
+          <button class="btn btn-primary">+ Add Staff User</button>
+        </div>
+        <div class="empty-state" style="padding: 40px;">
+          <div class="empty-icon">👥</div>
+          <div class="empty-text">No staff users yet</div>
+          <div class="empty-subtext">Add staff members to give them access to patient records</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showScreen(index) {
+  // Hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen-btn').forEach(b => b.classList.remove('active'));
+  
+  // Show selected screen
+  document.getElementById('screen-' + index).classList.add('active');
+  document.querySelectorAll('.screen-btn')[index].classList.add('active');
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>

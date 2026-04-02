@@ -1,0 +1,31 @@
+.finances {
+  display: flex;
+  flex-direction: column;
+  height: 120vh;
+  background: transparent;  /* ✅ White background for the whole container */
+}
+
+.finance {
+  padding: 32px;
+  min-width: 1600px;
+  width: 98%;
+  min-height: calc(95vh - 96px);
+  background: var(--bg-accent);
+  border: 1px solid #E5E7EB;
+  padding: 30px;
+  margin-top: 20px;
+  border-radius: 25px;
+  align-self: center;
+}
+
+.finance-title {
+  color: #000000;
+}
+
+.finances-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+

@@ -1,31 +1,11 @@
 import { useEffect, useState } from 'react'
-import { auth, db } from '../../services/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { useAuth } from '../../contexts/AuthContext'
 import './StaffOverview.css'
 
-export default function StaffHome() {
-  const [userData, setUserData] = useState(null)
-  const [loading, setLoading] = useState(true)
+import test from '../../assets/icons/test.png';
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const user = auth.currentUser
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid))
-          if (userDoc.exists()) {
-            setUserData(userDoc.data())
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserData()
-  }, [])
+export default function AdminOverview() {
+  const { userProfile, loading } = useAuth()
 
   if (loading) {
     return (
@@ -35,163 +15,168 @@ export default function StaffHome() {
     )
   }
 
-  const firstName = userData?.firstName || 'Staff'
-  const department = userData?.department || 'General'
-  const role = userData?.role || 'staff'
+  const firstName = userProfile?.firstName || 'Staff'
 
   return (
-    <div className="staff-home">
-      {/* Header */}
-      <header className="page-header">
-        <div>
-          <h1 className="page-title">Welcome back, Dr. {firstName}!</h1>
-          <p className="page-subtitle">{department} Department • {role.charAt(0).toUpperCase() + role.slice(1)}</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn btn-outline">
-            📊 View Reports
-          </button>
-          <button className="btn btn-primary">
-            + New Appointment
-          </button>
-        </div>
-      </header>
+    <div className="admin-dashboard">
+      <div className="admin-sidebar-left">
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h2 className="card-title">Today's Appointments</h2>
+            <span className="card-badge">12</span>
+          </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)' }}>
-            👥
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Patients Today</p>
-            <h3 className="stat-value">24</h3>
-            <p className="stat-change positive">+12% from yesterday</p>
-          </div>
-        </div>
+          <div className="appointments-list">
+            <div className="appointment-item">
+              <div className="appointment-avatar" style={{ background: '#2D9C9C' }}>
+                JS
+              </div>
+              <div className="appointment-info">
+                <p className="appointment-name">John Smith</p>
+                <p className="appointment-time">9:00 AM • General Checkup</p>
+              </div>
+              <span className="status-badge pending">Pending</span>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--info)' }}>
-            📅
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Appointments</p>
-            <h3 className="stat-value">18</h3>
-            <p className="stat-change">5 pending confirmation</p>
-          </div>
-        </div>
+            <div className="appointment-item">
+              <div className="appointment-avatar" style={{ background: '#FF6B6B' }}>
+                MJ
+              </div>
+              <div className="appointment-info">
+                <p className="appointment-name">Mary Johnson</p>
+                <p className="appointment-time">10:30 AM • Follow-up</p>
+              </div>
+              <span className="status-badge in-progress">In Progress</span>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' }}>
-            ⏰
+            <div className="appointment-item">
+              <div className="appointment-avatar" style={{ background: '#1F4788' }}>
+                RB
+              </div>
+              <div className="appointment-info">
+                <p className="appointment-name">Robert Brown</p>
+                <p className="appointment-time">2:00 PM • Emergency</p>
+              </div>
+              <span className="status-badge pending">Pending</span>
+            </div>
           </div>
-          <div className="stat-content">
-            <p className="stat-label">Avg. Wait Time</p>
-            <h3 className="stat-value">32 min</h3>
-            <p className="stat-change negative">+5 min from last week</p>
-          </div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)' }}>
-            🚨
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Critical Cases</p>
-            <h3 className="stat-value">3</h3>
-            <p className="stat-change">Requires immediate attention</p>
-          </div>
+          <button className="card-link">View all appointments →</button>
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="content-grid">
-        {/* Today's Schedule */}
-        <div className="content-card">
-          <div className="card-header">
-            <h2 className="card-title">Today's Schedule</h2>
-            <button className="btn-text">View All</button>
+      <div className="admin-sidebar-right">
+        <div className="dashboard-header">
+          <div>
+            <h1 className="dashboard-title">Welcome back, {firstName}!</h1>
+            <p className="dashboard-subtitle">Here's what's happening at your clinic today</p>
           </div>
-          <div className="schedule-list">
-            <div className="schedule-item">
-              <div className="schedule-time">9:00 AM</div>
-              <div className="schedule-details">
-                <p className="schedule-patient">John Doe</p>
-                <p className="schedule-type">Annual Checkup</p>
-              </div>
-              <span className="badge badge-success">Confirmed</span>
-            </div>
-            <div className="schedule-item">
-              <div className="schedule-time">10:30 AM</div>
-              <div className="schedule-details">
-                <p className="schedule-patient">Jane Smith</p>
-                <p className="schedule-type">Follow-up Visit</p>
-              </div>
-              <span className="badge badge-warning">Waiting</span>
-            </div>
-            <div className="schedule-item">
-              <div className="schedule-time">2:00 PM</div>
-              <div className="schedule-details">
-                <p className="schedule-patient">Michael Brown</p>
-                <p className="schedule-type">Consultation</p>
-              </div>
-              <span className="badge badge-info">Scheduled</span>
-            </div>
-          </div>
+
+          <button className="btn-primary">
+            + Add Patient
+          </button>
         </div>
 
-        {/* Recent Patients */}
-        <div className="content-card">
-          <div className="card-header">
-            <h2 className="card-title">Recent Patients</h2>
-            <button className="btn-text">View All</button>
-          </div>
-          <div className="patient-list">
-            <div className="patient-item">
-              <div className="patient-avatar">JD</div>
-              <div className="patient-info">
-                <p className="patient-name">John Doe</p>
-                <p className="patient-detail">Last visit: 2 days ago</p>
+        <div className="dashboard-grid">
+          <div className="dashboard-column">
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2 className="card-title">Clinic Overview</h2>
               </div>
-            </div>
-            <div className="patient-item">
-              <div className="patient-avatar">JS</div>
-              <div className="patient-info">
-                <p className="patient-name">Jane Smith</p>
-                <p className="patient-detail">Last visit: 1 week ago</p>
-              </div>
-            </div>
-            <div className="patient-item">
-              <div className="patient-avatar">MB</div>
-              <div className="patient-info">
-                <p className="patient-name">Michael Brown</p>
-                <p className="patient-detail">Last visit: 2 weeks ago</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <h3 className="quick-actions-title">Quick Actions</h3>
-        <div className="quick-actions-grid">
-          <button className="quick-action-btn">
-            <span className="quick-action-icon">📋</span>
-            <span>View Queue</span>
-          </button>
-          <button className="quick-action-btn">
-            <span className="quick-action-icon">📝</span>
-            <span>Write Prescription</span>
-          </button>
-          <button className="quick-action-btn">
-            <span className="quick-action-icon">🔬</span>
-            <span>Order Lab Test</span>
-          </button>
-          <button className="quick-action-btn">
-            <span className="quick-action-icon">📊</span>
-            <span>View Analytics</span>
-          </button>
+              <div className="overview-stats">
+                <div className="overview-stat">
+                  <div className="overview-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div className="overview-info">
+                    <div className="overview-value">156</div>
+                    <div className="overview-label">Total Patients</div>
+                  </div>
+                </div>
+
+                <div className="overview-stat">
+                  <div className="overview-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="overview-info">
+                    <div className="overview-value">24</div>
+                    <div className="overview-label">Appointments Today</div>
+                  </div>
+                </div>
+
+                <div className="overview-stat">
+                  <div className="overview-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="overview-info">
+                    <div className="overview-value">$4,250</div>
+                    <div className="overview-label">Net Profit (Month)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-column">
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2 className="card-title">Upcoming Birthdays</h2>
+              </div>
+
+              <div className="birthday-list">
+                <div className="birthday-item">
+                  <span className="birthday-icon">🎂</span>
+                  <div className="birthday-info">
+                    <div className="birthday-name">John Smith</div>
+                    <div className="birthday-date">Tomorrow</div>
+                  </div>
+                </div>
+
+                <div className="birthday-item">
+                  <span className="birthday-icon">🎂</span>
+                  <div className="birthday-info">
+                    <div className="birthday-name">Mary Johnson</div>
+                    <div className="birthday-date">April 2</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2 className="card-title">Upcoming Activities</h2>
+                <span className="card-badge">2</span>
+              </div>
+    
+              <div className="appointments-list">
+                <div className="appointment-item">
+                  <div className="appointment-avatar" style={{ background: '#2D9C9C' }}>
+                    <img 
+                      src={test}
+                      className="icon-img"
+                    >
+                    </img>
+                  </div>
+    
+                  <div className="appointment-info">
+                    <p className="appointment-name">Lab Results Ready</p>
+                    <p className="appointment-time">Blood work • 2 days ago</p>
+                  </div>
+                </div>
+              </div>
+    
+              <button className="card-link">View all activities →</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

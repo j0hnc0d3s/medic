@@ -10,8 +10,8 @@ import {
 } from 'firebase/auth'
 
 import './Login.css';
-import doctor1 from '../assets/doctor1.png';
-import logo from '../assets/logo.png';
+import doctor1 from '../assets/images/doctor1.png';
+import logo from '../assets/images/logo.png';
 
 // Your backend API URL
 const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:5173'
@@ -93,7 +93,9 @@ const Login = () => {
         // Step 5: Redirect based on role
         const redirectPath = getRedirectPath(data.user.role)
         console.log('✅ Login successful:', data.user.email, 'Role:', data.user.role)
+        console.log('🔄 Navigating to:', redirectPath)  // Add this
         navigate(redirectPath)
+        console.log('✅ Navigate called')  // Add this
       } else {
         throw new Error(data.error || 'Login failed')
       }
@@ -213,14 +215,6 @@ const Login = () => {
     <div className="login-container">
       <div className="login-left">
         <div className="carousel-content">
-          <div className="hero-image">
-            <img 
-              src={doctor1} 
-              alt="Healthcare Professional" 
-              className="doctor-img"
-            />
-          </div>
-          
           <div className="carousel-text">
             <p className="carousel-subtitle">We pride ourselves on</p>
             <h2 className="carousel-title">{slides[currentSlide].title}</h2>
@@ -245,6 +239,7 @@ const Login = () => {
                   <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
+
               <button className="arrow-btn" onClick={nextSlide}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -258,9 +253,12 @@ const Login = () => {
       {/* Right Side - Login Form */}
       <div className="login-right">
         <div className="login-card">
-          {/* Medic Logo */}
           <div className="medic-logo">
-            <img src={logo} className="medic-logo-img" alt="Medic Logo" />
+            <img 
+              src={logo} 
+              className="medic-logo-img" 
+              alt="Medic Logo" 
+            />
           </div>
 
           <h1 className="login-title">Create an account</h1>

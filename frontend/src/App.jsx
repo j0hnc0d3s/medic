@@ -5,29 +5,52 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 
 // Staff Components
+
 import StaffLayout from './components/StaffLayout.jsx'
 import StaffOverview from './pages/staff/StaffOverview.jsx'
-/* import StaffPatients from './pages/staff/StaffPatients.jsx'
+import StaffPatients from './pages/staff/StaffPatients.jsx'
 import StaffPatient from './pages/staff/StaffPatient.jsx'
-import StaffMessaging from './pages/staff/StaffMessaging.jsx'
+import StaffAddPatient from './pages/staff/StaffAddPatient.jsx'
 import StaffNotifications from './pages/staff/StaffNotifications.jsx'
 import StaffCalendar from './pages/staff/StaffCalendar.jsx'
-import StaffSettings from './pages/staff/StaffSettings.jsx'
-import StaffProfile from './pages/staff/StaffProfile.jsx' */
+import StaffActivity from './pages/staff/StaffActivity.jsx'
+import StaffDocuments from './pages/staff/StaffDocuments.jsx'
+import StaffMessaging from './pages/staff/StaffMessaging.jsx'
+
+/* 
+import StaffProfile from './pages/staff/StaffProfile.jsx'
+*/
 
 // Patient Components
+
 import PatientLayout from './components/PatientLayout.jsx'
 import PatientOverview from './pages/patient/PatientOverview.jsx'
-/* import PatientMessaging from './pages/patient/PatientMessaging.jsx'
+import PatientAppointment from './pages/patient/PatientAppointment.jsx'
+import PatientMessaging from './pages/patient/PatientMessaging.jsx'
+import PatientNotifications from './pages/patient/PatientNotifications.jsx'
+import PatientDocuments from './pages/patient/PatientDocuments.jsx'
+import PatientActivity from './pages/patient/PatientActivity.jsx'
+import PatientCalendar from './pages/patient/PatientCalendar.jsx'
+
+/* 
 import PatientProfile from './pages/patient/PatientProfile.jsx'
-import PatientSettings from './pages/patient/PatientSettings.jsx' */
+*/
 
 // Admin Components
+
 import AdminLayout from './components/AdminLayout.jsx'
-import AdminOverview from './pages/admin/AdminOverview.jsx'
-/* import AdminFinancials from './pages/admin/AdminFinancials.jsx'
+import AdminDashboard from './pages/admin/AdminDashboard.jsx'
+import AdminPatients from './pages/admin/AdminPatients.jsx'
+import AdminPatient from './pages/admin/AdminPatient.jsx'
+import AdminAddPatient from './pages/admin/AdminAddPatient.jsx'
+import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminReports from './pages/admin/AdminReports.jsx'
-import AdminSettings from './pages/admin/AdminSettings.jsx' */
+import AdminSettings from './pages/admin/AdminSettings.jsx'
+import AdminNotifications from './pages/admin/AdminNotifications.jsx'
+import AdminActivity from './pages/admin/AdminActivity.jsx'
+import AdminDocuments from './pages/admin/AdminDocuments.jsx'
+
+// Index
 
 import './index.css'
 
@@ -53,14 +76,18 @@ function App() {
           }
         >
           <Route index element={<Navigate to="/staff/overview" replace />} />
-          <Route path="overview" element={<StaffOverview />} />
-{/*           <Route path="patients" element={<StaffPatients />} />
+          <Route path="overview" element={<StaffOverview />} />  
+          <Route path="patients" element={<StaffPatients />} />
           <Route path="patients/:patientId" element={<StaffPatient />} />
-          <Route path="messaging" element={<StaffMessaging />} />
+          <Route path="addpatient" element={<StaffAddPatient />} />
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="calendar" element={<StaffCalendar />} />
-          <Route path="settings" element={<StaffSettings />} />
-          <Route path="profile" element={<StaffProfile />} /> */}
+          <Route path="documents" element={<StaffDocuments />} />
+          <Route path="activities" element={<StaffActivity />} />
+          <Route path="messaging" element={<StaffMessaging />} />
+{/*   
+          <Route path="profile" element={<StaffProfile />} /> 
+*/}
         </Route>
 
         {/* ========== PATIENT ROUTES ========== */}
@@ -74,9 +101,16 @@ function App() {
         >
           <Route index element={<Navigate to="/patient/overview" replace />} />
           <Route path="overview" element={<PatientOverview />} />
-{/*           <Route path="messaging" element={<PatientMessaging />} />
+          <Route path="appointment" element={<PatientAppointment />} />
+          <Route path="messaging" element={<PatientMessaging />} />
+          <Route path="notifications" element={<PatientNotifications />} />
+          <Route path="documents" element={<PatientDocuments />} />
+          <Route path="activities" element={<PatientActivity />} />
+          <Route path="calendar" element={<PatientCalendar />} />
+{/*           
           <Route path="profile" element={<PatientProfile />} />
-          <Route path="settings" element={<PatientSettings />} /> */}
+          <Route path="settings" element={<PatientSettings />} /> 
+*/}
         </Route>
 
         {/* ========== ADMIN ROUTES ========== */}
@@ -89,10 +123,16 @@ function App() {
           }
         >
           <Route index element={<Navigate to="/admin/overview" replace />} />
-          <Route path="overview" element={<AdminOverview />} />
-{/*           <Route path="financials" element={<AdminFinancials />} />
-          <Route path="report" element={<AdminReports />} />
-          <Route path="settings" element={<AdminSettings />} /> */}
+          <Route path="overview" element={<AdminDashboard />} />    
+          <Route path="patients" element={<AdminPatients />} />    
+          <Route path="patients/:patientId" element={<AdminPatient />} />
+          <Route path="addpatient" element={<AdminAddPatient />} />
+          <Route path="finances" element={<AdminFinances />} />
+          <Route path="reports" element={<AdminReports />} />
+          <Route path="settings" element={<AdminSettings />} /> 
+          <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="documents" element={<AdminDocuments />} />
+          <Route path="activities" element={<AdminActivity />} />
         </Route>
 
         {/* Catch-all redirect */}
