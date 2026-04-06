@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { doc, getDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore'
-import { db } from '../../services/firebase'
 import { useParams, useNavigate } from 'react-router-dom'
+import { doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore'
+import { db } from '../../services/firebase'
+import { patientService, activityService } from '../../services'
 import jsPDF from 'jspdf'
 import './StaffPatient.css'
 
 export default function PatientDetail() {
-  const { id } = useParams()
+  const { patientId } = useParams()  // ← Fixed: matches route param name
   const navigate = useNavigate()
   const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -15,19 +16,32 @@ export default function PatientDetail() {
 
   useEffect(() => {
     loadPatient()
-  }, [id])
+  }, [patientId])
+
+  useEffect(() => {
+    // Close modal on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showAddVisit) {
+        setShowAddVisit(false)
+        setVisitNotes('')
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [showAddVisit])  // ← Fixed dependency
 
   const loadPatient = async () => {
     try {
-      const docRef = doc(db, 'patients', id)
-      const docSnap = await getDoc(docRef)
+      const result = await patientService.getPatient(patientId)
       
-      if (docSnap.exists()) {
-        setPatient({ id: docSnap.id, ...docSnap.data() })
+      if (result.success) {
+        setPatient(result.patient)
       } else {
         alert('Patient not found')
-        navigate('/admin/patients')
+        navigate('/staff/patients')
       }
+      
       setLoading(false)
     } catch (error) {
       console.error('Error loading patient:', error)
@@ -42,7 +56,8 @@ export default function PatientDetail() {
     }
 
     try {
-      const docRef = doc(db, 'patients', id)
+      // Direct Firestore update for visits (not in service yet)
+      const docRef = doc(db, 'patients', patientId)
       await updateDoc(docRef, {
         visits: arrayUnion({
           date: Timestamp.now(),
@@ -51,9 +66,19 @@ export default function PatientDetail() {
         updatedAt: Timestamp.now()
       })
 
+      // Log activity
+      await activityService.logActivity({
+        action: 'Visit Added',
+        description: `New visit recorded for ${patient.firstName} ${patient.lastName}`,
+        type: 'patient-updated',
+        user: 'Admin',
+        entity: patientId
+      })
+
+      // Close modal and clear form
       setVisitNotes('')
       setShowAddVisit(false)
-      loadPatient() // Reload patient data
+      loadPatient()
       alert('Visit added successfully')
     } catch (error) {
       console.error('Error adding visit:', error)
@@ -184,7 +209,7 @@ export default function PatientDetail() {
       <header className="detail-header-bar">
         <button 
           className="back-btn"
-          onClick={() => navigate('/admin/patients')}
+          onClick={() => navigate('/staff/patients')}
         >
           ← Back to Patients
         </button>
@@ -197,7 +222,7 @@ export default function PatientDetail() {
           </button>
           <button 
             className="btn btn-primary"
-            onClick={() => navigate(`/admin/patients/${id}/edit`)}
+            onClick={() => navigate(`/staff/patients/${patientId}/edit`)}
           >
             Edit Patient
           </button>
@@ -264,28 +289,11 @@ export default function PatientDetail() {
           <h3>Visit History</h3>
           <button 
             className="btn btn-primary btn-sm"
-            onClick={() => setShowAddVisit(!showAddVisit)}
+            onClick={() => setShowAddVisit(true)}
           >
-            {showAddVisit ? 'Cancel' : '+ Add Visit'}
+            + Add Visit
           </button>
         </div>
-
-        {showAddVisit && (
-          <div className="add-visit-form">
-            <textarea
-              className="visit-textarea"
-              placeholder="Enter visit notes..."
-              value={visitNotes}
-              onChange={(e) => setVisitNotes(e.target.value)}
-            />
-            <button 
-              className="btn btn-primary"
-              onClick={addVisit}
-            >
-              Save Visit
-            </button>
-          </div>
-        )}
 
         {patient.visits && patient.visits.length > 0 ? (
           <div className="visit-list">
@@ -309,6 +317,66 @@ export default function PatientDetail() {
           </div>
         )}
       </div>
+
+      {/* Add Visit Modal */}
+      {showAddVisit && (
+        <div className="modal-overlay" onClick={() => setShowAddVisit(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Add New Visit</h2>
+              <button 
+                className="modal-close"
+                onClick={() => setShowAddVisit(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Visit Notes</label>
+                <textarea
+                  className="visit-textarea"
+                  placeholder="Enter visit notes, diagnosis, treatment plan, etc..."
+                  value={visitNotes}
+                  onChange={(e) => setVisitNotes(e.target.value)}
+                  rows={8}
+                  autoFocus
+                />
+              </div>
+
+              <div className="visit-meta">
+                <span className="visit-date-label">
+                  📅 Visit Date: {new Date().toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </span>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  setVisitNotes('')
+                  setShowAddVisit(false)
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={addVisit}
+                disabled={!visitNotes.trim()}
+              >
+                Save Visit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

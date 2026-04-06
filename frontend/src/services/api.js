@@ -1,7 +1,7 @@
 // src/services/api.js
 // Helper functions for making authenticated API calls to the backend
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5173'
 
 /**
  * Get the stored auth token

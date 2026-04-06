@@ -7,6 +7,7 @@ import './AdminLayout.css'
 import settings from '../assets/icons/settings.png';
 import notifications from '../assets/icons/notifications.png';
 import activity from '../assets/icons/activity.png';
+import alert from '../assets/icons/alert.png';
 import logo from '../assets/images/logo.png';
 
 const NAV_ITEMS = [
@@ -93,6 +94,18 @@ export default function AdminLayout() {
 
         {/* Right Side Actions */}
         <div className="nav-actions">
+{/*           <button             
+            className="icon-btn"
+            onClick={() => navigate('/admin/alert')}
+            title="Alert"
+          >
+            <img 
+              src={alert} 
+              alt="Alert" 
+              className="icon-img"
+            />
+          </button> */}
+
           <button             
             className="icon-btn"
             onClick={() => navigate('/admin/activities')}

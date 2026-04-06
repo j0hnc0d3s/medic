@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore'
-import { db } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
+import { patientService } from '../../services'
 import './StaffPatients.css'
 
 export default function PatientsDatabase() {
@@ -22,16 +21,14 @@ export default function PatientsDatabase() {
 
   const loadPatients = async () => {
     try {
-      const patientsQuery = query(
-        collection(db, 'patients'),
-        orderBy('lastName', 'asc')
-      )
-      const snapshot = await getDocs(patientsQuery)
-      const patientsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      setPatients(patientsData)
+      const result = await patientService.getPatients()
+      
+      if (result.success) {
+        setPatients(result.patients)
+      } else {
+        console.error('Error loading patients:', result.error)
+      }
+      
       setLoading(false)
     } catch (error) {
       console.error('Error loading patients:', error)
@@ -86,13 +83,44 @@ export default function PatientsDatabase() {
     }
 
     try {
-      await deleteDoc(doc(db, 'patients', patientId))
-      setPatients(patients.filter(p => p.id !== patientId))
-      alert('Patient deleted successfully')
+      const result = await patientService.deletePatient(patientId)
+      
+      if (result.success) {
+        setPatients(patients.filter(p => p.id !== patientId))
+        alert('Patient deleted successfully')
+      } else {
+        alert(`Failed to delete patient: ${result.error}`)
+      }
     } catch (error) {
       console.error('Error deleting patient:', error)
       alert('Failed to delete patient')
     }
+  }
+
+  const exportCSV = () => {
+    // Prepare CSV data
+    const headers = ['First Name', 'Last Name', 'Date of Birth', 'Phone', 'Email', 'Address']
+    const rows = filteredPatients.map(patient => [
+      patient.firstName,
+      patient.lastName,
+      formatDate(patient.dateOfBirth),
+      patient.phone || '',
+      patient.email || '',
+      patient.address || ''
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `patients_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
   }
 
   const getInitials = (firstName, lastName) => {
@@ -138,13 +166,13 @@ export default function PatientsDatabase() {
           <div className="header-actions">
             <button 
               className="btn btn-secondary"
-              onClick={() => {/* Export CSV logic */}}
+              onClick={exportCSV}
             >
               Export CSV
             </button>
             <button 
               className="btn btn-primary"
-              onClick={() => navigate('/admin/addpatient')}
+              onClick={() => navigate('/staff/addpatient')}
             >
               + Add Patient
             </button>
@@ -206,24 +234,17 @@ export default function PatientsDatabase() {
                       <div className="table-actions">
                         <button 
                           className="btn-icon"
-                          onClick={() => navigate(`/admin/patients/${patient.id}`)}
+                          onClick={() => navigate(`/staff/patients/${patient.id}`)}
                           title="View Details"
                         >
                           View
                         </button>
                         <button 
                           className="btn-icon"
-                          onClick={() => navigate(`/admin/patients/${patient.id}/edit`)}
+                          onClick={() => navigate(`/staff/patients/${patient.id}/edit`)}
                           title="Edit Patient"
                         >
                           Edit
-                        </button>
-                        <button 
-                          className="btn-icon"
-                          onClick={() => {/* Generate summary PDF */}}
-                          title="Generate Summary"
-                        >
-                          Summary
                         </button>
                         <button 
                           className="btn-icon delete"
@@ -243,7 +264,6 @@ export default function PatientsDatabase() {
           <div className="empty-state">
             <div className="empty-icon">👥</div>
             <div className="empty-text">No patients found</div>
-
             <div className="empty-subtext">
               {searchTerm || filterOption !== 'all' 
                 ? 'Try adjusting your search or filter'

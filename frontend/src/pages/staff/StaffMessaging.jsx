@@ -1,70 +1,138 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, getDocs, query, orderBy, Timestamp } from 'firebase/firestore'
-import { db } from '../../services/firebase'
+import { useAuth } from '../../contexts/AuthContext'
+import messagingService from '../../services/messagingService'
+import patientService from '../../services/patientService'
 import './StaffMessaging.css'
 
-export default function Messaging() {
+export default function StaffMessaging() {
+  const { userProfile } = useAuth()
   const [conversations, setConversations] = useState([])
   const [selectedConvo, setSelectedConvo] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [patients, setPatients] = useState([])
+  const [showNewConvoModal, setShowNewConvoModal] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState('')
+
+  // Real-time listeners cleanup
+  let unsubscribeConversations = null
+  let unsubscribeMessages = null
 
   useEffect(() => {
-    loadConversations()
-  }, [])
+    if (userProfile?.uid) {
+      loadPatients()
+      setupConversationListener()
+    }
+
+    return () => {
+      if (unsubscribeConversations) unsubscribeConversations()
+      if (unsubscribeMessages) unsubscribeMessages()
+    }
+  }, [userProfile?.uid])
 
   useEffect(() => {
     if (selectedConvo) {
-      loadMessages(selectedConvo.id)
+      setupMessagesListener()
+      markConversationAsRead()
     }
-  }, [selectedConvo])
 
-  const loadConversations = async () => {
-    try {
-      const convoQuery = query(collection(db, 'conversations'), orderBy('lastMessageAt', 'desc'))
-      const snapshot = await getDocs(convoQuery)
-      const convos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      setConversations(convos)
-      if (convos.length > 0 && !selectedConvo) {
-        setSelectedConvo(convos[0])
-      }
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading conversations:', error)
-      setLoading(false)
+    return () => {
+      if (unsubscribeMessages) unsubscribeMessages()
+    }
+  }, [selectedConvo?.id])
+
+  const loadPatients = async () => {
+    const result = await patientService.getPatients()
+    if (result.success) {
+      setPatients(result.patients)
     }
   }
 
-  const loadMessages = async (convoId) => {
-    try {
-      const msgsQuery = query(
-        collection(db, 'conversations', convoId, 'messages'),
-        orderBy('timestamp', 'asc')
-      )
-      const snapshot = await getDocs(msgsQuery)
-      const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-      setMessages(msgs)
-    } catch (error) {
-      console.error('Error loading messages:', error)
-    }
+  const setupConversationListener = () => {
+    unsubscribeConversations = messagingService.listenToConversations(
+      userProfile.uid,
+      (convos) => {
+        setConversations(convos)
+        
+        // Auto-select first conversation if none selected
+        if (convos.length > 0 && !selectedConvo) {
+          setSelectedConvo(convos[0])
+        }
+        
+        setLoading(false)
+      }
+    )
+  }
+
+  const setupMessagesListener = () => {
+    unsubscribeMessages = messagingService.listenToMessages(
+      selectedConvo.id,
+      (msgs) => {
+        setMessages(msgs)
+        
+        // Auto-scroll to bottom when new message arrives
+        setTimeout(() => {
+          const container = document.querySelector('.messages-container')
+          if (container) {
+            container.scrollTop = container.scrollHeight
+          }
+        }, 100)
+      }
+    )
+  }
+
+  const markConversationAsRead = async () => {
+    await messagingService.markAsRead(selectedConvo.id, userProfile.uid)
   }
 
   const sendMessage = async (e) => {
     e.preventDefault()
     if (!newMessage.trim() || !selectedConvo) return
 
-    try {
-      await addDoc(collection(db, 'conversations', selectedConvo.id, 'messages'), {
-        text: newMessage.trim(),
-        sender: 'Admin',
-        timestamp: Timestamp.now(),
-        read: false
-      })
+    const messageData = {
+      text: newMessage.trim(),
+      senderId: userProfile.uid,
+      senderName: `${userProfile.firstName} ${userProfile.lastName}`,
+      senderRole: 'staff'
+    }
+
+    const result = await messagingService.sendMessage(selectedConvo.id, messageData)
+    
+    if (result.success) {
       setNewMessage('')
-      loadMessages(selectedConvo.id)
-    } catch (error) {
-      console.error('Error sending message:', error)
+    } else {
+      alert('Failed to send message')
+    }
+  }
+
+  const startNewConversation = async () => {
+    if (!selectedPatient) {
+      alert('Please select a patient')
+      return
+    }
+
+    const patient = patients.find(p => p.id === selectedPatient)
+    
+    const userData = {
+      user1Name: `${userProfile.firstName} ${userProfile.lastName}`,
+      user1Role: 'staff',
+      user2Name: `${patient.firstName} ${patient.lastName}`,
+      user2Role: 'patient'
+    }
+
+    const result = await messagingService.getOrCreateConversation(
+      userProfile.uid,
+      selectedPatient,
+      userData
+    )
+
+    if (result.success) {
+      setSelectedConvo(result.conversation)
+      setShowNewConvoModal(false)
+      setSelectedPatient('')
+    } else {
+      alert('Failed to create conversation')
     }
   }
 
@@ -86,7 +154,16 @@ export default function Messaging() {
   }
 
   const getInitials = (name) => {
+    if (!name) return '??'
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
+  }
+
+  const getConversationName = (convo) => {
+    return messagingService.getConversationDisplayName(convo, userProfile.uid)
+  }
+
+  const getUnreadCount = (convo) => {
+    return messagingService.getUnreadCount(convo, userProfile.uid)
   }
 
   if (loading) {
@@ -100,10 +177,15 @@ export default function Messaging() {
   return (
     <div className="messaging">
       <div className="messaging-container">
+        {/* Conversations Sidebar */}
         <div className="conversations-sidebar">
           <div className="sidebar-header">
             <h2 className="sidebar-title">Messages</h2>
-            <button className="btn-icon" title="New conversation">
+            <button 
+              className="btn-icon" 
+              title="New conversation"
+              onClick={() => setShowNewConvoModal(true)}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
@@ -111,60 +193,72 @@ export default function Messaging() {
           </div>
 
           <div className="conversations-list">
-            {conversations.map(convo => (
-              <div
-                key={convo.id}
-                className={`conversation-item ${selectedConvo?.id === convo.id ? 'active' : ''}`}
-                onClick={() => setSelectedConvo(convo)}
-              >
-                <div className="convo-avatar" style={{ background: '#1F4788' }}>
-                  {getInitials(convo.name)}
-                </div>
-                <div className="convo-content">
-                  <div className="convo-header">
-                    <span className="convo-name">{convo.name}</span>
-                    <span className="convo-time">{formatDate(convo.lastMessageAt)}</span>
+            {conversations.length > 0 ? (
+              conversations.map(convo => {
+                const unreadCount = getUnreadCount(convo)
+                return (
+                  <div
+                    key={convo.id}
+                    className={`conversation-item ${selectedConvo?.id === convo.id ? 'active' : ''}`}
+                    onClick={() => setSelectedConvo(convo)}
+                  >
+                    <div className="convo-avatar" style={{ background: '#1F4788' }}>
+                      {getInitials(getConversationName(convo))}
+                    </div>
+                    <div className="convo-content">
+                      <div className="convo-header">
+                        <span className="convo-name">{getConversationName(convo)}</span>
+                        <span className="convo-time">{formatDate(convo.lastMessageAt)}</span>
+                      </div>
+                      <p className="convo-preview">{convo.lastMessage || 'No messages yet'}</p>
+                    </div>
+                    {unreadCount > 0 && <div className="unread-badge">{unreadCount}</div>}
                   </div>
-                  <p className="convo-preview">{convo.lastMessage}</p>
-                </div>
-                {convo.unread > 0 && <div className="unread-badge">{convo.unread}</div>}
+                )
+              })
+            ) : (
+              <div className="empty-conversations">
+                <p>No conversations yet</p>
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowNewConvoModal(true)}
+                >
+                  Start a conversation
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
+        {/* Chat Area */}
         {selectedConvo ? (
           <div className="chat-area">
             <div className="chat-header">
               <div className="chat-avatar" style={{ background: '#2D9C9C' }}>
-                {getInitials(selectedConvo.name)}
+                {getInitials(getConversationName(selectedConvo))}
               </div>
               <div className="chat-info">
-                <h3 className="chat-name">{selectedConvo.name}</h3>
-                <p className="chat-status">{selectedConvo.status || 'Active'}</p>
+                <h3 className="chat-name">{getConversationName(selectedConvo)}</h3>
+                <p className="chat-status">Patient</p>
               </div>
-              <button className="btn-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                  <circle cx="19" cy="12" r="1" fill="currentColor"/>
-                  <circle cx="5" cy="12" r="1" fill="currentColor"/>
-                </svg>
-              </button>
             </div>
 
             <div className="messages-container">
               {messages.map((msg, index) => {
                 const showDate = index === 0 || formatDate(messages[index - 1].timestamp) !== formatDate(msg.timestamp)
+                const isSentByMe = msg.senderId === userProfile.uid
+                
                 return (
                   <div key={msg.id}>
                     {showDate && <div className="date-divider">{formatDate(msg.timestamp)}</div>}
-                    <div className={`message ${msg.sender === 'Admin' ? 'sent' : 'received'}`}>
-                      {msg.sender !== 'Admin' && (
+                    <div className={`message ${isSentByMe ? 'sent' : 'received'}`}>
+                      {!isSentByMe && (
                         <div className="message-avatar">
-                          {getInitials(selectedConvo.name)}
+                          {getInitials(msg.senderName)}
                         </div>
                       )}
                       <div className="message-bubble">
+                        {!isSentByMe && <div className="message-sender">{msg.senderName}</div>}
                         <p className="message-text">{msg.text}</p>
                         <span className="message-time">{formatTime(msg.timestamp)}</span>
                       </div>
@@ -172,14 +266,15 @@ export default function Messaging() {
                   </div>
                 )
               })}
+              
+              {messages.length === 0 && (
+                <div className="empty-messages">
+                  <p>No messages yet. Start the conversation!</p>
+                </div>
+              )}
             </div>
 
             <form className="message-input-area" onSubmit={sendMessage}>
-              <button type="button" className="btn-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </button>
               <input
                 type="text"
                 placeholder="Type a message..."
@@ -201,6 +296,54 @@ export default function Messaging() {
           </div>
         )}
       </div>
+
+      {/* New Conversation Modal */}
+      {showNewConvoModal && (
+        <div className="modal-overlay" onClick={() => setShowNewConvoModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">New Conversation</h2>
+              <button className="modal-close" onClick={() => setShowNewConvoModal(false)}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Select Patient</label>
+                <select
+                  className="form-select"
+                  value={selectedPatient}
+                  onChange={(e) => setSelectedPatient(e.target.value)}
+                >
+                  <option value="">Choose a patient...</option>
+                  {patients.map(patient => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => setShowNewConvoModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                onClick={startNewConversation}
+                disabled={!selectedPatient}
+              >
+                Start Conversation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

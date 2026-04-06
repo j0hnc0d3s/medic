@@ -39,7 +39,7 @@ import PatientProfile from './pages/patient/PatientProfile.jsx'
 // Admin Components
 
 import AdminLayout from './components/AdminLayout.jsx'
-import AdminDashboard from './pages/admin/AdminDashboard.jsx'
+import AdminOverview from './pages/admin/AdminOverview.jsx'
 import AdminPatients from './pages/admin/AdminPatients.jsx'
 import AdminPatient from './pages/admin/AdminPatient.jsx'
 import AdminAddPatient from './pages/admin/AdminAddPatient.jsx'
@@ -79,6 +79,7 @@ function App() {
           <Route path="overview" element={<StaffOverview />} />  
           <Route path="patients" element={<StaffPatients />} />
           <Route path="patients/:patientId" element={<StaffPatient />} />
+          <Route path="patients/:patientId/edit" element={<StaffAddPatient />} />
           <Route path="addpatient" element={<StaffAddPatient />} />
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="calendar" element={<StaffCalendar />} />
@@ -123,13 +124,16 @@ function App() {
           }
         >
           <Route index element={<Navigate to="/admin/overview" replace />} />
-          <Route path="overview" element={<AdminDashboard />} />    
+          <Route path="overview" element={<AdminOverview />} />    
           <Route path="patients" element={<AdminPatients />} />    
           <Route path="patients/:patientId" element={<AdminPatient />} />
+          <Route path="patients/:patientId/edit" element={<AdminAddPatient />} />
           <Route path="addpatient" element={<AdminAddPatient />} />
+
           <Route path="finances" element={<AdminFinances />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="settings" element={<AdminSettings />} /> 
+          
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="documents" element={<AdminDocuments />} />
           <Route path="activities" element={<AdminActivity />} />

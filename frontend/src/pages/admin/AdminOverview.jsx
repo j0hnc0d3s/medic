@@ -8,7 +8,7 @@ import {
   staffService,
   notificationService 
 } from '../../services'
-import './StaffOverview.css'
+import './AdminOverview.css'
 
 export default function AdminOverview() {
   const { userProfile, loading: authLoading } = useAuth()
@@ -171,7 +171,7 @@ export default function AdminOverview() {
     )
   }
 
-  const firstName = userProfile?.firstName || 'Staff'
+  const firstName = userProfile?.firstName || 'Admin'
 
   return (
     <div className="admin-dashboard">
@@ -208,7 +208,7 @@ export default function AdminOverview() {
             )}
           </div>
 
-          <button className="card-link" onClick={() => navigate('/staff/appointments')}>
+          <button className="card-link" onClick={() => navigate('/admin/appointments')}>
             View all appointments →
           </button>
         </div>
@@ -241,7 +241,7 @@ export default function AdminOverview() {
 
           <button 
             className="btn-primary"
-            onClick={() => navigate('/staff/addpatient')}
+            onClick={() => navigate('/admin/addpatient')}
           >
             + Add Patient
           </button>
@@ -335,7 +335,7 @@ export default function AdminOverview() {
                 )}
               </div>
 
-              <button className="card-link" onClick={() => navigate('/staff/staff/calendar')}>
+              <button className="card-link" onClick={() => navigate('/admin/staff/calendar')}>
                 View staff calendar →
               </button>
             </div>
@@ -357,7 +357,7 @@ export default function AdminOverview() {
                     <div 
                       key={birthday.id} 
                       className={`birthday-item clickable ${birthday.daysUntil === 0 ? 'today' : ''}`}
-                      onClick={() => navigate(`/staff/patients/${birthday.id}`)}
+                      onClick={() => navigate(`/admin/patients/${birthday.id}`)}
                       title="Click to view patient"
                     >
                       <span className="birthday-icon">🎂</span>
@@ -379,7 +379,7 @@ export default function AdminOverview() {
                 )}
               </div>
 
-              <button className="card-link" onClick={() => navigate('/staff/patients')}>
+              <button className="card-link" onClick={() => navigate('/admin/patients')}>
                 View all patients →
               </button>
             </div>
@@ -413,7 +413,7 @@ export default function AdminOverview() {
                 )}
               </div>
 
-              <button className="card-link" onClick={() => navigate('/staff/notifications')}>
+              <button className="card-link" onClick={() => navigate('/admin/notifications')}>
                 View all alerts →
               </button>
             </div>

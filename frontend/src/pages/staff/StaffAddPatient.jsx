@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore'
-import { db } from '../../services/firebase'
 import { useParams, useNavigate } from 'react-router-dom'
+import { patientService } from '../../services'
 import './StaffAddPatient.css'
 
 export default function PatientForm() {
-  const { id } = useParams()
+  const { patientId } = useParams()  // ← Fixed: matches route param
   const navigate = useNavigate()
-  const isEditMode = Boolean(id)
+  const isEditMode = Boolean(patientId)  // ← Fixed
 
   const [loading, setLoading] = useState(isEditMode)
   const [saving, setSaving] = useState(false)
@@ -27,30 +26,30 @@ export default function PatientForm() {
     if (isEditMode) {
       loadPatient()
     }
-  }, [id])
+  }, [patientId])
 
   const loadPatient = async () => {
     try {
-      const docRef = doc(db, 'patients', id)
-      const docSnap = await getDoc(docRef)
+      const result = await patientService.getPatient(patientId)
       
-      if (docSnap.exists()) {
-        const data = docSnap.data()
+      if (result.success) {
+        const patient = result.patient
         setFormData({
-          firstName: data.firstName || '',
-          lastName: data.lastName || '',
-          dateOfBirth: data.dateOfBirth?.toDate().toISOString().split('T')[0] || '',
-          gender: data.gender || '',
-          phone: data.phone || '',
-          email: data.email || '',
-          address: data.address || '',
-          medicalHistory: data.medicalHistory || '',
-          notes: data.notes || ''
+          firstName: patient.firstName || '',
+          lastName: patient.lastName || '',
+          dateOfBirth: patient.dateOfBirth?.toDate().toISOString().split('T')[0] || '',
+          gender: patient.gender || '',
+          phone: patient.phone || '',
+          email: patient.email || '',
+          address: patient.address || '',
+          medicalHistory: patient.medicalHistory || '',
+          notes: patient.notes || ''
         })
       } else {
         alert('Patient not found')
-        navigate('/admin/patients')
+        navigate('/staff/patients')
       }
+      
       setLoading(false)
     } catch (error) {
       console.error('Error loading patient:', error)
@@ -98,40 +97,46 @@ export default function PatientForm() {
       const patientData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        dateOfBirth: Timestamp.fromDate(new Date(formData.dateOfBirth)),
+        dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         phone: formData.phone.trim(),
         email: formData.email.trim(),
         address: formData.address.trim(),
         medicalHistory: formData.medicalHistory.trim(),
         notes: formData.notes.trim(),
-        updatedAt: Timestamp.now()
+        createdBy: 'Admin' // Or use current user
       }
-
-      // Add birthdayMD for birthday queries (format: "3-15")
-      const dobDate = new Date(formData.dateOfBirth)
-      patientData.birthdayMD = `${dobDate.getMonth() + 1}-${dobDate.getDate()}`
 
       if (isEditMode) {
         // Update existing patient
-        const docRef = doc(db, 'patients', id)
-        await updateDoc(docRef, patientData)
-        alert('Patient updated successfully')
-        navigate(`/admin/patients/${id}`)
+        const result = await patientService.updatePatient(patientId, {
+          ...patientData,
+          updatedBy: 'Admin'
+        })
+        
+        if (result.success) {
+          alert('Patient updated successfully')
+          navigate(`/staff/patients/${patientId}`)
+        } else {
+          alert(`Failed to update patient: ${result.error}`)
+        }
       } else {
         // Create new patient
-        patientData.createdAt = Timestamp.now()
-        patientData.visits = [] // Initialize empty visits array
+        const result = await patientService.createPatient(patientData)
         
-        const docRef = await addDoc(collection(db, 'patients'), patientData)
-        alert('Patient added successfully')
-        navigate(`/admin/patients/${docRef.id}`)
+        if (result.success) {
+          alert('Patient added successfully')
+          navigate(`/staff/patients/${result.patientId}`)
+        } else {
+          alert(`Failed to add patient: ${result.error}`)
+        }
       }
     } catch (error) {
       console.error('Error saving patient:', error)
       alert(`Failed to ${isEditMode ? 'update' : 'add'} patient`)
-      setSaving(false)
     }
+    
+    setSaving(false)
   }
 
   if (loading) {
@@ -200,7 +205,6 @@ export default function PatientForm() {
 
               <div className="form-group">
                 <label className="form-label">Gender</label>
-                
                 <select
                   name="gender"
                   className="form-select"
@@ -294,7 +298,7 @@ export default function PatientForm() {
             <button 
               type="button"
               className="btn btn-secondary"
-              onClick={() => navigate(isEditMode ? `/admin/patients/${id}` : '/admin/patients')}
+              onClick={() => navigate(isEditMode ? `/staff/patients/${patientId}` : '/staff/patients')}
               disabled={saving}
             >
               Cancel
