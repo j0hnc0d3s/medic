@@ -42,7 +42,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .conversations-list {
@@ -80,7 +80,7 @@
   font-size: 16px;
   font-weight: 600;
   flex-shrink: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .convo-content {
@@ -99,13 +99,13 @@
   font-size: 15px;
   font-weight: 600;
   color: #111827;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .convo-time {
   font-size: 12px;
   color: #9CA3AF;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .convo-preview {
@@ -115,7 +115,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .unread-badge {
@@ -129,7 +129,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .chat-area {
@@ -157,7 +157,7 @@
   color: #FFFFFF;
   font-size: 14px;
   font-weight: 600;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .chat-info {
@@ -169,14 +169,14 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 2px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .chat-status {
   font-size: 13px;
   color: #22C55E;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .messages-container {
@@ -193,7 +193,7 @@
   font-size: 12px;
   color: #9CA3AF;
   margin: 8px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .message {
@@ -223,7 +223,7 @@
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .message-bubble {
@@ -243,7 +243,7 @@
   color: #111827;
   margin: 0 0 4px 0;
   line-height: 1.5;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   word-wrap: break-word;
 }
 
@@ -254,7 +254,7 @@
 .message-time {
   font-size: 11px;
   color: #9CA3AF;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .message.sent .message-time {
@@ -276,7 +276,7 @@
   border: 1px solid #D1D5DB;
   border-radius: 24px;
   font-size: 14px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   color: #111827;
   background: #F9FAFB;
   transition: all 0.2s ease;
@@ -347,7 +347,7 @@
 .no-chat-text {
   font-size: 16px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .messaging.loading {
@@ -359,7 +359,7 @@
 .loading-spinner {
   font-size: 16px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 @media (max-width: 768px) {

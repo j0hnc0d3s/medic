@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Unauthorized from './components/Unauthorized.jsx'
-import Login from './pages/Login.jsx'
-import Register from './pages/Register.jsx'
+import Login from './pages/auth/Login.jsx'
+import Register from './pages/auth/Register.jsx'
 
 // Staff Components
 
@@ -13,7 +13,6 @@ import StaffPatient from './pages/staff/StaffPatient.jsx'
 import StaffAddPatient from './pages/staff/StaffAddPatient.jsx'
 import StaffNotifications from './pages/staff/StaffNotifications.jsx'
 import StaffCalendar from './pages/staff/StaffCalendar.jsx'
-import StaffActivity from './pages/staff/StaffActivity.jsx'
 import StaffDocuments from './pages/staff/StaffDocuments.jsx'
 import StaffMessaging from './pages/staff/StaffMessaging.jsx'
 
@@ -29,7 +28,6 @@ import PatientAppointment from './pages/patient/PatientAppointment.jsx'
 import PatientMessaging from './pages/patient/PatientMessaging.jsx'
 import PatientNotifications from './pages/patient/PatientNotifications.jsx'
 import PatientDocuments from './pages/patient/PatientDocuments.jsx'
-import PatientActivity from './pages/patient/PatientActivity.jsx'
 import PatientCalendar from './pages/patient/PatientCalendar.jsx'
 
 /* 
@@ -47,7 +45,6 @@ import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminReports from './pages/admin/AdminReports.jsx'
 import AdminSettings from './pages/admin/AdminSettings.jsx'
 import AdminNotifications from './pages/admin/AdminNotifications.jsx'
-import AdminActivity from './pages/admin/AdminActivity.jsx'
 import AdminDocuments from './pages/admin/AdminDocuments.jsx'
 
 // Index
@@ -84,7 +81,6 @@ function App() {
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="calendar" element={<StaffCalendar />} />
           <Route path="documents" element={<StaffDocuments />} />
-          <Route path="activities" element={<StaffActivity />} />
           <Route path="messaging" element={<StaffMessaging />} />
 {/*   
           <Route path="profile" element={<StaffProfile />} /> 
@@ -106,7 +102,6 @@ function App() {
           <Route path="messaging" element={<PatientMessaging />} />
           <Route path="notifications" element={<PatientNotifications />} />
           <Route path="documents" element={<PatientDocuments />} />
-          <Route path="activities" element={<PatientActivity />} />
           <Route path="calendar" element={<PatientCalendar />} />
 {/*           
           <Route path="profile" element={<PatientProfile />} />
@@ -136,7 +131,6 @@ function App() {
           
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="documents" element={<AdminDocuments />} />
-          <Route path="activities" element={<AdminActivity />} />
         </Route>
 
         {/* Catch-all redirect */}

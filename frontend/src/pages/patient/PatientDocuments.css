@@ -26,14 +26,14 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 4px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .documents-subtitle {
   font-size: 14px;
   color: #6B7280;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .filters-bar {
@@ -62,7 +62,7 @@
   border: 1px solid #D1D5DB;
   border-radius: 8px;
   font-size: 14px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   color: #111827;
   background: #FFFFFF;
 }
@@ -73,7 +73,7 @@
   border: 1px solid #D1D5DB;
   border-radius: 8px;
   font-size: 14px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   color: #111827;
   background: #FFFFFF;
   cursor: pointer;
@@ -126,7 +126,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 4px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .document-category {
@@ -134,7 +134,7 @@
   color: #1F4788;
   font-weight: 500;
   margin: 0 0 8px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .document-description {
@@ -142,7 +142,7 @@
   color: #6B7280;
   margin: 0 0 12px 0;
   line-height: 1.5;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .document-meta {
@@ -157,7 +157,7 @@
   gap: 6px;
   font-size: 12px;
   color: #9CA3AF;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .meta-item svg {
@@ -215,7 +215,7 @@
   font-size: 14px;
   color: #6B7280;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .file-upload-hint {
@@ -239,7 +239,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   cursor: pointer;
   border: none;
 }
@@ -293,7 +293,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .modal-close {
@@ -340,7 +340,7 @@
   font-size: 13px;
   font-weight: 500;
   color: #374151;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .form-input, .form-select, .form-textarea {
@@ -348,7 +348,7 @@
   border: 1px solid #D1D5DB;
   border-radius: 8px;
   font-size: 14px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   color: #111827;
   background: #FFFFFF;
 }
@@ -376,13 +376,13 @@
   font-weight: 500;
   color: #111827;
   margin-bottom: 8px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .empty-subtext {
   font-size: 14px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 @media (max-width: 768px) {

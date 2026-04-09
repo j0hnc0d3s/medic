@@ -1,25 +1,36 @@
-.register-container {
+.login-container {
   display: flex;
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
 }
 
 /* ===== LEFT SIDE - CAROUSEL ===== */
-.register-left {
+.login-area {
   flex: 1;
-  background: linear-gradient(135deg, #E8F4F8 0%, #D4E9F2 100%);
+  flex-direction: row;
+  gap: 100px;
+  background: linear-gradient(180deg, #0088ff42 0%, #FFFFFF 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
   position: relative;
+  min-width: 1200px;
+}
+
+.carousel-area {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  max-height: 650px
 }
 
 .carousel-content {
-  max-width: 600px;
+  max-width: 800px;
   width: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -30,36 +41,46 @@
   width: 100%;
   margin-bottom: 40px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .doctor-img {
-  width: 100%;
-  max-width: 450px;
-  height: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
+  display: flex;
+  flex: 1;
+  width: 750px;
+  position: relative;
+  bottom: 80px;
 }
 
-/* If you don't have the image, here's a placeholder background */
-.hero-image::before {
-  content: '';
-  display: block;
-  width: 400px;
-  height: 450px;
-  background: linear-gradient(180deg, rgba(100, 170, 200, 0.2) 0%, rgba(150, 200, 220, 0.3) 100%);
-  border-radius: 20px;
-  opacity: 0.5;
+.left-img {
+  height: 18px;
+  width: 22px;
+}
+
+.right-img {
+  height: 25px;
+  width: 35px;
+}
+
+.carousel-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  bottom: 350px;
 }
 
 .carousel-text {
-  margin-top: 20px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  position: relative;
 }
 
 .carousel-subtitle {
   font-size: 16px;
   font-weight: 400;
-  color: #4A5568;
+  color: #1A202C;
   margin-bottom: 10px;
 }
 
@@ -73,6 +94,9 @@
 
 .carousel-controls {
   display: flex;
+  flex: 1;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
   gap: 30px;
   margin-top: 50px;
@@ -84,10 +108,10 @@
 }
 
 .dot {
-  width: 12px;
-  height: 12px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: #1F4788;
+  background: #0088FF;
   opacity: 0.3;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -102,6 +126,8 @@
 .carousel-arrows {
   display: flex;
   gap: 12px;
+  left: 100px;
+  position: relative;
 }
 
 .arrow-btn {
@@ -109,7 +135,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.5);
+  background: #eeeeeeeb;
   backdrop-filter: blur(10px);
   cursor: pointer;
   display: flex;
@@ -119,22 +145,31 @@
   transition: all 0.3s ease;
 }
 
+.arrow-btn.left {
+  background: #eeeeee3c;
+}
+
+.arrow-btn.right {
+  width: 80px; 
+  height: 45px;
+  border-radius: 20px;
+}
+
 .arrow-btn:hover {
   background: rgba(255, 255, 255, 0.8);
   transform: scale(1.05);
 }
 
 /* ===== RIGHT SIDE - LOGIN FORM ===== */
-.register-right {
-  flex: 1;
+.login-content {
   background: #FFFFFF;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px;
+  border-radius: 20px;
 }
 
-.register-card {
+.login-card {
   max-width: 480px;
   width: 100%;
 }
@@ -148,15 +183,23 @@
   height: 48px;
 }
 
-.register-title {
+
+.medic-logo-img {
+  height: 80px;
+  top: 30px;
+  right: 50px;
+  position: relative;
+}
+
+.login-title {
   font-size: 32px;
   font-weight: 700;
   color: #1A202C;
   margin: 0 0 12px 0;
 }
 
-.register-subtitle {
-  font-size: 15px;
+.login-subtitle {
+  font-size: 13px;
   font-weight: 400;
   color: #718096;
   line-height: 1.6;
@@ -164,7 +207,7 @@
 }
 
 /* ===== FORM STYLES ===== */
-.register-form {
+.login-form {
   margin-bottom: 24px;
 }
 
@@ -174,7 +217,7 @@
 
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #2D3748;
   margin-bottom: 8px;
@@ -183,8 +226,8 @@
 .form-group input {
   width: 100%;
   padding: 14px 16px;
-  font-size: 15px;
-  border: 1px solid #E2E8F0;
+  font-size: 12px;
+  border: 0px;
   border-radius: 12px;
   background: #F7FAFC;
   color: #2D3748;
@@ -206,10 +249,10 @@
 .get-started-btn {
   width: 100%;
   padding: 14px;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #FFFFFF;
-  background: #1F4788;
+  background: #0088FF;
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -218,7 +261,7 @@
 }
 
 .get-started-btn:hover {
-  background: #1a3d73;
+  background: #0088FF;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(31, 71, 136, 0.3);
 }
@@ -248,13 +291,13 @@
   position: relative;
   background: #FFFFFF;
   padding: 0 16px;
-  font-size: 13px;
+  font-size: 10px;
   color: #A0AEC0;
   font-weight: 500;
 }
 
 /* ===== SOCIAL LOGIN BUTTONS ===== */
-.social-register {
+.social-login {
   display: flex;
   gap: 12px;
   margin-bottom: 28px;
@@ -262,10 +305,9 @@
 
 .social-btn {
   flex: 1;
-  height: 52px;
+  height: 50px;
   border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  background: #F7FAFC;
+  background: #fbf5f560;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -281,24 +323,44 @@
 }
 
 .social-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .apple-btn svg {
   color: #000000;
 }
 
+/* ===== FORGOT LINK ===== */
+.forgot-link {
+  text-align: right;
+  font-size: 12px;
+  color: #718096;
+  margin-bottom: 5;
+}
+
+.forgot-link a {
+  color: #c0c0c0;
+  font-weight: 400;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-link a:hover {
+  color: #2D9C9C;
+  text-decoration: underline;
+}
+
 /* ===== SIGNUP LINK ===== */
 .signup-link {
   text-align: center;
-  font-size: 14px;
+  font-size: 10px;
   color: #718096;
   margin: 0;
 }
 
 .signup-link a {
-  color: #1F4788;
+  color: #0088FF;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.3s ease;
@@ -311,11 +373,11 @@
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1024px) {
-  .register-container {
+  .login-container {
     flex-direction: column;
   }
 
-  .register-left {
+  .login-area {
     padding: 40px;
     min-height: 40vh;
   }
@@ -324,34 +386,29 @@
     font-size: 28px;
   }
 
-  .register-right {
+  .login-content {
     padding: 40px;
   }
 }
 
 @media (max-width: 768px) {
-  .register-left {
+  .login-area {
     padding: 30px;
-  }
-
-  .hero-image::before {
-    width: 300px;
-    height: 350px;
   }
 
   .carousel-title {
     font-size: 24px;
   }
 
-  .register-right {
+  .login-content {
     padding: 30px 20px;
   }
 
-  .register-title {
+  .login-title {
     font-size: 26px;
   }
 
-  .social-register {
+  .social-login {
     flex-direction: column;
   }
 

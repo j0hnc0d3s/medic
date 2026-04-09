@@ -50,7 +50,7 @@
   font-size: 20px;
   font-weight: 700;
   color: #111827;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   letter-spacing: -0.02em;
 }
 
@@ -79,7 +79,7 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   transition: all 0.2s ease;
   cursor: pointer;
   white-space: nowrap;
@@ -230,7 +230,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #FFFFFF;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   flex-shrink: 0;
 }
 
@@ -245,13 +245,13 @@
   font-size: 13px;
   font-weight: 500;
   color: #111827;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .user-role {
   font-size: 11px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 /* ── Main Content Area ────────────────────────────────── */

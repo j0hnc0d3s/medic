@@ -28,7 +28,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .calendar-nav {
@@ -42,7 +42,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   flex: 1;
   text-align: center;
 }
@@ -52,7 +52,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
@@ -103,7 +103,7 @@
   color: #6B7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .calendar-day {
@@ -148,7 +148,7 @@
   font-size: 14px;
   font-weight: 500;
   color: #111827;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .day-appointments {
@@ -167,7 +167,7 @@
 .appt-more {
   font-size: 11px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .calendar-sidebar {
@@ -181,7 +181,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .sidebar-appointments {
@@ -204,7 +204,7 @@
   font-weight: 600;
   color: #1F4788;
   white-space: nowrap;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .appt-details {
@@ -215,13 +215,13 @@
   font-size: 14px;
   font-weight: 500;
   color: #111827;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .appt-type {
   font-size: 12px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .appt-status {
@@ -229,7 +229,7 @@
   padding: 4px 8px;
   border-radius: 4px;
   text-transform: capitalize;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .appt-status.scheduled {
@@ -247,7 +247,7 @@
   color: #9CA3AF;
   font-size: 14px;
   padding: 40px 20px;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 .calendar.loading {
@@ -260,7 +260,7 @@
 .loading-spinner {
   font-size: 16px;
   color: #6B7280;
-  font-family: var(--font-sans);
+  font-family: var(--font-family);
 }
 
 @media (max-width: 768px) {
