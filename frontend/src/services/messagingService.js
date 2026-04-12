@@ -270,6 +270,7 @@ const messagingService = {
   /**
    * Listen to conversations in real-time
    */
+  
   listenToConversations(userId, callback) {
     try {
       const conversationsRef = collection(db, 'conversations')
@@ -279,18 +280,32 @@ const messagingService = {
         orderBy('lastMessageAt', 'desc')
       )
       
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const conversations = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }))
-        
-        callback(conversations)
-      })
+      const unsubscribe = onSnapshot(
+        q, 
+        (snapshot) => {
+          console.log("🔥 Conversations snapshot received:", snapshot.size);
+          const conversations = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          
+          callback(conversations)
+        },
+        (error) => {
+          // ✅ ERROR HANDLER!
+          console.error("❌ Conversations listener error:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+          
+          // Still call callback with empty array so UI doesn't hang
+          callback([]);
+        }
+      )
       
       return unsubscribe
     } catch (error) {
-      console.error('Listen to conversations error:', error)
+      console.error('❌ Listen to conversations setup error:', error)
+      callback([]); // Call callback with empty array
       return () => {} // Return empty function if error
     }
   },

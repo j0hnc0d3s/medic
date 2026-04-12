@@ -18,9 +18,11 @@ import user2 from '../../assets/images/user2.jpg';
 const NAV_ITEMS = [
   {
     label: 'Diagnosis',
+    id: 'diagnosis',
   },
   {
     label: 'Treatment Plan',
+    id: 'treatment',
   },
 ]
 
@@ -36,6 +38,7 @@ export default function PatientOverview() {
   }
 
   const firstName = userProfile?.firstName || 'Patient'
+  const [activeTab, setActiveTab] = useState('diagnosis') // ✅ Add state
 
   return (
     <div className="patient-dashboard">
@@ -217,47 +220,107 @@ export default function PatientOverview() {
       <div className="patient-sidebar-right">
         <div className="dashboard-menu">
           {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `menu-area ${isActive ? 'active' : ''}`
-              }
+            <button  // ✅ Changed from NavLink to button
+              key={item.id}  // ✅ Use id as key
+              onClick={() => setActiveTab(item.id)}  // ✅ Click handler
+              className={`menu-area ${activeTab === item.id ? 'active' : ''}`}
             >
               <span className="menu-label">{item.label}</span>
-            </NavLink>
+            </button>
           ))}
         </div>
 
-        <div className="card lrg" style={{background: "#FFFFFF", border: "0"}}>
-          <div className="card-header">
-            <h2 className="card-title">Left Shoulder</h2>
-
-            <div className="card-img">
-              <img 
-                src={close} 
-                alt="Close" 
-                className="list-img mid"
-              />
-            </div>
-          </div>
-
-          <div className="diagnosis">
-            <div className="diagnosis-header">
-              <p className="diagnosis-text">X-ray results</p>
+        {/* ✅ Show content based on active tab */}
+        {activeTab === 'diagnosis' && (
+          <div className="card lrg" style={{background: "#FFFFFF", border: "0"}}>
+            <div className="card-header">
+              <h2 className="card-title">Left Shoulder</h2>
 
               <div className="card-img">
                 <img 
-                  src={dots} 
-                  alt="Dots" 
+                  src={close} 
+                  alt="Close" 
                   className="list-img mid"
                 />
               </div>
             </div>
 
-            <p className="diagnosis-subtext">Lorem ipsum dolor sit amet, eos verterem nominati in, 
-                electram postulant appellantur eam at, at nam 
-                quas putent iisque. </p>
+            <div className="diagnosis">
+              <div className="diagnosis-header">
+                <p className="diagnosis-text">X-ray results</p>
+
+                <div className="card-img">
+                  <img 
+                    src={dots} 
+                    alt="Dots" 
+                    className="list-img mid"
+                  />
+                </div>
+              </div>
+
+              <p className="diagnosis-subtext">Lorem ipsum dolor sit amet, eos verterem nominati in, 
+                  electram postulant appellantur eam at, at nam 
+                  quas putent iisque. </p>
+
+              <div className="doctor">
+                <div className="doctor-item">
+                  <div className="doctor-profile">
+                    <div className="doctor-avatar">
+                      <img 
+                        src={user2}
+                        className="doctor-avatar-img"
+                      />
+                    </div>
+
+                    <div className="doctor-details">
+                      <p className="doctor-name">Dr. Evan Baxter</p>
+                      <p className="doctor-type">Cardiologist</p>
+                    </div>
+                  </div>
+
+                  <p className="doctor-time">February 28th 2026</p>
+                </div>
+              </div>
+
+              <p className="diagnosis-text">Complaint Details</p>
+              
+              <p className="diagnosis-altext">Primary complaints</p>
+
+              <p className="diagnosis-subtext">Lorem 
+              electram postulant appellantur eam at, at nam 
+              quas putent iisque. </p>
+
+              <p className="diagnosis-altext">Prior Injuries</p>
+
+              <p className="diagnosis-subtext">Lorem ipsum 
+              electram postulant appellantur eam at, at nam 
+              quas putent iisque. </p>
+
+              <p className="diagnosis-altext">Activity</p>
+
+              <p className="diagnosis-subtext">Lorem ipsum dolor sit amet, eos verterem nominati in, 
+              quas putent iisque. </p>
+
+              <div className="diagnosis-scale">
+                <div className="diagnosis-side">
+                  <p className="diagnosis-text">Severity</p>
+                  <p className="diagnosis-subtext" style={{position: "relative", bottom: "12px"}}>Level</p>
+                </div>
+
+                <div className="diagnosis-img">
+                  <img 
+                    src={scale} 
+                    alt="Scale" 
+                    className="scale-img"
+                  />
+                </div>
+
+                <div>
+                  <p className="diagnosis-text">9/10</p>
+                  <p className="diagnosis-subtext" style={{position: "relative", bottom: "12px"}}>On Pain Scale</p>
+                </div>
+              </div>
+            </div>
 
             <div className="doctor">
               <div className="doctor-item">
@@ -278,67 +341,17 @@ export default function PatientOverview() {
                 <p className="doctor-time">February 28th 2026</p>
               </div>
             </div>
-
-            <p className="diagnosis-text">Complaint Details</p>
-            
-            <p className="diagnosis-altext">Primary complaints</p>
-
-            <p className="diagnosis-subtext">Lorem 
-            electram postulant appellantur eam at, at nam 
-            quas putent iisque. </p>
-
-            <p className="diagnosis-altext">Prior Injuries</p>
-
-            <p className="diagnosis-subtext">Lorem ipsum 
-            electram postulant appellantur eam at, at nam 
-            quas putent iisque. </p>
-
-            <p className="diagnosis-altext">Activity</p>
-
-            <p className="diagnosis-subtext">Lorem ipsum dolor sit amet, eos verterem nominati in, 
-            quas putent iisque. </p>
-
-            <div className="diagnosis-scale">
-              <div className="diagnosis-side">
-                <p className="diagnosis-text">Severity</p>
-                <p className="diagnosis-subtext" style={{position: "relative", bottom: "12px"}}>Level</p>
-              </div>
-
-              <div className="diagnosis-img">
-                <img 
-                  src={scale} 
-                  alt="Scale" 
-                  className="scale-img"
-                />
-              </div>
-
-              <div>
-                <p className="diagnosis-text">9/10</p>
-                <p className="diagnosis-subtext" style={{position: "relative", bottom: "12px"}}>On Pain Scale</p>
-              </div>
-            </div>
           </div>
+        )}
 
-          <div className="doctor">
-            <div className="doctor-item">
-              <div className="doctor-profile">
-                <div className="doctor-avatar">
-                  <img 
-                    src={user2}
-                    className="doctor-avatar-img"
-                  />
-                </div>
-
-                <div className="doctor-details">
-                  <p className="doctor-name">Dr. Evan Baxter</p>
-                  <p className="doctor-type">Cardiologist</p>
-                </div>
-              </div>
-
-              <p className="doctor-time">February 28th 2026</p>
+        {activeTab === 'treatment' && (
+          <div className="card lrg" style={{background: "#FFFFFF", border: "0"}}>
+            <div className="card-header">
+              <h2 className="card-title">Treatment Plan</h2>
             </div>
+            <p>Treatment plan content goes here...</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

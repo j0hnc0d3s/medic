@@ -23,11 +23,18 @@ export default function PatientMessaging() {
     if (userProfile?.uid) {
       loadStaff()
       setupConversationListener()
-    }
-
-    return () => {
-      if (unsubscribeConversations) unsubscribeConversations()
-      if (unsubscribeMessages) unsubscribeMessages()
+      
+      // ✅ SAFETY TIMEOUT - Stop loading after 5 seconds
+      const timeout = setTimeout(() => {
+        console.warn("⏱️ Messaging timeout - stopping loading");
+        setLoading(false);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timeout);
+        if (unsubscribeConversations) unsubscribeConversations()
+        if (unsubscribeMessages) unsubscribeMessages()
+      }
     }
   }, [userProfile?.uid])
 
@@ -50,19 +57,25 @@ export default function PatientMessaging() {
   }
 
   const setupConversationListener = () => {
-    unsubscribeConversations = messagingService.listenToConversations(
-      userProfile.uid,
-      (convos) => {
-        setConversations(convos)
-        
-        // Auto-select first conversation if none selected
-        if (convos.length > 0 && !selectedConvo) {
-          setSelectedConvo(convos[0])
+    try {
+      unsubscribeConversations = messagingService.listenToConversations(
+        userProfile.uid,
+        (convos) => {
+          console.log("✅ Conversations loaded:", convos.length); // DEBUG
+          setConversations(convos)
+          
+          // Auto-select first conversation if none selected
+          if (convos.length > 0 && !selectedConvo) {
+            setSelectedConvo(convos[0])
+          }
+          
+          setLoading(false)
         }
-        
-        setLoading(false)
-      }
-    )
+      )
+    } catch (error) {
+      console.error("❌ Setup listener error:", error);
+      setLoading(false); // ✅ Stop loading even if it fails!
+    }
   }
 
   const setupMessagesListener = () => {
