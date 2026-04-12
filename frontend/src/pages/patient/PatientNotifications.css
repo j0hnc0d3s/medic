@@ -4,22 +4,23 @@
 
 .notifications {
   display: flex;
-  flex-direction: column;
-  height: 250vh;
-  background: transparent;  /* ✅ White background for the whole container */
+  flex-direction: row;  /* ✅ Side-by-side layout */
+  padding: 20px;
+  margin: 20px;
+  gap: 24px;
+
+  max-height: 1500px;
+  
+  background: #FFFFFF;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .notifications-container {
-  padding: 32px;
-  min-width: 1600px;
-  width: 98%;
-  min-height: calc(95vh - 96px);
-  background: var(--bg-accent);
-  border: 1px solid #E5E7EB;
-  padding: 30px;
-  margin-top: 20px;
-  border-radius: 25px;
-  align-self: center;
+  background: transparent;
 }
 
 .notifications-header {
@@ -252,6 +253,11 @@
   font-size: 14px;
   color: #6B7280;
   font-family: var(--font-family);
+}
+
+.list-img.xlrg {
+  width: 80px;
+  height: 80px;
 }
 
 .notifications.loading {

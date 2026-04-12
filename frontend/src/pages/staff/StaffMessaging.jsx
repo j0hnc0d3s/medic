@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+
 import messagingService from '../../services/messagingService'
 import patientService from '../../services/patientService'
 import './StaffMessaging.css'
@@ -16,29 +17,39 @@ export default function StaffMessaging() {
   const [selectedPatient, setSelectedPatient] = useState('')
 
   // Real-time listeners cleanup
-  let unsubscribeConversations = null
-  let unsubscribeMessages = null
+  const unsubscribeConversations = useRef(null)
+  const unsubscribeMessages = useRef(null)
 
   useEffect(() => {
+    console.log("🚀 Component mounted, userProfile:", userProfile?.uid);
+    
     if (userProfile?.uid) {
       loadPatients()
       setupConversationListener()
     }
+    
+    const timeout = setTimeout(() => {
+      console.warn("⏱️ Timeout - stopping loading");
+      setLoading(false);
+    }, 5000);
 
     return () => {
-      if (unsubscribeConversations) unsubscribeConversations()
-      if (unsubscribeMessages) unsubscribeMessages()
+      console.log("🧹 Cleanup running");
+      clearTimeout(timeout);
+      if (unsubscribeConversations.current) unsubscribeConversations.current()
+      if (unsubscribeMessages.current) unsubscribeMessages.current()
     }
   }, [userProfile?.uid])
 
   useEffect(() => {
     if (selectedConvo) {
+      console.log("💬 Selected conversation:", selectedConvo.id);
       setupMessagesListener()
       markConversationAsRead()
     }
 
     return () => {
-      if (unsubscribeMessages) unsubscribeMessages()
+      if (unsubscribeMessages.current) unsubscribeMessages.current()
     }
   }, [selectedConvo?.id])
 
@@ -50,36 +61,49 @@ export default function StaffMessaging() {
   }
 
   const setupConversationListener = () => {
-    unsubscribeConversations = messagingService.listenToConversations(
-      userProfile.uid,
-      (convos) => {
-        setConversations(convos)
-        
-        // Auto-select first conversation if none selected
-        if (convos.length > 0 && !selectedConvo) {
-          setSelectedConvo(convos[0])
+    console.log("🎧 Setting up conversation listener...");
+    
+    try {
+      unsubscribeConversations.current = messagingService.listenToConversations(
+        userProfile.uid,
+        (convos) => {
+          console.log("✅ Conversations received:", convos.length);
+          setConversations(convos)
+          
+          if (convos.length > 0 && !selectedConvo) {
+            setSelectedConvo(convos[0])
+          }
+          
+          setLoading(false)
         }
-        
-        setLoading(false)
-      }
-    )
+      )
+    } catch (error) {
+      console.error("❌ Setup listener error:", error);
+      setLoading(false);
+    }
   }
 
   const setupMessagesListener = () => {
-    unsubscribeMessages = messagingService.listenToMessages(
-      selectedConvo.id,
-      (msgs) => {
-        setMessages(msgs)
-        
-        // Auto-scroll to bottom when new message arrives
-        setTimeout(() => {
-          const container = document.querySelector('.messages-container')
-          if (container) {
-            container.scrollTop = container.scrollHeight
-          }
-        }, 100)
-      }
-    )
+    console.log("📩 Setting up messages listener for:", selectedConvo.id);
+    
+    try {
+      unsubscribeMessages.current = messagingService.listenToMessages(
+        selectedConvo.id,
+        (msgs) => {
+          console.log("✅ Messages received:", msgs.length);
+          setMessages(msgs)
+          
+          setTimeout(() => {
+            const container = document.querySelector('.messages-container')
+            if (container) {
+              container.scrollTop = container.scrollHeight
+            }
+          }, 100)
+        }
+      )
+    } catch (error) {
+      console.error("❌ Setup messages listener error:", error);
+    }
   }
 
   const markConversationAsRead = async () => {
@@ -114,9 +138,14 @@ export default function StaffMessaging() {
 
     const patient = patients.find(p => p.id === selectedPatient)
     
+    if (!patient) {
+      alert('Patient not found')
+      return
+    }
+
     const userData = {
       user1Name: `${userProfile.firstName} ${userProfile.lastName}`,
-      user1Role: 'staff',
+      user1Role: userProfile.role || 'staff',
       user2Name: `${patient.firstName} ${patient.lastName}`,
       user2Role: 'patient'
     }
@@ -132,7 +161,7 @@ export default function StaffMessaging() {
       setShowNewConvoModal(false)
       setSelectedPatient('')
     } else {
-      alert('Failed to create conversation')
+      alert('Failed to create conversation: ' + (result.error || 'Unknown error'))
     }
   }
 
@@ -196,6 +225,7 @@ export default function StaffMessaging() {
             {conversations.length > 0 ? (
               conversations.map(convo => {
                 const unreadCount = getUnreadCount(convo)
+
                 return (
                   <div
                     key={convo.id}
@@ -205,6 +235,7 @@ export default function StaffMessaging() {
                     <div className="convo-avatar" style={{ background: '#1F4788' }}>
                       {getInitials(getConversationName(convo))}
                     </div>
+
                     <div className="convo-content">
                       <div className="convo-header">
                         <span className="convo-name">{getConversationName(convo)}</span>
@@ -212,6 +243,7 @@ export default function StaffMessaging() {
                       </div>
                       <p className="convo-preview">{convo.lastMessage || 'No messages yet'}</p>
                     </div>
+                    
                     {unreadCount > 0 && <div className="unread-badge">{unreadCount}</div>}
                   </div>
                 )
@@ -219,6 +251,7 @@ export default function StaffMessaging() {
             ) : (
               <div className="empty-conversations">
                 <p>No conversations yet</p>
+
                 <button 
                   className="btn btn-primary btn-sm"
                   onClick={() => setShowNewConvoModal(true)}
@@ -237,6 +270,7 @@ export default function StaffMessaging() {
               <div className="chat-avatar" style={{ background: '#2D9C9C' }}>
                 {getInitials(getConversationName(selectedConvo))}
               </div>
+
               <div className="chat-info">
                 <h3 className="chat-name">{getConversationName(selectedConvo)}</h3>
                 <p className="chat-status">Patient</p>
@@ -251,12 +285,14 @@ export default function StaffMessaging() {
                 return (
                   <div key={msg.id}>
                     {showDate && <div className="date-divider">{formatDate(msg.timestamp)}</div>}
+
                     <div className={`message ${isSentByMe ? 'sent' : 'received'}`}>
                       {!isSentByMe && (
                         <div className="message-avatar">
                           {getInitials(msg.senderName)}
                         </div>
                       )}
+                      
                       <div className="message-bubble">
                         {!isSentByMe && <div className="message-sender">{msg.senderName}</div>}
                         <p className="message-text">{msg.text}</p>

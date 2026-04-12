@@ -4,10 +4,10 @@ import { signOut } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext'
 import './AdminLayout.css'
 
-import settings from '../assets/icons/settings.png';
-import notifications from '../assets/icons/notifications.png';
-import activity from '../assets/icons/activity.png';
-import alert from '../assets/icons/alert.png';
+import settings from '../assets/images/settings.png';
+import notifications from '../assets/images/notifications.png';
+import activity from '../assets/images/activity.png';
+import alert from '../assets/images/alert.png';
 import logo from '../assets/images/logo.png';
 
 const NAV_ITEMS = [

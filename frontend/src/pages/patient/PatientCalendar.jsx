@@ -1,28 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore'
+import { collection, getDocs, query } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import './PatientCalendar.css'
 
-import search from '../../assets/icons/search.png';
-import trash from '../../assets/icons/trash.png';
-import tick from '../../assets/icons/tick.png';
-import edit from '../../assets/icons/edit.png';
-
-const NAV_ITEMS = [
-  {
-    label: 'Hide Events',
-  },
-  {
-    label: 'Show Events',
-  },
-]
+import search from '../../assets/images/search.png';
+import trash from '../../assets/images/trash.png';
+import tick from '../../assets/images/tick.png';
+import edit from '../../assets/images/edit.png';
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [appointments, setAppointments] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showEvents, setShowEvents] = useState(true) // ✅ ADD THIS!
 
   useEffect(() => {
     loadAppointments()
@@ -148,7 +139,8 @@ export default function Calendar() {
                   {date && (
                     <>
                       <span className="date-number">{date.getDate()}</span>
-                      {dayAppts.length > 0 && (
+                      {/* ✅ Only show dots if showEvents is true */}
+                      {showEvents && dayAppts.length > 0 && (
                         <div className="date-appointments">
                           {dayAppts.slice(0, 2).map((appt, i) => (
                             <div key={i} className="appt-dot" style={{ background: appt.status === 'confirmed' ? '#3B82F6' : '#F59E0B' }} />
@@ -166,43 +158,43 @@ export default function Calendar() {
 
         <div className="dates-search">
           <div className="date-search">
-            <div className="search">
+            <div className="dates-search-area">
               <img 
                 src={search}
                 className="search-img"
               />
 
-              <p className="search-text">Search</p>
+              <p className="dates-search-text">Search</p>
             </div>
 
-            <div className="search-list">
-              <div className="list-item">
-                <div className="list-body">
-                  <p className="list-text">You have an appointment with Dr. Coy</p>
-                  <p className="list-subtext">Lorem ipsum dor sit amet</p>
+            <div className="dates-search-list">
+              <div className="dates-list-item">
+                <div className="dates-list-body">
+                  <p className="dates-list-text">You have an appointment with Dr. Coy</p>
+                  <p className="dates-list-subtext">Lorem ipsum dor sit amet</p>
                 </div>
 
-                <div className="list-imgs">
-                  <div className="list-img" style={{background: "#2cb337"}}>
+                <div className="dates-list-imgs">
+                  <div className="dates-list-img" style={{background: "#2cb337"}}>
                     <img 
                       src={tick}
-                      className="tick-img"
+                      className="img"
                     />
                   </div>
 
-                  <div className="list-img" style={{background: "#be2828"}}>
+                  <div className="dates-list-img" style={{background: "#be2828"}}>
                     <img 
                       src={trash}
-                      className="delete-img"
+                      className="img"
                     />
                   </div>
                 </div>
 
-                <div className="list-edit">
-                  <div className="edit">
+                <div className="dates-list-edit">
+                  <div className="dates-edit">
                     <img 
                       src={edit}
-                      className="edit-img"
+                      className="img"
                     />
                   </div>
                 </div>
@@ -212,18 +204,21 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* ✅ FIXED NAV MENU - Now buttons instead of NavLink */}
       <div className="nav-menu">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `nav-area ${isActive ? 'active' : ''}`
-            }
-          >
-            <span className="nav-label">{item.label}</span>
-          </NavLink>
-        ))}
+        <button
+          onClick={() => setShowEvents(false)}
+          className={`nav-area ${!showEvents ? 'active' : ''}`}
+        >
+          <span className="nav-label">Hide Events</span>
+        </button>
+        
+        <button
+          onClick={() => setShowEvents(true)}
+          className={`nav-area ${showEvents ? 'active' : ''}`}
+        >
+          <span className="nav-label">Show Events</span>
+        </button>
       </div>
     </>
   )

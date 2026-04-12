@@ -248,8 +248,7 @@
 
 /* ── List ────────────────────────────────── */
 
-.list {
-  flex: 1;
+.overview-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -257,35 +256,34 @@
   justify-content: center;
 }
 
-.list-item {
-  flex: 1;
+.overview-list-item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  width: 330px;
+  width: 340px;
   justify-content: space-between;
   align-content: center;
   gap: 12px;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.892);
-  border-radius: 8px;
+  border-radius: 16px;
   transition: all 0.2s ease;
 }
 
-.list-item.active {
+.overview-list-item.active {
   background: #0088FF;
 }
 
-.list-item.active:hover {
+.overview-list-item.active:hover {
   background: #0088FF;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-.list-item:hover {
+.overview-list-item:hover {
   background: rgba(206, 217, 248, 0.34);
 }
 
-.list-avatar {
+.overview-list-avatar {
   width: 50px;
   height: 55px;
   border-radius: 10px;
@@ -295,7 +293,7 @@
   overflow: hidden;
 }
 
-.list-header {
+.overview-list-header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -304,7 +302,7 @@
   align-items: center;
 }
 
-.list-name {
+.overview-list-name {
   font-size: 13px;
   font-weight: 500;
   color: #111827;
@@ -317,18 +315,18 @@
   right: 3px;
 }
 
-.list-name.active {
+.overview-list-name.active {
   color: #FFFFFF;
 }
 
-.list-time {
+.overview-list-time {
   font-size: 12px;
   color: #6B7280;
   margin: 0;
   font-family: var(--font-family);
 }
 
-.list-time.active {
+.overview-list-time.active {
   color: #FFFFFF;
 }
 
@@ -409,7 +407,7 @@
 /* ── Test ────────────────────────────────── */
 
 
-.list.wrap {
+.overview-list.wrap {
   flex-direction: row;
   flex-wrap: wrap;
   flex: 1;

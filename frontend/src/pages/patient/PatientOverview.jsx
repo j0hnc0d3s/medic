@@ -3,15 +3,16 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import './PatientOverview.css'
 
-import test from '../../assets/icons/test.png';
-import top from '../../assets/icons/top.png';
-import document from '../../assets/icons/document.png';
-import upload from '../../assets/icons/upload.png';
-import dots from '../../assets/icons/dots.png';
-import next from '../../assets/icons/next.png';
-import close from '../../assets/icons/close.png';
-import scale from '../../assets/images/scale.png';
+import test from '../../assets/images/test.png';
+import top from '../../assets/images/top.png';
+import document from '../../assets/images/document.png';
+import upload from '../../assets/images/upload.png';
+import dots from '../../assets/images/dots.png';
+import next from '../../assets/images/next.png';
+import close from '../../assets/images/close.png';
 
+
+import scale from '../../assets/images/scale.png';
 import user1 from '../../assets/images/user1.jpeg';
 import user2 from '../../assets/images/user2.jpg';
 
@@ -28,6 +29,8 @@ const NAV_ITEMS = [
 
 export default function PatientOverview() {
   const { userProfile, loading } = useAuth()
+  const firstName = userProfile?.firstName || 'Patient'
+  const [activeTab, setActiveTab] = useState('diagnosis') // ✅ Add state
 
   if (loading) {
     return (
@@ -36,9 +39,6 @@ export default function PatientOverview() {
       </div>
     )
   }
-
-  const firstName = userProfile?.firstName || 'Patient'
-  const [activeTab, setActiveTab] = useState('diagnosis') // ✅ Add state
 
   return (
     <div className="patient-dashboard">
@@ -56,18 +56,18 @@ export default function PatientOverview() {
             </div>
           </div>
           
-          <div className="list">
-            <div className="list-item active">
-              <div className="list-avatar">
+          <div className="overview-list">
+            <div className="overview-list-item active">
+              <div className="overview-list-avatar">
                 <img 
                   src={user1}
                   className="avatar-img"
                 />
               </div>
 
-              <div className="list-info">
-                <p className="list-time active">January 29th at 9:00 PM</p>
-                <p className="list-name active">Appointment with Dr. Coy</p>
+              <div className="overview-list-info">
+                <p className="overview-list-time active">January 29th at 9:00 PM</p>
+                <p className="overview-list-name active">Appointment with Dr. Coy</p>
               </div>
 
               <img 
@@ -76,17 +76,17 @@ export default function PatientOverview() {
               />
             </div>
 
-            <div className="list-item">
-              <div className="list-avatar">
+            <div className="overview-list-item">
+              <div className="overview-list-avatar">
                 <img 
                   src={user1}
                   className="avatar-img"
                 />
               </div>
 
-              <div className="list-info">
-                <p className="list-time">January 29th at 9:00 PM</p>
-                <p className="list-name">Appointment with Dr. Coy</p>
+              <div className="overview-list-info">
+                <p className="overview-list-time">January 29th at 9:00 PM</p>
+                <p className="overview-list-name">Appointment with Dr. Coy</p>
               </div>
 
               <img 
@@ -112,15 +112,15 @@ export default function PatientOverview() {
             </div>
           </div>
           
-          <div className="list">
-            <div className="list-item">
-              <div className="list-header">
+          <div className="overview-list">
+            <div className="overview-list-item">
+              <div className="overview-list-header">
                 <img 
                   src={document}
                   className="icon-img"
                 />
                 
-                <p className="list-name">Medical Documument.pdf</p>
+                <p className="overview-list-name">Medical Documument.pdf</p>
               </div>
 
               <div className="list-imgs">
@@ -153,7 +153,7 @@ export default function PatientOverview() {
             </div>
           </div>
           
-          <div className="list wrap">
+          <div className="overview-list wrap">
             <div className="test-item">
               <div className="test-header">
                 <p className="test-name">CPR</p>

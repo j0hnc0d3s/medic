@@ -8,12 +8,12 @@ import Register from './pages/auth/Register.jsx'
 
 import StaffLayout from './components/StaffLayout.jsx'
 import StaffOverview from './pages/staff/StaffOverview.jsx'
-import StaffPatients from './pages/staff/StaffPatients.jsx'
+/* import StaffPatients from './pages/staff/StaffPatients.jsx'
 import StaffPatient from './pages/staff/StaffPatient.jsx'
 import StaffAddPatient from './pages/staff/StaffAddPatient.jsx'
 import StaffNotifications from './pages/staff/StaffNotifications.jsx'
 import StaffCalendar from './pages/staff/StaffCalendar.jsx'
-import StaffDocuments from './pages/staff/StaffDocuments.jsx'
+import StaffDocuments from './pages/staff/StaffDocuments.jsx' */
 import StaffMessaging from './pages/staff/StaffMessaging.jsx'
 
 /* 
@@ -38,14 +38,14 @@ import PatientProfile from './pages/patient/PatientProfile.jsx'
 
 import AdminLayout from './components/AdminLayout.jsx'
 import AdminOverview from './pages/admin/AdminOverview.jsx'
-import AdminPatients from './pages/admin/AdminPatients.jsx'
+/* import AdminPatients from './pages/admin/AdminPatients.jsx'
 import AdminPatient from './pages/admin/AdminPatient.jsx'
 import AdminAddPatient from './pages/admin/AdminAddPatient.jsx'
 import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminReports from './pages/admin/AdminReports.jsx'
 import AdminSettings from './pages/admin/AdminSettings.jsx'
 import AdminNotifications from './pages/admin/AdminNotifications.jsx'
-import AdminDocuments from './pages/admin/AdminDocuments.jsx'
+import AdminDocuments from './pages/admin/AdminDocuments.jsx' */
 
 // Index
 
@@ -74,13 +74,13 @@ function App() {
         >
           <Route index element={<Navigate to="/staff/overview" replace />} />
           <Route path="overview" element={<StaffOverview />} />  
-          <Route path="patients" element={<StaffPatients />} />
+{/*           <Route path="patients" element={<StaffPatients />} />
           <Route path="patients/:patientId" element={<StaffPatient />} />
           <Route path="patients/:patientId/edit" element={<StaffAddPatient />} />
           <Route path="addpatient" element={<StaffAddPatient />} />
           <Route path="notifications" element={<StaffNotifications />} />
           <Route path="calendar" element={<StaffCalendar />} />
-          <Route path="documents" element={<StaffDocuments />} />
+          <Route path="documents" element={<StaffDocuments />} /> */}
           <Route path="messaging" element={<StaffMessaging />} />
 {/*   
           <Route path="profile" element={<StaffProfile />} /> 
@@ -120,7 +120,7 @@ function App() {
         >
           <Route index element={<Navigate to="/admin/overview" replace />} />
           <Route path="overview" element={<AdminOverview />} />    
-          <Route path="patients" element={<AdminPatients />} />    
+{/*           <Route path="patients" element={<AdminPatients />} />    
           <Route path="patients/:patientId" element={<AdminPatient />} />
           <Route path="patients/:patientId/edit" element={<AdminAddPatient />} />
           <Route path="addpatient" element={<AdminAddPatient />} />
@@ -130,7 +130,7 @@ function App() {
           <Route path="settings" element={<AdminSettings />} /> 
           
           <Route path="notifications" element={<AdminNotifications />} />
-          <Route path="documents" element={<AdminDocuments />} />
+          <Route path="documents" element={<AdminDocuments />} /> */}
         </Route>
 
         {/* Catch-all redirect */}

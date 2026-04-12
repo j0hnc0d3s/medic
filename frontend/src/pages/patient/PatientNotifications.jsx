@@ -3,6 +3,8 @@ import { collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy, Timesta
 import { db } from '../../services/firebase'
 import './PatientNotifications.css'
 
+import notification from '../../assets/images/notifications.png';
+
 export default function Notifications() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -243,7 +245,12 @@ export default function Notifications() {
           </div>
         ) : (
           <div className="empty-state">
-            <div className="empty-icon">🔔</div>
+            <img 
+              src={notification} 
+              alt="Notifications" 
+              className="list-img xlrg"
+            />
+
             <div className="empty-text">No notifications</div>
             <div className="empty-subtext">
 

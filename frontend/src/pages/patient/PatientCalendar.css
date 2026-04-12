@@ -142,6 +142,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .dates-date.selected {
@@ -352,7 +355,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.search {
+.dates-search-area {
   width: auto;
   height: 60px;
   display: flex;
@@ -370,7 +373,7 @@
   align-content: center;
 }
 
-.search-text {
+.dates-search-text {
   color: #000000;
   font-size: 14px;
   font-weight: 600;
@@ -384,17 +387,16 @@
 
 /*  */
 
-.search-list {
+.dates-search-list {
   padding-top: 2px;
 }
 
-.list-item {
-  width: auto;
+.dates-list-item {
   height: 120px;
   display: flex;
   flex-direction: row;
   gap: 10px;
-  padding: 20px;
+  padding: 30px;
   margin: 20px;
   background: #c5def7;
   border-radius: 30px;
@@ -403,75 +405,65 @@
   border: 1px solid rgb(255, 255, 255);
   border-radius: 20px;
   align-content: center;
+  justify-content: space-between;
 }
 
-.list-imgs {
+.dates-list-imgs {
   flex-direction: row;
   display: flex;
   gap: 10px;
 }
 
-.list-img {
+.dates-list-img {
   display: flex;
   border-radius: 20px;
-  padding: 15px 20px;
   justify-content: center;
   align-items: center;
+  width: 50px;
+  height: 50px;
 }
 
-.list-text {
+.dates-list-text {
   color: #000000;
   font-size: 14px;
   font-weight: 500;
   font-family: var(--font-family);
 }
 
-.list-subtext {
+.dates-list-subtext {
   color: #000000;
   font-size: 10px;
   font-weight: 400;
   font-family: var(--font-family);
 }
 
-.list-edit {
+.dates-list-edit {
   position: absolute;
+  right: -2%;         /* ✅ 10px from right edge of parent */
+  top: 5%;            /* ✅ 50% from top */
+  transform: translateY(-50%);  /* ✅ Center vertically */
   z-index: 1;
   background: #def0ff;
   border-radius: 50%;
-  bottom: 100px;
-  left: 800px;
-  border-radius: 50%;
+  padding: 5px;
+  display: flex;
   justify-content: center;
   align-items: center;
-  display: flex;
-  padding: 5px;
 }
 
-.edit {
+.dates-edit {
   width: 30px;
   height: 30px;
   background: #0088FF;
   border-radius: 50%;
+  display: flex;
   justify-content: center;
   align-items: center;
-  display: flex;
 }
 
-.tick-img {
-  width: 15px;
-  height: 15px;
-  filter: invert(1);
-}
-
-.delete-img {
-  width: 15px;
-  height: 15px;
-  filter: invert(1);
-}
-
-.edit-img {
-  width: 15px;
-  height: 15px;
+.img {
+  width: 20px;
+  height: 20px;
   filter: invert(1);
 }
 

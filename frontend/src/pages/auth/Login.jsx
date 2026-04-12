@@ -13,8 +13,8 @@ import './Login.css';
 import doctor1 from '../../assets/images/doctor1.png';
 import logo from '../../assets/images/logo.png';
 
-import left from '../../assets/icons/left.png';
-import right from '../../assets/icons/right.png';
+import left from '../../assets/images/left.png';
+import right from '../../assets/images/right.png';
 
 // Your backend API URL
 const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:5173'
