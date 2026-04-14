@@ -2,17 +2,17 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { auth } from '../services/firebase'
 import { signOut } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext'
-import './PatientLayout.css'
+
+import '../pages/styles/Layout.css'
 
 import settings from '../assets/images/settings.png';
 import notifications from '../assets/images/notifications.png';
-import activity from '../assets/images/activity.png';
 import inverted from '../assets/images/inverted.png';
 
 const NAV_ITEMS = [
   {
     path: '/patient/overview',
-    label: 'Overview',
+    label: 'Home',
     icon: (
       <></>
     ),
@@ -20,6 +20,13 @@ const NAV_ITEMS = [
   {
     path: '/patient/messaging',
     label: 'Messaging',
+    icon: (
+      <></>
+    ),
+  },
+  {
+    path: '/patient/appointments',
+    label: 'Appointments',
     icon: (
       <></>
     ),
@@ -53,7 +60,7 @@ export default function PatientLayout() {
   const initials = firstName.charAt(0) + (lastName.charAt(0) || '')
 
   return (
-    <div className="patient-layout">
+    <div className="layout">
       <header className="top-nav">
         <div className="nav-brand">
           <div className="nav-logo">
@@ -107,7 +114,13 @@ export default function PatientLayout() {
           </button>
 
           <div className="user-area">
-            <div className="user-icon">{initials}</div>
+            <button 
+              className="user-icon"
+              onClick={() => navigate('/patient/profile')}
+              title="Patient Profile"
+            >
+              {initials}
+            </button>
 
             <div className="user-info-expanded">
               <div className="user-info">

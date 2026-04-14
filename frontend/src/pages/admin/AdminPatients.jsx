@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useNavigate } from 'react-router-dom'
-import './AdminPatients.css'
+
+import '../styles/Patients.css'
 
 export default function PatientsDatabase() {
   const navigate = useNavigate()

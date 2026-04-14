@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './StaffCalendar.css'
+import './Calendar.css'
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())

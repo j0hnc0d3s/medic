@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { financeService, patientService } from '../../services'
-import './AdminFinances.css'
+
+import '../styles/Finances.css'
 
 export default function Finances() {
   const navigate = useNavigate()

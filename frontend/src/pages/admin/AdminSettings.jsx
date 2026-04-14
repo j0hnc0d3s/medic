@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './AdminSettings.css'
+
+import '../styles/Settings.css'
 
 export default function Settings() {
   const [loading, setLoading] = useState(true)

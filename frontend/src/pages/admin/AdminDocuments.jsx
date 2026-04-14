@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './AdminDocuments.css'
+
+import '../styles/Documents.css'
 
 export default function Documents() {
   const [documents, setDocuments] = useState([])

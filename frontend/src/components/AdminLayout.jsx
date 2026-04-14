@@ -2,12 +2,12 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { auth } from '../services/firebase'
 import { signOut } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext'
-import './AdminLayout.css'
+
+import '../pages/styles/Layout.css'
 
 import settings from '../assets/images/settings.png';
 import notifications from '../assets/images/notifications.png';
 import activity from '../assets/images/activity.png';
-import alert from '../assets/images/alert.png';
 import logo from '../assets/images/logo.png';
 
 const NAV_ITEMS = [

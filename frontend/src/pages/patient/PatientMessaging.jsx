@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import messagingService from '../../services/messagingService'
 import staffService from '../../services/staffService'
-import './PatientMessaging.css'
+
+import '../styles/Messaging.css'
 
 import edit from '../../assets/images/edit.png';
 import search from '../../assets/images/search.png';
@@ -22,7 +23,7 @@ export default function PatientMessaging() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [staff, setStaff] = useState([])
-  const [loadingStaff, setLoadingStaff] = useState(true) // ✅ NEW!
+  const [loadingStaff, setLoadingStaff] = useState(true)
   const [showNewConvoModal, setShowNewConvoModal] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState('')
 
@@ -239,7 +240,7 @@ export default function PatientMessaging() {
               <div className="messages-search-area">
                 <img 
                   src={search}
-                  className="search-img"
+                  className="messaging-search-img"
                   alt="Search"
                 />
                 <p className="messages-search-text">Search</p>
@@ -248,9 +249,10 @@ export default function PatientMessaging() {
               <div className="messages-search-btns">
                 <div className="messages-filter">
                   <p className="messages-filter-title">Unread</p>
+                  
                   <img 
                     src={down}
-                    className="down-img"
+                    className="messaging-down-img"
                     alt="Filter"
                   />
                 </div>
@@ -262,7 +264,7 @@ export default function PatientMessaging() {
                 >
                   <img 
                     src={edit}
-                    className="add-img"
+                    className="messaging-add-img"
                     alt="New conversation"
                   /> 
                 </button>
@@ -301,7 +303,7 @@ export default function PatientMessaging() {
                 <div className="empty-conversations">
                   <img 
                     src={inbox}
-                    className="inbox-img"
+                    className="messaging-inbox-img"
                   />
 
                   <p class="empty-text">No conversations yet</p>
@@ -367,7 +369,7 @@ export default function PatientMessaging() {
                 <button type="submit" className="btn-send" disabled={!newMessage.trim()}>
                   <img 
                     src={send}
-                    className="send-img"
+                    className="messaging-send-img"
                     alt="Send"
                   />
                 </button>
@@ -377,7 +379,7 @@ export default function PatientMessaging() {
             <div className="no-chat-selected">
               <img 
                 src={chatting}
-                className="chat-img"
+                className="messaging-chat-img"
                 alt="Chat"
               />
 

@@ -4,13 +4,12 @@
 
 .notifications {
   display: flex;
-  flex-direction: row;  /* ✅ Side-by-side layout */
+  flex-direction: row;
   padding: 20px;
   margin: 20px;
-  gap: 24px;
 
-  max-height: 1500px;
-  
+  min-height: 800px;
+
   background: #FFFFFF;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -21,6 +20,9 @@
 
 .notifications-container {
   background: transparent;
+  width: 100%;
+  padding: 0px 30px 0px 0px;
+  margin: 0px;
 }
 
 .notifications-header {
@@ -45,35 +47,99 @@
   font-family: var(--font-family);
 }
 
-.filters-bar {
+/* Search */
+
+.notifications-search {
+  width: 100%;
+  min-height: 30px; 
+
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  flex: 1;
+  flex-direction: row;
+
+  gap: 10px;
+  padding: 15px 20px; 
+  margin: 20px;
+
+  background: #F2F6FA;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgb(255, 255, 255);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  justify-content: space-between;
+  align-content: center;
+  align-items: center; 
 }
 
-.filter-select {
+.notifications-search-header {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.notifications-search-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.notifications-search-text {
+  color: #000000;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  margin: 0;
+}
+
+.notifications-search-img {
+  width: 20px;
+  height: 20px;
+}
+
+.search-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.search-filter {
+  background: #0088FF;
+  color: #ffffff;
+
   min-width: 150px;
   padding: 10px 12px;
+  padding-right: 36px;
+
   border: 1px solid #D1D5DB;
-  border-radius: 8px;
+  border-radius: 20px;
   font-size: 14px;
   font-family: var(--font-family);
-  color: #111827;
-  background: #FFFFFF;
+  font-weight: 400;
+
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  padding-right: 36px;
 }
 
-.filter-select:focus {
+.search-filter:focus {
   outline: none;
-  border-color: #1F4788;
+  border: 0px;
   box-shadow: 0 0 0 3px rgba(31, 71, 136, 0.1);
 }
+
+.search-filter option {
+  font-size: 15px;
+  font-weight: 600;
+  color: #FFFFFF;
+  font-family: var(--font-family); 
+}
+
+/* List */
 
 .notifications-list {
   display: flex;
@@ -205,6 +271,41 @@
   color: #EF4444;
 }
 
+/* Empty */
+
+.notifications-empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: #FFFFFF;
+  border: 0px;
+  position: relative;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifications-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notifications-empty-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #11182758;
+  margin-bottom: 8px;
+  font-family: var(--font-family);
+}
+
+.notifications-empty-subtext {
+  font-size: 14px;
+  color: #6b728045;
+  font-family: var(--font-family);
+}
+
+/* Buttons */
+
 .btn {
   padding: 10px 20px;
   border-radius: 8px;
@@ -227,38 +328,15 @@
   border-color: #D1D5DB;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  background: #FFFFFF;
-  border-radius: 12px;
-  border: 1px solid #E5E7EB;
+/* Images */
+
+.notification-list-img.xlrg {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 10px;
 }
 
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-text {
-  font-size: 18px;
-  font-weight: 500;
-  color: #111827;
-  margin-bottom: 8px;
-  font-family: var(--font-family);
-}
-
-.empty-subtext {
-  font-size: 14px;
-  color: #6B7280;
-  font-family: var(--font-family);
-}
-
-.list-img.xlrg {
-  width: 80px;
-  height: 80px;
-}
+/* Loading */
 
 .notifications.loading {
   display: flex;

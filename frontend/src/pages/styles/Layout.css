@@ -3,31 +3,33 @@
    Modern medical software design with enhanced shadows
    ═══════════════════════════════════════════════════════ */
 
-.patient-layout {
+.layout {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: linear-gradient(180deg, #0088ff42 0%, #FFFFFF 100%);
   padding: 20px 30px;
-
   position: relative;
 }
 
 /* ── Top Navigation Bar ────────────────────────────── */
 .top-nav {
+  position: relative;
   height: 64px;
-  background: transparent;
-  border: 1px solid #E5E7EB;
+  width: 98%;
+  
+  background: #FFFFFF;
+  border: 0px;
+  border-radius: 18px;
+
   display: flex;
+  align-self: center;
   align-items: center;
   justify-content: space-between;
+
   padding: 0 30px;
   flex-shrink: 0;
-  border-radius: 18px;
   z-index: 100;
-  position: relative;
-  width: 98%;
-  align-self: center;
 }
 
 /* ── Brand Section ────────────────────────────────── */
@@ -74,8 +76,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 20px;
-  border-radius: 15px;
+  padding: 8px 10px;
+  border-radius: 10px;
   background: transparent;
   color: #6B7280;
   text-decoration: none;
@@ -88,11 +90,6 @@
   position: relative;
 }
 
-.nav-area:hover {
-  background: #F9FAFB;
-  color: #374151;
-}
-
 /* Active state - blue background with subtle shadow */
 .nav-area.active {
   background: #0088FF;
@@ -100,6 +97,26 @@
   box-shadow: 
     0 1px 3px 0 rgba(31, 71, 136, 0.3),
     0 1px 2px 0 rgba(31, 71, 136, 0.2);
+}
+
+.nav-label {
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: #6B7280;                    /* default gray */
+  transition: color 0.2s ease;
+}
+
+.nav-area:hover .nav-label {
+  color: #374151;                    /* darker on hover */
+}
+
+.nav-area.active .nav-label {
+  color: #0088FF;                    /* white when active */
+}
+
+.nav-area.active:hover .nav-label {
+  color: #FFFFFF;                    /* stay white when hovering active */
 }
 
 .nav-area.active:hover {
@@ -305,7 +322,10 @@
   }
   
   .nav-label {
-    display: none;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    color: inherit;
   }
   
   .nav-area {

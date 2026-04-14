@@ -1,463 +1,236 @@
-import { useState, useEffect } from 'react'
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, Timestamp } from 'firebase/firestore'
-import { db } from '../../services/firebase'
-import './PatientAppointment.css'
+import { useEffect, useState } from 'react'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
-export default function Appointments() {
-  const [appointments, setAppointments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [editingAppt, setEditingAppt] = useState(null)
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [filterDate, setFilterDate] = useState('all')
-  const [formData, setFormData] = useState({
-    patientName: '',
-    patientPhone: '',
-    appointmentDate: new Date().toISOString().split('T')[0],
-    appointmentTime: '',
-    type: '',
-    doctor: '',
-    status: 'scheduled',
-    notes: ''
-  })
+import '../styles/Appointment.css'
 
-  useEffect(() => {
-    loadAppointments()
-  }, [])
+import test from '../../assets/images/test.png';
+import top from '../../assets/images/top.png';
+import document from '../../assets/images/document.png';
+import upload from '../../assets/images/upload.png';
+import dots from '../../assets/images/dots.png';
+import next from '../../assets/images/next.png';
+import close from '../../assets/images/close.png';
+import down from '../../assets/images/down.png';
+import calendar from '../../assets/images/calendar.png';
+import time from '../../assets/images/time.png';
 
-  const loadAppointments = async () => {
-    try {
-      const apptsQuery = query(
-        collection(db, 'appointments'),
-        orderBy('appointmentDate', 'desc')
-      )
-      const snapshot = await getDocs(apptsQuery)
-      const appts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      setAppointments(appts)
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading appointments:', error)
-      setLoading(false)
-    }
-  }
+import scale from '../../assets/images/scale.png';
+import user1 from '../../assets/images/user1.jpeg';
+import user2 from '../../assets/images/user2.jpg';
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+const NAV_ITEMS = [
+  {
+    label: 'Diagnosis',
+    id: 'diagnosis',
+  },
+  {
+    label: 'Treatment Plan',
+    id: 'treatment',
+  },
+]
 
-  const resetForm = () => {
-    setFormData({
-      patientName: '',
-      patientPhone: '',
-      appointmentDate: new Date().toISOString().split('T')[0],
-      appointmentTime: '',
-      type: '',
-      doctor: '',
-      status: 'scheduled',
-      notes: ''
-    })
-    setEditingAppt(null)
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    if (!formData.patientName.trim()) {
-      alert('Patient name is required')
-      return
-    }
-
-    try {
-      const data = {
-        ...formData,
-        patientName: formData.patientName.trim(),
-        appointmentDate: Timestamp.fromDate(new Date(formData.appointmentDate)),
-        updatedAt: Timestamp.now()
-      }
-
-      if (editingAppt) {
-        await updateDoc(doc(db, 'appointments', editingAppt.id), data)
-        alert('Appointment updated successfully')
-      } else {
-        data.createdAt = Timestamp.now()
-        await addDoc(collection(db, 'appointments'), data)
-        alert('Appointment created successfully')
-      }
-
-      setShowModal(false)
-      resetForm()
-      loadAppointments()
-    } catch (error) {
-      console.error('Error saving appointment:', error)
-      alert('Failed to save appointment')
-    }
-  }
-
-  const handleEdit = (appt) => {
-    setEditingAppt(appt)
-    setFormData({
-      patientName: appt.patientName || '',
-      patientPhone: appt.patientPhone || '',
-      appointmentDate: appt.appointmentDate?.toDate().toISOString().split('T')[0] || '',
-      appointmentTime: appt.appointmentTime || '',
-      type: appt.type || '',
-      doctor: appt.doctor || '',
-      status: appt.status || 'scheduled',
-      notes: appt.notes || ''
-    })
-    setShowModal(true)
-  }
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this appointment?')) return
-
-    try {
-      await deleteDoc(doc(db, 'appointments', id))
-      alert('Appointment deleted')
-      loadAppointments()
-    } catch (error) {
-      console.error('Error deleting appointment:', error)
-    }
-  }
-
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await updateDoc(doc(db, 'appointments', id), {
-        status: newStatus,
-        updatedAt: Timestamp.now()
-      })
-      loadAppointments()
-    } catch (error) {
-      console.error('Error updating status:', error)
-    }
-  }
-
-  const getStatusColor = (status) => {
-    const colors = {
-      scheduled: '#F59E0B',
-      confirmed: '#3B82F6',
-      'in-progress': '#2D9C9C',
-      completed: '#22C55E',
-      cancelled: '#EF4444',
-      'no-show': '#6B7280'
-    }
-    return colors[status] || '#6B7280'
-  }
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  const types = ['General Checkup', 'Follow-up', 'Emergency', 'Consultation', 'Procedure']
-  const doctors = ['Dr. Sarah Mitchell', 'Dr. James Wilson', 'Dr. Paula Chen']
-  const statuses = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show']
-
-  const filteredAppointments = appointments.filter(a => {
-    const matchesStatus = filterStatus === 'all' || a.status === filterStatus
-    
-    let matchesDate = true
-    if (filterDate === 'today') {
-      const today = new Date().toDateString()
-      matchesDate = a.appointmentDate?.toDate().toDateString() === today
-    } else if (filterDate === 'upcoming') {
-      matchesDate = a.appointmentDate?.toDate() >= new Date()
-    } else if (filterDate === 'past') {
-      matchesDate = a.appointmentDate?.toDate() < new Date()
-    }
-
-    return matchesStatus && matchesDate
-  })
-
-  const todayCount = appointments.filter(a => 
-    a.appointmentDate?.toDate().toDateString() === new Date().toDateString()
-  ).length
-
-  const upcomingCount = appointments.filter(a => 
-    a.appointmentDate?.toDate() >= new Date() && a.status !== 'cancelled'
-  ).length
+export default function PatientOverview() {
+  const { userProfile, loading } = useAuth()
+  const firstName = userProfile?.firstName || 'Patient'
+  const [activeTab, setActiveTab] = useState('diagnosis') // ✅ Add state
 
   if (loading) {
     return (
-      <div className="appointments loading">
-        <div className="loading-spinner">Loading appointments...</div>
+      <div className="loading-container">
+        <div className="spinner"></div>
       </div>
     )
   }
 
   return (
-    <div className="appointments">
-      <div className="appointments-container">
-        <header className="appointments-header">
-          <div>
-            <h1 className="appointments-title">Appointments</h1>
-            <p className="appointments-subtitle">
-              {todayCount} today · {upcomingCount} upcoming
-            </p>
-          </div>
+    <>
+        <div className="appointments">
+            <div className="appointments-container">
+                <div className="appointments-header">
+                    <h2 className="appointment-header-title">New Appointment</h2>
+                </div>
 
-          <button 
-            className="btn btn-primary"
-            onClick={() => {
-              resetForm()
-              setShowModal(true)
-            }}
-          >
-            + New Appointment
-          </button>
-        </header>
+                <div className="appointments-body">
+                    <div className="appointment-body-left">
+                        <div className="appointment-body-section">
+                            <div className="appointment-body-section-header">
+                                <div className="appointment-body-title">Patient Information</div>
+                                <div className="appointment-body-subtitle">Enter the patient's details below</div>
+                            </div>
 
-        <div className="filters-bar">
-          <select 
-            className="filter-select"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-          >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="past">Past</option>
-          </select>
+                            <div className="appointment-body-area">
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Patient Name</div>
 
-          <select 
-            className="filter-select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All Statuses</option>
-            {statuses.map(status => (
-              <option key={status} value={status}>
-                {status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-              </option>
-            ))}
-          </select>
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: John Smith</h2>
+
+                                        <img 
+                                            src={down}
+                                            alt="Down"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Assign Doctor</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: John Smith</h2>
+
+                                        <img 
+                                            src={down}
+                                            alt="Down"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Phone Number</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: +1 (876) 123-4567</h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="appointment-body-area">
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Date</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: John Smith</h2>
+
+                                        <img 
+                                            src={calendar}
+                                            alt="Calendar"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Time</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: John Smith</h2>
+
+                                        <img 
+                                            src={time}
+                                            alt="Down"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Duration</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: 30 mins</h2>
+
+                                        <img 
+                                            src={time}
+                                            alt="Down"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="appointment-body-right">                   
+                        <div className="appointment-body-section">
+                            <div className="appointment-body-section-header">
+                                <div className="appointment-body-title">Appointment Information</div>
+                                <div className="appointment-body-subtitle">Enter the patient's appointment details below</div>
+                            </div>
+
+                            <div className="appointment-body-area">
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Reason</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: I had a Stroke</h2>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="appointment-body-area">
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Type</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: Other</h2>
+
+                                        <img 
+                                            src={down}
+                                            alt="Calendar"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="appointment-body-content">
+                                    <div className="appointment-body-text">Priority</div>
+
+                                    <div className="appointment-body-textfield">
+                                        <h2 className="appointment-body-placeholder">e.g: Other</h2>
+
+                                        <img 
+                                            src={down}
+                                            alt="Down"
+                                            className="appointments-down-img"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="appointments-body">
+                    <div className="appointment-body-section">
+                        <div className="appointment-body-section-header">
+                            <div className="appointment-body-title">Additional Information</div>
+                            <div className="appointment-body-subtitle">Enter the additional details below</div>
+                        </div>
+
+                        <div className="appointment-body-area">
+                            <div className="appointment-body-content">
+                                <div className="appointment-body-text">Patient Notes</div>
+
+                                <div className="appointment-body-textfield lrg">
+                                    <h2 className="appointment-body-placeholder">e.g: I feel sick</h2>
+                                </div>
+                            </div>
+
+                            <div className="appointment-body-content">
+                                <div className="appointment-body-text">Specialist Notes</div>
+
+                                <div className="appointment-body-textfield lrg">
+                                    <h2 className="appointment-body-placeholder">e.g: John Smith</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {filteredAppointments.length > 0 ? (
-          <div className="appointments-list">
-            {filteredAppointments.map(appt => (
-              <div key={appt.id} className="appointment-card">
-                <div className="appointment-header">
-                  <div className="appointment-time-block">
-                    <div className="appointment-date">{formatDate(appt.appointmentDate)}</div>
-                    <div className="appointment-time">{appt.appointmentTime}</div>
-                  </div>
-
-                  <div 
-                    className="status-badge"
-                    style={{
-                      background: `${getStatusColor(appt.status)}15`,
-                      color: getStatusColor(appt.status)
-                    }}
-                  >
-                    {appt.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                  </div>
-                </div>
-
-                <div className="appointment-body">
-                  <h3 className="patient-name">{appt.patientName}</h3>
-                  {appt.patientPhone && (
-                    <p className="patient-phone">{appt.patientPhone}</p>
-                  )}
-                  <div className="appointment-details">
-                    {appt.type && <span className="detail-badge">{appt.type}</span>}
-                    {appt.doctor && <span className="detail-badge">{appt.doctor}</span>}
-                  </div>
-                  {appt.notes && (
-                    <p className="appointment-notes">{appt.notes}</p>
-                  )}
-                </div>
-
-                <div className="appointment-footer">
-                  <div className="status-actions">
-                    {appt.status === 'scheduled' && (
-                      <button 
-                        className="btn-sm btn-confirm"
-                        onClick={() => updateStatus(appt.id, 'confirmed')}
-                      >
-                        Confirm
-                      </button>
-                    )}
-                    {appt.status === 'confirmed' && (
-                      <button 
-                        className="btn-sm btn-start"
-                        onClick={() => updateStatus(appt.id, 'in-progress')}
-                      >
-                        Start
-                      </button>
-                    )}
-                    {appt.status === 'in-progress' && (
-                      <button 
-                        className="btn-sm btn-complete"
-                        onClick={() => updateStatus(appt.id, 'completed')}
-                      >
-                        Complete
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="action-buttons">
-                    <button className="btn-text" onClick={() => handleEdit(appt)}>
-                      Edit
-                    </button>
-                    <button className="btn-text delete" onClick={() => handleDelete(appt.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">📅</div>
-            <div className="empty-text">No appointments found</div>
-            <div className="empty-subtext">
-              {filterDate !== 'all' || filterStatus !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Create your first appointment to get started'}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">
-                {editingAppt ? 'Edit Appointment' : 'New Appointment'}
-              </h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="modal-body">
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Patient Name *</label>
-                    <input
-                      type="text"
-                      name="patientName"
-                      className="form-input"
-                      value={formData.patientName}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Phone</label>
-                    <input
-                      type="tel"
-                      name="patientPhone"
-                      className="form-input"
-                      value={formData.patientPhone}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Date *</label>
-                    <input
-                      type="date"
-                      name="appointmentDate"
-                      className="form-input"
-                      value={formData.appointmentDate}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Time *</label>
-                    <input
-                      type="time"
-                      name="appointmentTime"
-                      className="form-input"
-                      value={formData.appointmentTime}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Type</label>
-                    <select
-                      name="type"
-                      className="form-select"
-                      value={formData.type}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select type</option>
-                      {types.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Doctor</label>
-                    <select
-                      name="doctor"
-                      className="form-select"
-                      value={formData.doctor}
-                      onChange={handleChange}
-                    >
-                      <option value="">Select doctor</option>
-                      {doctors.map(doc => (
-                        <option key={doc} value={doc}>{doc}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Status</label>
-                    <select
-                      name="status"
-                      className="form-select"
-                      value={formData.status}
-                      onChange={handleChange}
-                    >
-                      {statuses.map(status => (
-                        <option key={status} value={status}>
-                          {status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label className="form-label">Notes</label>
-                    <textarea
-                      name="notes"
-                      className="form-textarea"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      rows={3}
-                      placeholder="Additional notes or instructions..."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingAppt ? 'Update' : 'Create'} Appointment
-                </button>
-              </div>
-            </form>
-          </div>
+        <div className="nav-menu">
+            <button className="nav-area">
+                <span className="nav-label">Cancel</span>
+            </button>
+            
+            <button className="nav-area active" style={{background: '#4da952'}}>
+                <span className="nav-label" style={{color: '#FFFFFF'}}>Save</span>
+            </button>
         </div>
-      )}
-    </div>
+    </>
   )
 }

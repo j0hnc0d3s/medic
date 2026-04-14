@@ -15,7 +15,8 @@ import {
   Legend
 } from 'chart.js'
 import jsPDF from 'jspdf'
-import './AdminReports.css'
+
+import '../styles/Reports.css'
 
 // Register ChartJS components
 ChartJS.register(

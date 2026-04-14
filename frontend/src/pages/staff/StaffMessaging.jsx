@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 
 import messagingService from '../../services/messagingService'
 import patientService from '../../services/patientService'
-import './StaffMessaging.css'
+import '../styles/Messaging.css'
 
 export default function StaffMessaging() {
   const { userProfile } = useAuth()

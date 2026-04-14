@@ -5,8 +5,8 @@
   padding: 50px;
   margin: 20px;
   gap: 24px;
-  max-width: 2025px;
-  max-height: 800px;
+  max-width: 2028px;
+  min-height: 800px;
   
   background: #FFFFFF;
   backdrop-filter: blur(20px);
@@ -18,16 +18,16 @@
 
 .messaging-container {
   width: 100%;
-  max-width: 1950px;
-  max-height: 800px;
+  height: auto;
   background: transparent;
+  display: flex;
+  flex-direction: row;
 
-  border: 0px;
   background: #FFFFFF;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 30px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
 }
 
 /* Conversations */
@@ -391,7 +391,7 @@
 
 .message-input-area {
   padding: 20px 24px;
-  border-top: 0px;
+  border-bottom-right-radius: 30px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -509,35 +509,35 @@
 
 /* Images */
 
-.search-img {
+.messaging-search-img {
   width: 18px;
   height: 18px;
 }
 
-.send-img {
-  width: 18px;
-  height: 18px;
-  filter: invert(1);
-}
-
-.add-img {
+.messaging-send-img {
   width: 18px;
   height: 18px;
   filter: invert(1);
 }
 
-.down-img {
+.messaging-add-img {
+  width: 18px;
+  height: 18px;
+  filter: invert(1);
+}
+
+.messaging-down-img {
   width: 14px;
   height: 14px;
   filter: invert(1);
 }
 
-.chat-img {
+.messaging-chat-img {
   width: 100px;
   height: 100px;
 }
 
-.inbox-img {
+.messaging-inbox-img {
   width: 90px;
   height: 90px;
   filter: opacity(1);

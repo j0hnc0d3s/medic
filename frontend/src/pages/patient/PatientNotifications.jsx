@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './PatientNotifications.css'
+
+import '../styles/Notifications.css'
 
 import notification from '../../assets/images/notifications.png';
+import search from '../../assets/images/search.png';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([])
@@ -159,13 +161,6 @@ export default function Notifications() {
     <div className="notifications">
       <div className="notifications-container">
         <header className="notifications-header">
-          <div>
-            <h1 className="notifications-title">Notifications</h1>
-            <p className="notifications-subtitle">
-              {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-            </p>
-          </div>
-
           {unreadCount > 0 && (
             <button className="btn btn-secondary" onClick={markAllAsRead}>
               Mark all as read
@@ -173,29 +168,41 @@ export default function Notifications() {
           )}
         </header>
 
-        <div className="filters-bar">
-          <select 
-            className="filter-select"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="all">All Types</option>
-            <option value="appointment">Appointments</option>
-            <option value="alert">Alerts</option>
-            <option value="system">System</option>
-            <option value="message">Messages</option>
-            <option value="birthday">Birthdays</option>
-          </select>
+        <div className="notifications-search">
+          <div className="notifications-search-header">
+            <img 
+              src={search}
+              className="notifications-search-img"
+              alt="Search"
+            />
 
-          <select 
-            className="filter-select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
-          </select>
+            <p className="notifications-search-text">Search</p>
+          </div>
+
+          <div className="search-filters">
+            <select 
+              className="search-filter"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="all">All Types</option>
+              <option value="appointment">Appointments</option>
+              <option value="alert">Alerts</option>
+              <option value="system">System</option>
+              <option value="message">Messages</option>
+              <option value="birthday">Birthdays</option>
+            </select>
+
+            <select 
+              className="search-filter"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="unread">Unread</option>
+              <option value="read">Read</option>
+            </select>
+          </div>
         </div>
 
         {filteredNotifications.length > 0 ? (
@@ -244,17 +251,15 @@ export default function Notifications() {
             ))}
           </div>
         ) : (
-          <div className="empty-state">
+          <div className="notifications-empty-state">
             <img 
               src={notification} 
               alt="Notifications" 
-              className="list-img xlrg"
+              className="notification-list-img xlrg"
             />
 
-            <div className="empty-text">No notifications</div>
-            <div className="empty-subtext">
-
-            </div>
+            <div className="notifications-empty-text">Cleared.</div>
+            <div className="notifications-empty-subtext">Nothing to see here.</div>
           </div>
         )}
       </div>

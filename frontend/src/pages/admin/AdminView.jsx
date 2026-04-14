@@ -8,7 +8,8 @@ import {
   staffService,
   notificationService 
 } from '../../services'
-import './AdminOverview.css'
+
+import '../styles/AdminView.css'
 
 export default function AdminOverview() {
   const { userProfile, loading: authLoading } = useAuth()

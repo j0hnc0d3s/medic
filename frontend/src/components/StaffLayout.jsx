@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { auth } from '../services/firebase'
 import { signOut } from 'firebase/auth'
 import { useAuth } from '../contexts/AuthContext'
-import './StaffLayout.css'
+import '../pages/styles/Layout.css'
 
 import settings from '../assets/images/settings.png';
 import notifications from '../assets/images/notifications.png';

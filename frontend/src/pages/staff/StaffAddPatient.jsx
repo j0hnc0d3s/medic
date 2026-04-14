@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { patientService } from '../../services'
-import './StaffAddPatient.css'
+import './AddPatient.css'
 
 export default function PatientForm() {
   const { patientId } = useParams()  // ← Fixed: matches route param

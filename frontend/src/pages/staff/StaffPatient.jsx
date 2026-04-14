@@ -4,7 +4,7 @@ import { doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { patientService, activityService } from '../../services'
 import jsPDF from 'jspdf'
-import './StaffPatient.css'
+import './Patient.css'
 
 export default function PatientDetail() {
   const { patientId } = useParams()  // ← Fixed: matches route param name

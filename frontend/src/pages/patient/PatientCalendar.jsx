@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './PatientCalendar.css'
+
+import '../styles/Calendar.css'
 
 import search from '../../assets/images/search.png';
 import trash from '../../assets/images/trash.png';
@@ -13,7 +14,7 @@ export default function Calendar() {
   const [appointments, setAppointments] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showEvents, setShowEvents] = useState(true) // ✅ ADD THIS!
+  const [showEvents, setShowEvents] = useState(true)
 
   useEffect(() => {
     loadAppointments()
