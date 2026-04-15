@@ -4,20 +4,9 @@ import { useAuth } from '../../contexts/AuthContext'
 
 import '../styles/Appointment.css'
 
-import test from '../../assets/images/test.png';
-import top from '../../assets/images/top.png';
-import document from '../../assets/images/document.png';
-import upload from '../../assets/images/upload.png';
-import dots from '../../assets/images/dots.png';
-import next from '../../assets/images/next.png';
-import close from '../../assets/images/close.png';
 import down from '../../assets/images/down.png';
 import calendar from '../../assets/images/calendar.png';
 import time from '../../assets/images/time.png';
-
-import scale from '../../assets/images/scale.png';
-import user1 from '../../assets/images/user1.jpeg';
-import user2 from '../../assets/images/user2.jpg';
 
 const NAV_ITEMS = [
   {
@@ -33,7 +22,7 @@ const NAV_ITEMS = [
 export default function PatientOverview() {
   const { userProfile, loading } = useAuth()
   const firstName = userProfile?.firstName || 'Patient'
-  const [activeTab, setActiveTab] = useState('diagnosis') // ✅ Add state
+  const [activeTab, setActiveTab] = useState('diagnosis')
 
   if (loading) {
     return (

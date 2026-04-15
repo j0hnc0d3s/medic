@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
-import '../styles/PatientProfile.css'
+import '../styles/Profile.css'
 
 import test from '../../assets/images/test.png';
 import top from '../../assets/images/top.png';

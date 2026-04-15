@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react'
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore'
+import { collection, getDocs, query } from 'firebase/firestore'
 import { db } from '../../services/firebase'
-import './Calendar.css'
+
+import '../styles/Calendar.css'
+
+import search from '../../assets/images/search.png';
+import trash from '../../assets/images/trash.png';
+import tick from '../../assets/images/tick.png';
+import edit from '../../assets/images/edit.png';
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [appointments, setAppointments] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showEvents, setShowEvents] = useState(true)
 
   useEffect(() => {
     loadAppointments()
@@ -76,7 +83,7 @@ export default function Calendar() {
   }
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
   const days = getDaysInMonth(currentDate)
   const selectedAppts = selectedDate ? getAppointmentsForDate(selectedDate) : []
@@ -90,81 +97,130 @@ export default function Calendar() {
   }
 
   return (
-    <div className="calendar">
-      <div className="calendar-container">
-        <header className="calendar-header">
-          <h1 className="calendar-title">Calendar</h1>
-          <div className="calendar-nav">
-            <button className="btn btn-secondary" onClick={goToToday}>Today</button>
-            <button className="btn-icon" onClick={goToPreviousMonth}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-            <h2 className="calendar-month">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
-            <button className="btn-icon" onClick={goToNextMonth}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-          </div>
-        </header>
+    <>
+      <div className="dates">
+        <div className="dates-container">
+          <header className="dates-header">
+            <h2 className="dates-title">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h2>
 
-        <div className="calendar-grid">
-          {dayNames.map(day => (
-            <div key={day} className="calendar-day-name">{day}</div>
-          ))}
-          
-          {days.map((date, index) => {
-            const dayAppts = date ? getAppointmentsForDate(date) : []
-            return (
-              <div
-                key={index}
-                className={`calendar-day ${!date ? 'empty' : ''} ${isToday(date) ? 'today' : ''} ${selectedDate && date && selectedDate.toDateString() === date.toDateString() ? 'selected' : ''}`}
-                onClick={() => date && setSelectedDate(date)}
+            <div className="dates-nav">
+              <button 
+                className="btn-icon" 
+                onClick={goToPreviousMonth}
               >
-                {date && (
-                  <>
-                    <span className="day-number">{date.getDate()}</span>
-                    {dayAppts.length > 0 && (
-                      <div className="day-appointments">
-                        {dayAppts.slice(0, 2).map((appt, i) => (
-                          <div key={i} className="appt-dot" style={{ background: appt.status === 'confirmed' ? '#3B82F6' : '#F59E0B' }} />
-                        ))}
-                        {dayAppts.length > 2 && <span className="appt-more">+{dayAppts.length - 2}</span>}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )
-          })}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+
+              <button 
+                className="btn-icon" 
+                onClick={goToNextMonth}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <div className="dates-grid">
+            {dayNames.map(day => (
+              <div key={day} className="dates-date-name">{day}</div>
+            ))}
+            
+            {days.map((date, index) => {
+              const dayAppts = date ? getAppointmentsForDate(date) : []
+              return (
+                <div
+                  key={index}
+                  className={`dates-date ${!date ? 'empty' : ''} ${isToday(date) ? 'today' : ''} ${selectedDate && date && selectedDate.toDateString() === date.toDateString() ? 'selected' : ''}`}
+                  onClick={() => date && setSelectedDate(date)}
+                >
+                  {date && (
+                    <>
+                      <span className="date-number">{date.getDate()}</span>
+                      {/* ✅ Only show dots if showEvents is true */}
+                      {showEvents && dayAppts.length > 0 && (
+                        <div className="date-appointments">
+                          {dayAppts.slice(0, 2).map((appt, i) => (
+                            <div key={i} className="appt-dot" style={{ background: appt.status === 'confirmed' ? '#3B82F6' : '#F59E0B' }} />
+                          ))}
+                          {dayAppts.length > 2 && <span className="appt-more">+{dayAppts.length - 2}</span>}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        {selectedDate && (
-          <div className="calendar-sidebar">
-            <h3 className="sidebar-title">
-              {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </h3>
-            {selectedAppts.length > 0 ? (
-              <div className="sidebar-appointments">
-                {selectedAppts.map(appt => (
-                  <div key={appt.id} className="sidebar-appt">
-                    <div className="appt-time">{appt.appointmentTime}</div>
-                    <div className="appt-details">
-                      <div className="appt-patient">{appt.patientName}</div>
-                      <div className="appt-type">{appt.type}</div>
-                    </div>
-                    <div className={`appt-status ${appt.status}`}>{appt.status}</div>
+        <div className="dates-search">
+          <div className="date-search">
+            <div className="dates-search-area">
+              <img 
+                src={search}
+                className="search-img"
+              />
+
+              <p className="dates-search-text">Search</p>
+            </div>
+
+            <div className="dates-search-list">
+              <div className="dates-list-item">
+                <div className="dates-list-body">
+                  <p className="dates-list-text">You have an appointment with Dr. Coy</p>
+                  <p className="dates-list-subtext">Lorem ipsum dor sit amet</p>
+                </div>
+
+                <div className="dates-list-imgs">
+                  <div className="dates-list-img" style={{background: "#2cb337"}}>
+                    <img 
+                      src={tick}
+                      className="img"
+                    />
                   </div>
-                ))}
+
+                  <div className="dates-list-img" style={{background: "#be2828"}}>
+                    <img 
+                      src={trash}
+                      className="img"
+                    />
+                  </div>
+                </div>
+
+                <div className="dates-list-edit">
+                  <div className="dates-edit">
+                    <img 
+                      src={edit}
+                      className="img"
+                    />
+                  </div>
+                </div>
               </div>
-            ) : (
-              <p className="no-appointments">No appointments scheduled</p>
-            )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+
+      {/* ✅ FIXED NAV MENU - Now buttons instead of NavLink */}
+      <div className="nav-menu">
+        <button
+          onClick={() => setShowEvents(false)}
+          className={`nav-area ${!showEvents ? 'active' : ''}`}
+        >
+          <span className="nav-label">Hide Events</span>
+        </button>
+        
+        <button
+          onClick={() => setShowEvents(true)}
+          className={`nav-area ${showEvents ? 'active' : ''}`}
+        >
+          <span className="nav-label">Show Events</span>
+        </button>
+      </div>
+    </>
   )
 }

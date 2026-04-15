@@ -8,7 +8,7 @@
   padding: 20px;
   margin: 20px;
 
-  min-height: 800px;
+  min-height: 700px;
 
   background: #FFFFFF;
   backdrop-filter: blur(20px);
@@ -100,43 +100,40 @@
   height: 20px;
 }
 
-.search-filters {
+/* Filter */
+
+.notifications-search-filters {
   display: flex;
   gap: 12px;
 }
 
-.search-filter {
+.notifications-filter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
   background: #0088FF;
-  color: #ffffff;
-
-  min-width: 150px;
-  padding: 10px 12px;
-  padding-right: 36px;
-
-  border: 1px solid #D1D5DB;
   border-radius: 20px;
-  font-size: 14px;
-  font-family: var(--font-family);
-  font-weight: 400;
-
   cursor: pointer;
-  transition: all 0.2s ease;
-  appearance: none;
-  background-repeat: no-repeat;
-  background-position: right 12px center;
 }
 
-.search-filter:focus {
-  outline: none;
-  border: 0px;
-  box-shadow: 0 0 0 3px rgba(31, 71, 136, 0.1);
+.notifications-filter:hover {
+  background: #0077DD;
 }
 
-.search-filter option {
-  font-size: 15px;
+.notifications-filter-title {
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 600;
-  color: #FFFFFF;
-  font-family: var(--font-family); 
+  font-family: var(--font-family);
+  margin: 0;
+}
+
+.notifications-down-img {
+  width: 16px;
+  height: 16px;
+  filter: invert(1);
 }
 
 /* List */
@@ -334,6 +331,7 @@
   width: 150px;
   height: 150px;
   margin-bottom: 10px;
+  filter: opacity(0.8);
 }
 
 /* Loading */

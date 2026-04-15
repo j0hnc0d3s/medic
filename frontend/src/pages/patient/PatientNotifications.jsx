@@ -6,6 +6,9 @@ import '../styles/Notifications.css'
 
 import notification from '../../assets/images/notifications.png';
 import search from '../../assets/images/search.png';
+import add from '../../assets/images/plus.png';
+import down from '../../assets/images/down.png';
+
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([])
@@ -179,29 +182,26 @@ export default function Notifications() {
             <p className="notifications-search-text">Search</p>
           </div>
 
-          <div className="search-filters">
-            <select 
-              className="search-filter"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-            >
-              <option value="all">All Types</option>
-              <option value="appointment">Appointments</option>
-              <option value="alert">Alerts</option>
-              <option value="system">System</option>
-              <option value="message">Messages</option>
-              <option value="birthday">Birthdays</option>
-            </select>
+          <div className="notifications-search-filters">
+              <div className="notifications-filter">
+                  <p className="notifications-filter-title">All Types</p>
+                  
+                  <img 
+                      src={down}
+                      className="notifications-down-img"
+                      alt="Filter"
+                  />
+              </div>
 
-            <select 
-              className="search-filter"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="unread">Unread</option>
-              <option value="read">Read</option>
-            </select>
+              <div className="notifications-filter">
+                  <p className="appointments-filter-title">All</p>
+                  
+                  <img 
+                      src={down}
+                      className="notifications-down-img"
+                      alt="Filter"
+                  />
+              </div>
           </div>
         </div>
 

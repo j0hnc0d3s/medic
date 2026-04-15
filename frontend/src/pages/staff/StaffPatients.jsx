@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { patientService } from '../../services'
-import './Patients.css'
+
+import '../styles/Patients.css'
 
 export default function PatientsDatabase() {
   const navigate = useNavigate()

@@ -193,6 +193,19 @@ export default function PatientMessaging() {
     }
   }
 
+    const getConversationRole = (convo) => {
+      const role = messagingService.getOtherParticipantRole(convo, userProfile.uid)
+      const labels = {
+        admin: 'Administrator',
+        doctor: 'Doctor',
+        nurse: 'Nurse',
+        receptionist: 'Receptionist',
+        staff: 'Staff',
+        patient: 'Patient'
+      }
+      return labels[role] || 'User'
+    }
+
   const formatTime = (timestamp) => {
     if (!timestamp) return ''
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
@@ -321,7 +334,7 @@ export default function PatientMessaging() {
 
                 <div className="chat-info">
                   <h3 className="chat-name">{getConversationName(selectedConvo)}</h3>
-                  <p className="chat-status">Medical Staff</p>
+                  <p className="chat-status">{getConversationRole(selectedConvo)}</p>
                 </div>
               </div>
 
