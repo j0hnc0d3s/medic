@@ -16,6 +16,7 @@ import close from '../../assets/images/close.png';
 import scale from '../../assets/images/scale.png';
 import user1 from '../../assets/images/user1.jpeg';
 import user2 from '../../assets/images/user2.jpg';
+import body from '../../assets/images/body.png';
 
 const NAV_ITEMS = [
   {
@@ -76,25 +77,6 @@ export default function PatientOverview() {
                 className="list-img lrg active"
               />
             </div>
-
-            <div className="overview-list-item">
-              <div className="overview-list-avatar">
-                <img 
-                  src={user1}
-                  className="avatar-img"
-                />
-              </div>
-
-              <div className="overview-list-info">
-                <p className="overview-list-time">January 29th at 9:00 PM</p>
-                <p className="overview-list-name">Appointment with Dr. Coy</p>
-              </div>
-
-              <img 
-                src={next}
-                className="list-img lrg"
-              />
-            </div>
           </div>
 
           <button className="link">See all</button>
@@ -121,7 +103,7 @@ export default function PatientOverview() {
                   className="icon-img"
                 />
                 
-                <p className="overview-list-name">Medical Documument.pdf</p>
+                <p className="overview-list-name">Medical Document.pdf</p>
               </div>
 
               <div className="list-imgs">
@@ -162,7 +144,7 @@ export default function PatientOverview() {
                 <p className="test-number">1.8 mg/L</p>
               </div>
 
-              <p className="test-info">Highly concentrated</p>
+              <p className="test-info">High</p>
             </div>
 
             <div className="test-item">
@@ -172,7 +154,7 @@ export default function PatientOverview() {
                 <p className="test-number">1.8 mg/L</p>
               </div>
 
-              <p className="test-info">Highly concentrated</p>
+              <p className="test-info">High</p>
             </div>
 
             <div className="test-item">
@@ -182,7 +164,7 @@ export default function PatientOverview() {
                 <p className="test-number">1.8 mg/L</p>
               </div>
 
-              <p className="test-info">Highly concentrated</p>
+              <p className="test-info">High</p>
             </div>
 
             <div className="test-item">
@@ -192,7 +174,7 @@ export default function PatientOverview() {
                 <p className="test-number">1.8 mg/L</p>
               </div>
 
-              <p className="test-info">Highly concentrated</p>
+              <p className="test-info">High</p>
             </div>
           </div>
 
@@ -216,6 +198,13 @@ export default function PatientOverview() {
       </div>
 
       <div className="patient-sidebar-center">
+        <div className="patient-img">
+          <img 
+            src={body} 
+            alt="Body" 
+            className="body-img"
+          />
+        </div>
       </div>
 
       <div className="patient-sidebar-right">

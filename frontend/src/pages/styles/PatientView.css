@@ -12,6 +12,7 @@
   padding: 20px;
   margin: 20px;
   gap: 24px;
+  max-height: 852px;
 
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(20px);
@@ -418,14 +419,12 @@
 .test-item {
   padding: 20px;
   background: #0088ff1e;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
   flex: 1;
   display: flex;
-  gap: 7px;
   border-radius: 20px;
   width: 220px;
-  height: 120px;
+  height: 95px;
 }
 
 .test-header {
@@ -438,7 +437,6 @@
 }
 
 .test-name {
-  display: flex;
   background: #0088ff1e;
   padding: 6px;
   border-radius: 10px;
@@ -449,7 +447,6 @@
 }
 
 .test-number {
-  display: flex;
   font-size: 12px;
   font-weight: 500;
   color: #414244;
@@ -598,6 +595,13 @@
 .top-img {
   width: 20px;
   height: 20px;
+}
+
+.patient-img {
+  display: flex;
+  position: relative;
+  left: 150px;
+  opacity: 0.5;
 }
 
 .list-img {
