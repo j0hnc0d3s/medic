@@ -1,279 +1,215 @@
+// ─────────────────────────────────────────────────────────
+// FILE : src/pages/staff/StaffPatients.jsx
+// CSS  : src/pages/styles/Patients.css
+// ─────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { patientService } from '../../services'
-
 import '../styles/Patients.css'
+import homeImg  from '../../assets/images/home.png'
+import phoneImg from '../../assets/images/phone.png'
+import clockImg from '../../assets/images/clock.png'
+import schedImg from '../../assets/images/schedule.png'
 
-export default function PatientsDatabase() {
+
+const AV_COLORS = ['#2D9C9C','#FF6B6B','#1F4788','#F59E0B','#8B5CF6']
+const getInitials = (f, l) => `${f?.[0]||''}${l?.[0]||''}`.toUpperCase()
+const getAv = i => AV_COLORS[i % AV_COLORS.length]
+
+const fmtDate = ts => {
+  if (!ts) return 'Never'
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const FILTER_OPTS = [
+  { value: 'all',      label: 'All Patients'         },
+  { value: 'week',     label: 'Visited This Week'     },
+  { value: 'month',    label: 'Visited This Month'    },
+  { value: 'inactive', label: 'Inactive (3+ months)'  },
+]
+
+const STAFF_NAV = [
+  { img: homeImg, path: '/staff/overview', title: 'Home', active: true },
+  { img: phoneImg, path: '/staff/messaging', title: 'Messaging', active: false },
+  { img: clockImg, path: '/staff/appointments', title: 'Appointments', active: false },
+  { img: schedImg, path: '/staff/calendar', title: 'Calendar', active: false },
+]
+
+export default function StaffPatients() {
   const navigate = useNavigate()
-  const [patients, setPatients] = useState([])
-  const [filteredPatients, setFilteredPatients] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterOption, setFilterOption] = useState('all')
-  const [loading, setLoading] = useState(true)
+  const [patients,  setPatients]  = useState([])
+  const [filtered,  setFiltered]  = useState([])
+  const [search,    setSearch]    = useState('')
+  const [filter,    setFilter]    = useState('all')
+  const [loading,   setLoading]   = useState(true)
 
-  useEffect(() => {
-    loadPatients()
-  }, [])
-
-  useEffect(() => {
-    filterPatients()
-  }, [searchTerm, filterOption, patients])
+  useEffect(() => { loadPatients() }, [])
+  useEffect(() => { applyFilters() }, [search, filter, patients])
 
   const loadPatients = async () => {
     try {
-      const result = await patientService.getPatients()
-      
-      if (result.success) {
-        setPatients(result.patients)
-      } else {
-        console.error('Error loading patients:', result.error)
-      }
-      
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading patients:', error)
-      setLoading(false)
-    }
+      const res = await patientService.getPatients()
+      if (res.success) setPatients(res.patients)
+    } catch (e) { console.error(e) }
+    setLoading(false)
   }
 
-  const filterPatients = () => {
-    let filtered = [...patients]
-
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(patient => {
-        const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase()
-        const phone = patient.phone?.toLowerCase() || ''
-        const email = patient.email?.toLowerCase() || ''
-        return fullName.includes(term) || phone.includes(term) || email.includes(term)
-      })
+  const applyFilters = () => {
+    let list = [...patients]
+    if (search) {
+      const t = search.toLowerCase()
+      list = list.filter(p =>
+        `${p.firstName} ${p.lastName}`.toLowerCase().includes(t) ||
+        p.phone?.toLowerCase().includes(t) ||
+        p.email?.toLowerCase().includes(t)
+      )
     }
-
-    // Apply date filter
-    if (filterOption !== 'all') {
+    if (filter !== 'all') {
       const now = new Date()
-      filtered = filtered.filter(patient => {
-        if (!patient.visits || patient.visits.length === 0) return false
-        
-        const lastVisit = patient.visits[patient.visits.length - 1].date.toDate()
-        
-        switch (filterOption) {
-          case 'week':
-            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-            return lastVisit >= weekAgo
-          case 'month':
-            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-            return lastVisit >= monthAgo
-          case 'inactive':
-            const threeMonthsAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-            return lastVisit < threeMonthsAgo
-          default:
-            return true
-        }
+      list = list.filter(p => {
+        if (!p.visits?.length) return false
+        const last = p.visits[p.visits.length - 1].date.toDate()
+        if (filter === 'week')     return last >= new Date(now - 7*86400000)
+        if (filter === 'month')    return last >= new Date(now - 30*86400000)
+        if (filter === 'inactive') return last < new Date(now - 90*86400000)
+        return true
       })
     }
-
-    setFilteredPatients(filtered)
+    setFiltered(list)
   }
 
-  const handleDelete = async (patientId) => {
-    if (!window.confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
-      return
-    }
-
-    try {
-      const result = await patientService.deletePatient(patientId)
-      
-      if (result.success) {
-        setPatients(patients.filter(p => p.id !== patientId))
-        alert('Patient deleted successfully')
-      } else {
-        alert(`Failed to delete patient: ${result.error}`)
-      }
-    } catch (error) {
-      console.error('Error deleting patient:', error)
-      alert('Failed to delete patient')
-    }
+  const handleDelete = async id => {
+    if (!window.confirm('Delete this patient? This cannot be undone.')) return
+    const res = await patientService.deletePatient(id)
+    if (res.success) setPatients(p => p.filter(x => x.id !== id))
+    else alert(`Failed: ${res.error}`)
   }
 
   const exportCSV = () => {
-    // Prepare CSV data
-    const headers = ['First Name', 'Last Name', 'Date of Birth', 'Phone', 'Email', 'Address']
-    const rows = filteredPatients.map(patient => [
-      patient.firstName,
-      patient.lastName,
-      formatDate(patient.dateOfBirth),
-      patient.phone || '',
-      patient.email || '',
-      patient.address || ''
+    const rows = filtered.map(p => [
+      p.firstName, p.lastName, fmtDate(p.dateOfBirth),
+      p.phone||'', p.email||'', p.address||''
     ])
+    const csv = [
+      ['First Name','Last Name','Date of Birth','Phone','Email','Address'],
+      ...rows
+    ].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n')
-
-    // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = `patients_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
   }
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase()
-  }
+  const getLastVisit = p =>
+    p.visits?.length ? p.visits[p.visits.length - 1].date : null
 
-  const getAvatarColor = (index) => {
-    const colors = ['#2D9C9C', '#FF6B6B', '#1F4788', '#F59E0B', '#8B5CF6']
-    return colors[index % colors.length]
-  }
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'Never'
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    })
-  }
-
-  const getLastVisit = (patient) => {
-    if (!patient.visits || patient.visits.length === 0) return null
-    return patient.visits[patient.visits.length - 1].date
-  }
-
-  if (loading) {
-    return (
-      <div className="patients-database loading">
-        <div className="loading-spinner">Loading patients...</div>
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="pts-loading"><div className="pts-spinner" /></div>
+  )
 
   return (
-    <div className="patients">
-      <div className="patients-database">
-        <header className="database-header">
-          <div>
-            <h1>Patient Records</h1>
-            <p>{filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} found</p>
-          </div>
-          <div className="header-actions">
-            <button 
-              className="btn btn-secondary"
-              onClick={exportCSV}
-            >
-              Export CSV
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/staff/addpatient')}
-            >
-              + Add Patient
-            </button>
-          </div>
-        </header>
+    <div className="pts-shell">
+      {/* ── Left icon sidebar ──────────────────────── */}
+      <aside className="pv-aside">
+        {STAFF_NAV.map(({ img, path, title, active }) => (
+          <button key={title} title={title} aria-label={title}
+            className={`pv-aside-btn${active ? ' active' : ''}`}
+            onClick={() => navigate(path)}>
+            <img src={img} alt={title} className="pv-aside-icon" />
+          </button>
+        ))}
+      </aside>
 
-        <div className="search-bar">
+
+      {/* ── Bar ──────────────────────────────────── */}
+      <div className="pts-bar">
+        <div className="pts-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="pts-search-icon">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
           <input
-            type="text"
-            className="search-input"
-            placeholder="Search patients by name, phone, or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pts-search-input"
+            placeholder="Search by name, phone, or email…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
-          <select 
-            className="filter-select"
-            value={filterOption}
-            onChange={(e) => setFilterOption(e.target.value)}
-          >
-            <option value="all">All Patients</option>
-            <option value="week">Visited This Week</option>
-            <option value="month">Visited This Month</option>
-            <option value="inactive">Not Visited (3+ months)</option>
-          </select>
         </div>
 
-        {filteredPatients.length > 0 ? (
-          <div className="table-container">
-            <table className="patients-table">
-              <thead>
-                <tr>
-                  <th>Patient</th>
-                  <th>Date of Birth</th>
-                  <th>Phone</th>
-                  <th>Last Visit</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPatients.map((patient, index) => (
-                  <tr key={patient.id}>
-                    <td>
-                      <div className="patient-cell">
-                        <div 
-                          className="patient-avatar"
-                          style={{ background: getAvatarColor(index) }}
-                        >
-                          {getInitials(patient.firstName, patient.lastName)}
-                        </div>
-                        <span className="patient-name">
-                          {patient.firstName} {patient.lastName}
-                        </span>
-                      </div>
-                    </td>
-                    <td>{formatDate(patient.dateOfBirth)}</td>
-                    <td>{patient.phone || 'N/A'}</td>
-                    <td>{formatDate(getLastVisit(patient))}</td>
-                    <td>
-                      <div className="table-actions">
-                        <button 
-                          className="btn-icon"
-                          onClick={() => navigate(`/staff/patients/${patient.id}`)}
-                          title="View Details"
-                        >
-                          View
-                        </button>
-                        <button 
-                          className="btn-icon"
-                          onClick={() => navigate(`/staff/patients/${patient.id}/edit`)}
-                          title="Edit Patient"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="btn-icon delete"
-                          onClick={() => handleDelete(patient.id)}
-                          title="Delete Patient"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="pts-bar-right">
+          <div className="pts-select-wrap">
+            <select className="pts-select" value={filter} onChange={e => setFilter(e.target.value)}>
+              {FILTER_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">👥</div>
-            <div className="empty-text">No patients found</div>
-            <div className="empty-subtext">
-              {searchTerm || filterOption !== 'all' 
-                ? 'Try adjusting your search or filter'
-                : 'Add your first patient to get started'
-              }
-            </div>
-          </div>
-        )}
+
+          <button className="pts-btn pts-btn--ghost" onClick={exportCSV}>Export CSV</button>
+          <button className="pts-btn pts-btn--primary" onClick={() => navigate('/staff/addpatient')}>
+            + Add Patient
+          </button>
+        </div>
       </div>
+
+      {/* ── Count ─────────────────────────────────── */}
+      <p className="pts-count">
+        {filtered.length} patient{filtered.length !== 1 ? 's' : ''} found
+      </p>
+
+      {/* ── Table ─────────────────────────────────── */}
+      {filtered.length > 0 ? (
+        <div className="pts-table-wrap">
+          <table className="pts-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Date of Birth</th>
+                <th>Phone</th>
+                <th>Last Visit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p, i) => (
+                <tr key={p.id}>
+                  <td>
+                    <div className="pts-cell">
+                      <div className="pts-av" style={{ background: getAv(i) }}>
+                        {getInitials(p.firstName, p.lastName)}
+                      </div>
+                      <span className="pts-name">{p.firstName} {p.lastName}</span>
+                    </div>
+                  </td>
+                  <td>{fmtDate(p.dateOfBirth)}</td>
+                  <td>{p.phone || '—'}</td>
+                  <td>{fmtDate(getLastVisit(p))}</td>
+                  <td>
+                    <div className="pts-actions">
+                      <button className="pts-action-btn"
+                        onClick={() => navigate(`/staff/patients/${p.id}`)}>View</button>
+                      <button className="pts-action-btn"
+                        onClick={() => navigate(`/staff/patients/${p.id}/edit`)}>Edit</button>
+                      <button className="pts-action-btn pts-action-btn--delete"
+                        onClick={() => handleDelete(p.id)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="pts-empty">
+          <span className="pts-empty-icon">👥</span>
+          <p className="pts-empty-title">No patients found</p>
+          <p className="pts-empty-sub">
+            {search || filter !== 'all'
+              ? 'Try adjusting your search or filter'
+              : 'Add your first patient to get started'}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

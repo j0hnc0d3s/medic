@@ -15,9 +15,6 @@ import StaffAppointments from './pages/staff/StaffAppointments.jsx'
 import StaffAppointment from './pages/staff/StaffAppointment.jsx'
 import StaffMessaging from './pages/staff/StaffMessaging.jsx'
 import StaffCalendar from './pages/staff/StaffCalendar.jsx'
-import StaffNotifications from './pages/staff/StaffNotifications.jsx'
-import StaffProfile from './pages/staff/StaffProfile.jsx'
-import StaffSettings from './pages/staff/StaffSettings.jsx'
 
 // Patient Components
 
@@ -27,9 +24,6 @@ import PatientAppointments from './pages/patient/PatientAppointments.jsx'
 import PatientAppointment from './pages/patient/PatientAppointment.jsx'
 import PatientMessaging from './pages/patient/PatientMessaging.jsx'
 import PatientCalendar from './pages/patient/PatientCalendar.jsx'
-import PatientNotifications from './pages/patient/PatientNotifications.jsx'
-import PatientProfile from './pages/patient/PatientProfile.jsx'
-import PatientSettings from './pages/patient/PatientSettings.jsx'
 
 // Admin Components
 
@@ -75,9 +69,6 @@ function App() {
           <Route path="appointment/:appointmentId/edit" element={<StaffAppointment />} />
           <Route path="messaging" element={<StaffMessaging />} />
           <Route path="calendar" element={<StaffCalendar />} />
-          <Route path="notifications" element={<StaffNotifications />} />
-          <Route path="settings" element={<StaffSettings />} />
-          <Route path="profile" element={<StaffProfile />} />
         </Route>
 
         {/* ========== PATIENT ROUTES ========== */}
@@ -97,9 +88,6 @@ function App() {
           <Route path="appointment/:appointmentId/edit" element={<PatientAppointment />} />
           <Route path="messaging" element={<PatientMessaging />} />
           <Route path="calendar" element={<PatientCalendar />} />
-          <Route path="notifications" element={<PatientNotifications />} />
-          <Route path="settings" element={<PatientSettings />} />
-          <Route path="profile" element={<PatientProfile />} />
         </Route>
 
         {/* ========== ADMIN ROUTES ========== */}

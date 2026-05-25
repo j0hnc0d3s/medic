@@ -1,420 +1,344 @@
+// ─────────────────────────────────────────────────────────
+// FILE : src/pages/staff/StaffView.jsx
+// CSS  : src/pages/styles/StaffView.css
+// ─────────────────────────────────────────────────────────
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { 
-  reportService, 
-  appointmentService, 
-  patientService,
-  staffService,
-  notificationService 
+import { useAuth } from '../../contexts/AuthContext'
+import {
+  reportService, appointmentService, patientService,
+  staffService, notificationService,
 } from '../../services'
-
 import '../styles/StaffView.css'
 
-export default function AdminOverview() {
+import homeImg  from '../../assets/images/home.png'
+import phoneImg from '../../assets/images/phone.png'
+import clockImg from '../../assets/images/clock.png'
+import schedImg from '../../assets/images/schedule.png'
+import patImg from '../../assets/images/patient.png'
+
+// ── Sidebar nav ───────────────────────────────────────────
+const STAFF_NAV = [
+  { img: homeImg,  path: '/staff/overview',     title: 'StaffHome',         active: true  },
+  { img: phoneImg, path: '/staff/messaging',    title: 'StaffMessaging',    active: false },
+  { img: clockImg, path: '/staff/appointments', title: 'StaffAppointments', active: false },
+  { img: schedImg, path: '/staff/calendar',     title: 'StaffCalendar',     active: false },
+  { img: patImg, path: '/staff/patients',     title: 'StaffPatients',     active: false },
+]
+
+// ── Helpers ───────────────────────────────────────────────
+const mkInit = name =>
+  (name || '').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
+
+const fmtCurrency = n =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+
+const statusCls = s =>
+  ({ scheduled:'pending', confirmed:'pending', 'in-progress':'active', completed:'done' })[s] || 'pending'
+
+const statusLabel = s =>
+  (s || '').split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
+
+const shiftLabel = s =>
+  ({ day:'Day', evening:'Evening', night:'Night' })[s] || 'Active'
+
+const AV_COLORS = ['#2D9C9C','#567C8D','#1F4788','#2F4156','#858a8e']
+
+const getUpcomingBirthdays = patients => {
+  const today = new Date(); today.setHours(0,0,0,0)
+  return patients
+    .filter(p => p.dateOfBirth)
+    .map(p => {
+      const dob  = p.dateOfBirth.toDate ? p.dateOfBirth.toDate() : new Date(p.dateOfBirth)
+      let next   = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+      if (next < today) next = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate())
+      const days = Math.ceil((next - today) / 86400000)
+      return {
+        id: p.id,
+        name: `${p.firstName} ${p.lastName}`,
+        days,
+        label: days === 0 ? 'Today' : days === 1 ? 'Tomorrow'
+          : next.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      }
+    })
+    .filter(x => x.days <= 30)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5)
+}
+
+// ── Component ─────────────────────────────────────────────
+export default function StaffView() {
   const { userProfile, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  
+
   const [loading, setLoading] = useState(true)
-  const [dashboardData, setDashboardData] = useState({
-    todayAppointments: [],
-    upcomingBirthdays: [],
-    staffOnDuty: [],
-    stats: {
-      totalPatients: 0,
-      appointmentsToday: 0,
-      monthlyIncome: 0,
-      activeStaff: 0
-    },
-    recentAlerts: []
+  const [data, setData] = useState({
+    todayAppointments: [], upcomingBirthdays: [],
+    staffOnDuty: [], recentAlerts: [],
+    stats: { totalPatients: 0, appointmentsToday: 0, monthlyIncome: 0, activeStaff: 0 },
   })
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
+  useEffect(() => { loadDashboard() }, [])
 
-  const loadDashboardData = async () => {
+  const loadDashboard = async () => {
     try {
-      // Get comprehensive dashboard summary
-      const summaryResult = await reportService.getDashboardSummary()
-      
-      // Get today's appointments
-      const todayAppts = await appointmentService.getTodayAppointments()
-      
-      // Get upcoming birthdays (mock for now - you'd filter patients by birthday)
-      const patientsResult = await patientService.getPatients({ limit: 100 })
-      const upcomingBirthdays = getUpcomingBirthdays(patientsResult.success ? patientsResult.patients : [])
-      
-      // Get staff on duty (active status)
-      const staffResult = await staffService.getAllStaff({ status: 'active' })
-      const staffOnDuty = staffResult.success ? staffResult.staff.slice(0, 5) : []
-      
-      // Get unread alerts/notifications
-      const alertsResult = await notificationService.getNotifications({ 
-        type: 'alert', 
-        read: false,
-        limit: 3 
-      })
-
-      if (summaryResult.success) {
-        setDashboardData({
+      const [summary, todayAppts, patientsRes, staffRes, alertsRes] = await Promise.all([
+        reportService.getDashboardSummary(),
+        appointmentService.getTodayAppointments(),
+        patientService.getPatients({ limit: 100 }),
+        staffService.getAllStaff({ status: 'active' }),
+        notificationService.getNotifications({ type: 'alert', read: false, limit: 5 }),
+      ])
+      if (summary.success) {
+        setData({
           todayAppointments: todayAppts.success ? todayAppts.appointments : [],
-          upcomingBirthdays,
-          staffOnDuty,
+          upcomingBirthdays: getUpcomingBirthdays(patientsRes.success ? patientsRes.patients : []),
+          staffOnDuty      : staffRes.success ? staffRes.staff.slice(0, 5) : [],
+          recentAlerts     : alertsRes.success ? alertsRes.notifications : [],
           stats: {
-            totalPatients: summaryResult.summary.patients?.total || 0,
-            appointmentsToday: summaryResult.summary.appointments?.today || 0,
-            monthlyIncome: summaryResult.summary.finances?.totalIncome || 0,
-            activeStaff: summaryResult.summary.staff?.active || 0
+            totalPatients    : summary.summary.patients?.total          || 0,
+            appointmentsToday: summary.summary.appointments?.today      || 0,
+            monthlyIncome    : summary.summary.finances?.totalIncome    || 0,
+            activeStaff      : summary.summary.staff?.active            || 0,
           },
-          recentAlerts: alertsResult.success ? alertsResult.notifications : []
         })
       }
-      
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
-      setLoading(false)
-    }
+    } catch (e) { console.error(e) }
+    setLoading(false)
   }
 
-  const getUpcomingBirthdays = (patients) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0) // Reset to start of day
-    
-    const thirtyDaysFromNow = new Date(today)
-    thirtyDaysFromNow.setDate(today.getDate() + 30)
-
-    const birthdays = patients
-      .filter(patient => patient.dateOfBirth) // Must have DOB
-      .map(patient => {
-        const dob = patient.dateOfBirth.toDate ? patient.dateOfBirth.toDate() : new Date(patient.dateOfBirth)
-        
-        // Get this year's birthday
-        let birthdayThisYear = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
-        birthdayThisYear.setHours(0, 0, 0, 0)
-        
-        // If birthday already passed this year, use next year
-        let nextBirthday = birthdayThisYear
-        if (birthdayThisYear < today) {
-          nextBirthday = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate())
-          nextBirthday.setHours(0, 0, 0, 0)
-        }
-        
-        // Calculate days until birthday
-        const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24))
-        
-        return {
-          id: patient.id,
-          name: `${patient.firstName} ${patient.lastName}`,
-          nextBirthday,
-          daysUntil,
-          dateFormatted: daysUntil === 0 ? 'Today' : 
-                        daysUntil === 1 ? 'Tomorrow' : 
-                        nextBirthday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        }
-      })
-      .filter(item => item.daysUntil <= 30) // Next 30 days
-      .sort((a, b) => a.daysUntil - b.daysUntil) // Sort by closest first
-      .slice(0, 5) // Show max 5
-
-    return birthdays
-  }
-
-  const getInitials = (name) => {
-    const parts = name.split(' ')
-    return parts.map(p => p[0]).join('').toUpperCase()
-  }
-
-  const getStatusBadgeClass = (status) => {
-    const classes = {
-      'scheduled': 'pending',
-      'confirmed': 'pending',
-      'in-progress': 'in-progress',
-      'completed': 'completed'
-    }
-    return classes[status] || 'pending'
-  }
-
-  const formatTime = (time) => {
-    if (!time) return ''
-    return time
-  }
-
-  const getStaffShiftBadge = (shift, status) => {
-    if (status === 'on-break') return { text: 'Break', class: 'break' }
-    if (status === 'off-duty') return { text: 'Off Duty', class: 'pending' }
-    if (status === 'on-leave') return { text: 'On Leave', class: 'pending' }
-    
-    // Active staff - show shift
-    const shiftBadges = {
-      'day': { text: 'Day Shift', class: 'in-progress' },
-      'night': { text: 'Night Shift', class: 'in-progress' },
-      'evening': { text: 'Evening', class: 'in-progress' }
-    }
-    return shiftBadges[shift] || { text: 'Active', class: 'in-progress' }
-  }
-
-  const getStaffShiftTime = (shift) => {
-    const shiftTimes = {
-      'day': '8:00 AM - 4:00 PM',
-      'evening': '4:00 PM - 12:00 AM',
-      'night': '12:00 AM - 8:00 AM'
-    }
-    return shiftTimes[shift] || 'Flexible'
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
+  if (authLoading || loading) return (
+    <div className="sv-shell">
+      <div className="pv-aside-staff">
+        {[
+          { img: homeImg,  path: '/staff/overview',     title: 'StaffHome',         active: true  },
+          { img: phoneImg, path: '/staff/messaging',    title: 'StaffMessaging',    active: false },
+          { img: clockImg, path: '/staff/appointments', title: 'StaffAppointments', active: false },
+          { img: schedImg, path: '/staff/calendar',     title: 'StaffCalendar',     active: false },
+          { img: patImg, path: '/staff/patients',     title: 'StaffPatients',     active: false },
+        ].map(({ img, path, title, active }) => (
+          <button key={title} title={title} aria-label={title}
+            className={`pv-aside-btn${active ? ' active' : ''}`}
+            onClick={() => navigate(path)}>
+            <img src={img} alt={title} className="pv-aside-icon" />
+          </button>
+        ))}
       </div>
-    )
-  }
+      <div className="sv-loading-inner"><div className="sv-spinner" /></div>
+    </div>
+  )
 
   const firstName = userProfile?.firstName || 'Staff'
 
   return (
-    <div className="admin-dashboard">
-      <div className="admin-sidebar-left">
-        {/* Today's Appointments */}
-        <div className="dashboard-card">
-          <div className="card-header">
-            <h2 className="card-title">Today's Appointments</h2>
-            <span className="card-badge">{dashboardData.todayAppointments.length}</span>
-          </div>
+    <div className="sv-shell">
 
-          <div className="appointments-list">
-            {dashboardData.todayAppointments.slice(0, 3).map((appt, index) => (
-              <div key={appt.id} className="appointment-item">
-                <div className="appointment-avatar" style={{ 
-                  background: ['#2D9C9C', '#FF6B6B', '#1F4788', '#F59E0B'][index % 4]
-                }}>
-                  {getInitials(appt.patientName)}
-                </div>
-                <div className="appointment-info">
-                  <p className="appointment-name">{appt.patientName}</p>
-                  <p className="appointment-time">{formatTime(appt.appointmentTime)} • {appt.type}</p>
-                </div>
-                <span className={`status-badge ${getStatusBadgeClass(appt.status)}`}>
-                  {appt.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                </span>
-              </div>
-            ))}
-
-            {dashboardData.todayAppointments.length === 0 && (
-              <div className="empty-state-small">
-                <p>No appointments today</p>
-              </div>
-            )}
-          </div>
-
-          <button className="card-link" onClick={() => navigate('/staff/appointments')}>
-            View all appointments →
+      {/* ── Sidebar ─────────────────────────────── */}
+      <aside className="pv-aside">
+        {STAFF_NAV.map(({ img, path, title, active }) => (
+          <button key={title} title={title} aria-label={title}
+            className={`pv-aside-btn${active ? ' active' : ''}`}
+            onClick={() => navigate(path)}>
+            <img src={img} alt={title} className="pv-aside-icon" />
           </button>
-        </div>
+        ))}
+      </aside>
 
-        {/* Quick Stats */}
-        <div className="dashboard-card">
-          <div className="card-header">
-            <h2 className="card-title">Quick Stats</h2>
-          </div>
-          
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-number">{dashboardData.stats.totalPatients}</div>
-              <div className="stat-label">Total Patients</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">${dashboardData.stats.monthlyIncome.toFixed(0)}</div>
-              <div className="stat-label">Income (Month)</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* ── Page ────────────────────────────────── */}
+      <div className="sv-page">
 
-      <div className="admin-sidebar-right">
-        <div className="dashboard-header">
+        {/* ── Header ──────────────────────────── */}
+        <div className="sv-header">
           <div>
-            <h1 className="dashboard-title">Welcome back, {firstName}!</h1>
-            <p className="dashboard-subtitle">Here's what's happening at your clinic today</p>
+            <h1 className="sv-greeting">Welcome back, {firstName}!</h1>
+            <p className="sv-sub">Here's what's happening at the clinic today</p>
           </div>
-
-          <button 
-            className="btn-primary"
-            onClick={() => navigate('/staff/addpatient')}
-          >
+          <button className="sv-add-btn" onClick={() => navigate('/staff/addpatient')}>
             + Add Patient
           </button>
         </div>
 
-        <div className="dashboard-grid">
-          <div className="dashboard-column">
-            {/* Clinic Overview */}
-            <div className="dashboard-card">
-              <div className="card-header">
-                <h2 className="card-title">Clinic Overview</h2>
+        {/* ── Stat cards ──────────────────────── */}
+        <div className="sv-stats">
+          <div className="sv-stat-card sv-stat-card--dark">
+            <p className="sv-stat-value">{data.stats.totalPatients}</p>
+            <p className="sv-stat-label">Total Patients</p>
+          </div>
+          <div className="sv-stat-card">
+            <p className="sv-stat-value">{data.stats.appointmentsToday}</p>
+            <p className="sv-stat-label">Appointments Today</p>
+          </div>
+          <div className="sv-stat-card sv-stat-card--dark">
+            <p className="sv-stat-value">{fmtCurrency(data.stats.monthlyIncome)}</p>
+            <p className="sv-stat-label">Monthly Income</p>
+          </div>
+          <div className="sv-stat-card">
+            <p className="sv-stat-value">{data.stats.activeStaff}</p>
+            <p className="sv-stat-label">Active Staff</p>
+          </div>
+        </div>
+
+        {/* ── 2-col grid ──────────────────────── */}
+        <div className="sv-grid">
+
+          {/* LEFT */}
+          <div className="sv-col">
+
+            {/* Today's Appointments */}
+            <div className="sv-card">
+              <div className="sv-card-head">
+                <h2 className="sv-card-title">Today's Appointments</h2>
+                <span className="sv-badge">{data.todayAppointments.length}</span>
               </div>
 
-              <div className="overview-stats">
-                <div className="overview-stat">
-                  <div className="overview-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                  </div>
-                  <div className="overview-info">
-                    <div className="overview-value">{dashboardData.stats.totalPatients}</div>
-                    <div className="overview-label">Total Patients</div>
-                  </div>
+              {data.todayAppointments.length > 0 ? (
+                <div className="sv-list">
+                  {data.todayAppointments.slice(0, 4).map((a, i) => (
+                    <div key={a.id} className="sv-list-item">
+                      <div className="sv-av" style={{ background: AV_COLORS[i % AV_COLORS.length] }}>
+                        {mkInit(a.patientName)}
+                      </div>
+                      <div className="sv-item-info">
+                        <p className="sv-item-name">{a.patientName}</p>
+                        <p className="sv-item-meta">
+                          {a.appointmentTime && <span>{a.appointmentTime}</span>}
+                          {a.type && <span> · {a.type}</span>}
+                        </p>
+                      </div>
+                      <span className={`sv-status sv-status--${statusCls(a.status)}`}>
+                        {statusLabel(a.status)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
+              ) : (
+                <div className="sv-empty">
+                  <p className="sv-empty-text">No appointments today</p>
+                </div>
+              )}
 
-                <div className="overview-stat">
-                  <div className="overview-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div className="overview-info">
-                    <div className="overview-value">{dashboardData.stats.appointmentsToday}</div>
-                    <div className="overview-label">Appointments Today</div>
-                  </div>
-                </div>
-
-                <div className="overview-stat">
-                  <div className="overview-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <div className="overview-info">
-                    <div className="overview-value">${dashboardData.stats.monthlyIncome.toFixed(0)}</div>
-                    <div className="overview-label">Monthly Income</div>
-                  </div>
-                </div>
-              </div>
+              <button className="sv-card-link" onClick={() => navigate('/staff/appointments')}>
+                View all appointments →
+              </button>
             </div>
 
             {/* Staff On Duty */}
-            <div className="dashboard-card">
-              <div className="card-header">
-                <h2 className="card-title">Staff On Duty</h2>
-                <span className="card-badge">{dashboardData.staffOnDuty.length}</span>
+            <div className="sv-card">
+              <div className="sv-card-head">
+                <h2 className="sv-card-title">Staff On Duty</h2>
+                <span className="sv-badge">{data.staffOnDuty.length}</span>
               </div>
 
-              <div className="staff-list">
-                {dashboardData.staffOnDuty.length > 0 ? (
-                  dashboardData.staffOnDuty.map((staff, index) => {
-                    const shiftBadge = getStaffShiftBadge(staff.shift, staff.status)
+              {data.staffOnDuty.length > 0 ? (
+                <div className="sv-list">
+                  {data.staffOnDuty.map((s, i) => {
+                    const name  = s.fullName || `${s.firstName} ${s.lastName}`
+                    const isOff = s.status === 'off-duty' || s.status === 'on-leave'
                     return (
-                      <div key={staff.id} className="staff-item">
-                        <div className="staff-avatar" style={{ 
-                          background: ['#6B7280', '#1F4788', '#2D9C9C', '#8B5CF6', '#F59E0B'][index % 5]
-                        }}>
-                          {getInitials(staff.fullName || `${staff.firstName} ${staff.lastName}`)}
+                      <div key={s.id} className="sv-list-item">
+                        <div className="sv-av" style={{ background: AV_COLORS[i % AV_COLORS.length] }}>
+                          {mkInit(name)}
                         </div>
-                        <div className="staff-info">
-                          <p className="staff-name">
-                            {staff.role === 'Doctor' ? 'Dr. ' : ''}{staff.fullName || `${staff.firstName} ${staff.lastName}`}
+                        <div className="sv-item-info">
+                          <p className="sv-item-name">
+                            {s.role === 'Doctor' ? 'Dr. ' : ''}{name}
                           </p>
-                          <p className="staff-detail">
-                            {staff.department || staff.specialization || staff.role} • {getStaffShiftTime(staff.shift)}
+                          <p className="sv-item-meta">
+                            {s.department || s.specialization || s.role}
+                            {s.shift ? ` · ${shiftLabel(s.shift)} shift` : ''}
                           </p>
                         </div>
-                        <span className={`status-badge ${shiftBadge.class}`}>
-                          {shiftBadge.text}
+                        <span className={`sv-status${isOff ? ' sv-status--off' : ' sv-status--active'}`}>
+                          {isOff ? (s.status === 'on-leave' ? 'On Leave' : 'Off Duty') : 'On Duty'}
                         </span>
                       </div>
                     )
-                  })
-                ) : (
-                  <div className="empty-state-small">
-                    <p>No staff on duty</p>
-                  </div>
-                )}
-              </div>
+                  })}
+                </div>
+              ) : (
+                <div className="sv-empty">
+                  <p className="sv-empty-text">No staff on duty</p>
+                </div>
+              )}
 
-              <button className="card-link" onClick={() => navigate('/staff/staff/calendar')}>
+              <button className="sv-card-link" onClick={() => navigate('/staff/calendar')}>
                 View staff calendar →
               </button>
             </div>
           </div>
 
-          <div className="dashboard-column">
+          {/* RIGHT */}
+          <div className="sv-col">
+
             {/* Upcoming Birthdays */}
-            <div className="dashboard-card">
-              <div className="card-header">
-                <h2 className="card-title">Upcoming Birthdays</h2>
-                {dashboardData.upcomingBirthdays.length > 0 && (
-                  <span className="card-badge">{dashboardData.upcomingBirthdays.length}</span>
+            <div className="sv-card">
+              <div className="sv-card-head">
+                <h2 className="sv-card-title">Upcoming Birthdays</h2>
+                {data.upcomingBirthdays.length > 0 && (
+                  <span className="sv-badge">{data.upcomingBirthdays.length}</span>
                 )}
               </div>
 
-              <div className="birthday-list">
-                {dashboardData.upcomingBirthdays.length > 0 ? (
-                  dashboardData.upcomingBirthdays.map((birthday) => (
-                    <div 
-                      key={birthday.id} 
-                      className={`birthday-item clickable ${birthday.daysUntil === 0 ? 'today' : ''}`}
-                      onClick={() => navigate(`/staff/patients/${birthday.id}`)}
-                      title="Click to view patient"
-                    >
-                      <span className="birthday-icon">🎂</span>
-                      <div className="birthday-info">
-                        <div className="birthday-name">{birthday.name}</div>
-                        <div className="birthday-date">
-                          {birthday.dateFormatted}
-                          {birthday.daysUntil > 0 && (
-                            <span className="birthday-countdown"> • in {birthday.daysUntil} day{birthday.daysUntil !== 1 ? 's' : ''}</span>
-                          )}
-                        </div>
+              {data.upcomingBirthdays.length > 0 ? (
+                <div className="sv-list">
+                  {data.upcomingBirthdays.map(b => (
+                    <div key={b.id}
+                      className={`sv-list-item sv-list-item--clickable${b.days === 0 ? ' sv-list-item--today' : ''}`}
+                      onClick={() => navigate(`/staff/patients/${b.id}`)}>
+                      <div className="sv-birthday-icon">🎂</div>
+                      <div className="sv-item-info">
+                        <p className="sv-item-name">{b.name}</p>
+                        <p className="sv-item-meta">{b.label}</p>
                       </div>
+                      {b.days > 0 && (
+                        <span className="sv-days-badge">
+                          {b.days}d
+                        </span>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <div className="empty-state-small">
-                    <p>No birthdays in the next 30 days</p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="sv-empty">
+                  <p className="sv-empty-text">No birthdays in the next 30 days</p>
+                </div>
+              )}
 
-              <button className="card-link" onClick={() => navigate('/staff/patients')}>
+              <button className="sv-card-link" onClick={() => navigate('/staff/patients')}>
                 View all patients →
               </button>
             </div>
 
             {/* System Alerts */}
-            <div className="dashboard-card">
-              <div className="card-header">
-                <h2 className="card-title">System Alerts</h2>
-                <span className="card-badge alert">{dashboardData.recentAlerts.length}</span>
+            <div className="sv-card">
+              <div className="sv-card-head">
+                <h2 className="sv-card-title">System Alerts</h2>
+                {data.recentAlerts.length > 0 && (
+                  <span className="sv-badge sv-badge--alert">{data.recentAlerts.length}</span>
+                )}
               </div>
 
-              <div className="alerts-list">
-                {dashboardData.recentAlerts.length > 0 ? (
-                  dashboardData.recentAlerts.map((alert) => (
-                    <div key={alert.id} className="alert-item critical">
-                      <div className="alert-dot"></div>
-                      <div className="alert-content">
-                        <p className="alert-title">{alert.title}</p>
-                        <p className="alert-text">{alert.message}</p>
-                      </div>
+              <div className="sv-list">
+                {data.recentAlerts.length > 0 ? data.recentAlerts.map(a => (
+                  <div key={a.id} className="sv-alert-item sv-alert-item--warn">
+                    <div className="sv-alert-dot sv-alert-dot--warn" />
+                    <div className="sv-item-info">
+                      <p className="sv-item-name">{a.title}</p>
+                      <p className="sv-item-meta">{a.message}</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="alert-item info">
-                    <div className="alert-dot"></div>
-                    <div className="alert-content">
-                      <p className="alert-title">All Clear</p>
-                      <p className="alert-text">No system alerts</p>
+                  </div>
+                )) : (
+                  <div className="sv-alert-item">
+                    <div className="sv-alert-dot sv-alert-dot--ok" />
+                    <div className="sv-item-info">
+                      <p className="sv-item-name">All Clear</p>
+                      <p className="sv-item-meta">No system alerts at this time</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <button className="card-link" onClick={() => navigate('/staff/notifications')}>
+              <button className="sv-card-link" onClick={() => navigate('/staff/notifications')}>
                 View all alerts →
               </button>
             </div>

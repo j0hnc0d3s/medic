@@ -66,81 +66,25 @@ export default function AdminLayout() {
       <header className="top-nav">
         {/* Logo/Brand */}
         <div className="nav-brand">
-          <div className="brand-logo">
+          <div className="nav-logo">
             <img 
-              src={logo} 
+              src={inverted} 
               alt="Logo" 
               className="logo-img"
             />
           </div>
 
-          <span className="brand-name">Medic</span>
+          <div className="nav-content">
+            <span className="brand-name">medic</span>
+            <h3 className="brand-title">Takes care of you</h3>
+          </div>
         </div>
 
+
         {/* Navigation Items */}
-        <nav className="nav-items">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `nav-item ${isActive ? 'active' : ''}`
-              }
-            >
-              <span className="nav-label">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
 
         {/* Right Side Actions */}
         <div className="nav-actions">
-{/*           <button             
-            className="icon-btn"
-            onClick={() => navigate('/admin/alert')}
-            title="Alert"
-          >
-            <img 
-              src={alert} 
-              alt="Alert" 
-              className="icon-img"
-            />
-          </button> */}
-
-          <button             
-            className="icon-btn"
-            onClick={() => navigate('/admin/activities')}
-            title="Activity"
-          >
-            <img 
-              src={activity} 
-              alt="Activity" 
-              className="icon-img"
-            />
-          </button>
-
-          <button             
-            className="icon-btn"
-            onClick={() => navigate('/admin/notifications')}
-            title="Notifications"
-          >
-            <img 
-              src={notifications} 
-              alt="Notifications" 
-              className="icon-img"
-            />
-          </button>
-
-          <button 
-            className="icon-btn"
-            onClick={() => navigate('/admin/settings')}
-            title="Settings"
-          >
-            <img 
-              src={settings} 
-              alt="Settings" 
-              className="icon-img"
-            />
-          </button>
 
           <div className="user-menu">
             <div className="user-avatar">{initials}</div>

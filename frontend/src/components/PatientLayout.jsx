@@ -71,48 +71,14 @@ export default function PatientLayout() {
             />
           </div>
 
-          <span className="brand-name">Medic</span>
+          <div className="nav-content">
+            <span className="brand-name">medic</span>
+            <h3 className="brand-title">Takes care of you</h3>
+          </div>
         </div>
 
-        <nav className="nav-items">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `nav-area ${isActive ? 'active' : ''}`
-              }
-            >
-              <span className="nav-label">{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
 
         <div className="nav-actions">
-          <button             
-            className="icon-btn"
-            onClick={() => navigate('/patient/notifications')}
-            title="Notifications"
-          >
-            <img 
-              src={notifications} 
-              alt="Notifications" 
-              className="icon-img"
-            />
-          </button>
-
-          <button             
-            className="icon-btn"
-            onClick={() => navigate('/patient/settings')}
-            title="Notifications"
-          >
-            <img 
-              src={settings} 
-              alt="Settings" 
-              className="icon-img"
-            />
-          </button>
-
           <div className="user-area">
             <button 
               className="user-icon"

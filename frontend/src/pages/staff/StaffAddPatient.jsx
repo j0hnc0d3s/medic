@@ -1,316 +1,202 @@
+// ─────────────────────────────────────────────────────────
+// FILE : src/pages/staff/StaffAddPatient.jsx
+// CSS  : src/pages/styles/AddPatient.css
+// ─────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { patientService } from '../../services'
-
 import '../styles/AddPatient.css'
+import homeImg  from '../../assets/images/home.png'
+import phoneImg from '../../assets/images/phone.png'
+import clockImg from '../../assets/images/clock.png'
+import schedImg from '../../assets/images/schedule.png'
 
-export default function PatientForm() {
-  const { patientId } = useParams()  // ← Fixed: matches route param
-  const navigate = useNavigate()
-  const isEditMode = Boolean(patientId)  // ← Fixed
 
-  const [loading, setLoading] = useState(isEditMode)
-  const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    gender: '',
-    phone: '',
-    email: '',
-    address: '',
-    medicalHistory: '',
-    notes: ''
+const GENDERS = ['Male','Female','Other','Prefer not to say']
+
+const STAFF_NAV = [
+  { img: homeImg, path: '/staff/overview', title: 'Home', active: true },
+  { img: phoneImg, path: '/staff/messaging', title: 'Messaging', active: false },
+  { img: clockImg, path: '/staff/appointments', title: 'Appointments', active: false },
+  { img: schedImg, path: '/staff/calendar', title: 'Calendar', active: false },
+]
+
+export default function StaffAddPatient() {
+  const { patientId } = useParams()
+  const navigate      = useNavigate()
+  const isEdit        = Boolean(patientId)
+
+  const [loading, setLoading] = useState(isEdit)
+  const [saving,  setSaving]  = useState(false)
+  const [form, setForm] = useState({
+    firstName:'', lastName:'', dateOfBirth:'', gender:'',
+    phone:'', email:'', address:'', medicalHistory:'', notes:'',
   })
 
-  useEffect(() => {
-    if (isEditMode) {
-      loadPatient()
-    }
-  }, [patientId])
+  useEffect(() => { if (isEdit) loadPatient() }, [patientId])
 
   const loadPatient = async () => {
     try {
-      const result = await patientService.getPatient(patientId)
-      
-      if (result.success) {
-        const patient = result.patient
-        setFormData({
-          firstName: patient.firstName || '',
-          lastName: patient.lastName || '',
-          dateOfBirth: patient.dateOfBirth?.toDate().toISOString().split('T')[0] || '',
-          gender: patient.gender || '',
-          phone: patient.phone || '',
-          email: patient.email || '',
-          address: patient.address || '',
-          medicalHistory: patient.medicalHistory || '',
-          notes: patient.notes || ''
+      const res = await patientService.getPatient(patientId)
+      if (res.success) {
+        const p = res.patient
+        setForm({
+          firstName     : p.firstName || '',
+          lastName      : p.lastName  || '',
+          dateOfBirth   : p.dateOfBirth?.toDate().toISOString().split('T')[0] || '',
+          gender        : p.gender || '',
+          phone         : p.phone  || '',
+          email         : p.email  || '',
+          address       : p.address || '',
+          medicalHistory: p.medicalHistory || '',
+          notes         : p.notes || '',
         })
-      } else {
-        alert('Patient not found')
-        navigate('/staff/patients')
-      }
-      
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading patient:', error)
-      alert('Failed to load patient')
-      setLoading(false)
-    }
+      } else { alert('Patient not found'); navigate('/staff/patients') }
+    } catch (e) { console.error(e); alert('Failed to load patient') }
+    setLoading(false)
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
+  const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-  const validateForm = () => {
-    if (!formData.firstName.trim()) {
-      alert('First name is required')
-      return false
-    }
-    if (!formData.lastName.trim()) {
-      alert('Last name is required')
-      return false
-    }
-    if (!formData.dateOfBirth) {
-      alert('Date of birth is required')
-      return false
-    }
-    if (!formData.phone.trim()) {
-      alert('Phone number is required')
-      return false
-    }
+  const validate = () => {
+    if (!form.firstName.trim()) { alert('First name is required'); return false }
+    if (!form.lastName.trim())  { alert('Last name is required');  return false }
+    if (!form.dateOfBirth)      { alert('Date of birth is required'); return false }
+    if (!form.phone.trim())     { alert('Phone number is required'); return false }
     return true
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault()
-    
-    if (!validateForm()) return
-
+    if (!validate()) return
     setSaving(true)
-
     try {
-      const patientData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
-        phone: formData.phone.trim(),
-        email: formData.email.trim(),
-        address: formData.address.trim(),
-        medicalHistory: formData.medicalHistory.trim(),
-        notes: formData.notes.trim(),
-        createdBy: 'Admin' // Or use current user
+      const data = {
+        ...Object.fromEntries(Object.entries(form).map(([k,v]) => [k, typeof v === 'string' ? v.trim() : v])),
+        createdBy: 'Admin',
       }
-
-      if (isEditMode) {
-        // Update existing patient
-        const result = await patientService.updatePatient(patientId, {
-          ...patientData,
-          updatedBy: 'Admin'
-        })
-        
-        if (result.success) {
-          alert('Patient updated successfully')
-          navigate(`/staff/patients/${patientId}`)
-        } else {
-          alert(`Failed to update patient: ${result.error}`)
-        }
+      if (isEdit) {
+        const res = await patientService.updatePatient(patientId, { ...data, updatedBy: 'Admin' })
+        if (res.success) navigate(`/staff/patients/${patientId}`)
+        else alert(`Failed to update: ${res.error}`)
       } else {
-        // Create new patient
-        const result = await patientService.createPatient(patientData)
-        
-        if (result.success) {
-          alert('Patient added successfully')
-          navigate(`/staff/patients/${result.patientId}`)
-        } else {
-          alert(`Failed to add patient: ${result.error}`)
-        }
+        const res = await patientService.createPatient(data)
+        if (res.success) navigate(`/staff/patients/${res.patientId}`)
+        else alert(`Failed to add: ${res.error}`)
       }
-    } catch (error) {
-      console.error('Error saving patient:', error)
-      alert(`Failed to ${isEditMode ? 'update' : 'add'} patient`)
-    }
-    
+    } catch (e) { console.error(e); alert(`Failed to ${isEdit ? 'update' : 'add'} patient`) }
     setSaving(false)
   }
 
-  if (loading) {
-    return (
-      <div className="patient-form loading">
-        <div className="loading-spinner">Loading patient...</div>
-      </div>
-    )
-  }
+  if (loading) return <div className="ap-loading"><div className="ap-spinner" /></div>
 
   return (
-    <div className="patients">
-      <div className="patient-form">
-        <header className="form-header">
-          <h1 className="form-title">{isEditMode ? 'Edit Patient' : 'Add New Patient'}</h1>
-        </header>
+    <div className="ap-shell">
+      {/* ── Left icon sidebar ──────────────────────── */}
+      <aside className="pv-aside">
+        {STAFF_NAV.map(({ img, path, title, active }) => (
+          <button key={title} title={title} aria-label={title}
+            className={`pv-aside-btn${active ? ' active' : ''}`}
+            onClick={() => navigate(path)}>
+            <img src={img} alt={title} className="pv-aside-icon" />
+          </button>
+        ))}
+      </aside>
 
-        <form onSubmit={handleSubmit} className="form-container">
-          <div className="form-card">
-            <h3>Personal Information</h3>
-            
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">
-                  First Name <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="firstName"
-                  className="form-input"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="John"
-                  required
-                />
+
+      <div className="ap-page">
+        <h1 className="ap-heading">{isEdit ? 'Edit Patient' : 'Add New Patient'}</h1>
+
+        <form onSubmit={handleSubmit} className="ap-form">
+
+          {/* Personal Info */}
+          <div className="ap-card">
+            <div className="ap-card-head">
+              <p className="ap-card-title">Personal Information</p>
+            </div>
+            <div className="ap-grid">
+              <div className="ap-field">
+                <label className="ap-label">First Name <span className="ap-req">*</span></label>
+                <input className="ap-input" type="text" name="firstName"
+                  value={form.firstName} onChange={handleChange} placeholder="John" required />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  Last Name <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  className="form-input"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  placeholder="Smith"
-                  required
-                />
+              <div className="ap-field">
+                <label className="ap-label">Last Name <span className="ap-req">*</span></label>
+                <input className="ap-input" type="text" name="lastName"
+                  value={form.lastName} onChange={handleChange} placeholder="Smith" required />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  Date of Birth <span className="required">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  className="form-input"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  required
-                />
+              <div className="ap-field">
+                <label className="ap-label">Date of Birth <span className="ap-req">*</span></label>
+                <input className="ap-input" type="date" name="dateOfBirth"
+                  value={form.dateOfBirth} onChange={handleChange} required />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Gender</label>
-                <select
-                  name="gender"
-                  className="form-select"
-                  value={formData.gender}
-                  onChange={handleChange}
-                >
+              <div className="ap-field">
+                <label className="ap-label">Gender</label>
+                <select className="ap-select" name="gender"
+                  value={form.gender} onChange={handleChange}>
                   <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
+                  {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
               </div>
             </div>
           </div>
 
-          <div className="form-card">
-            <h3>Contact Information</h3>
-            
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">
-                  Phone Number <span className="required">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  className="form-input"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="+1 876-555-0123"
-                  required
-                />
+          {/* Contact Info */}
+          <div className="ap-card">
+            <div className="ap-card-head">
+              <p className="ap-card-title">Contact Information</p>
+            </div>
+            <div className="ap-grid">
+              <div className="ap-field">
+                <label className="ap-label">Phone Number <span className="ap-req">*</span></label>
+                <input className="ap-input" type="tel" name="phone"
+                  value={form.phone} onChange={handleChange}
+                  placeholder="+1 876-555-0123" required />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="form-input"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="john.smith@example.com"
-                />
+              <div className="ap-field">
+                <label className="ap-label">Email</label>
+                <input className="ap-input" type="email" name="email"
+                  value={form.email} onChange={handleChange}
+                  placeholder="john.smith@example.com" />
               </div>
-
-              <div className="form-group full-width">
-                <label className="form-label">Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  className="form-input"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="123 Main St, Kingston, Jamaica"
-                />
+              <div className="ap-field ap-field--full">
+                <label className="ap-label">Address</label>
+                <input className="ap-input" type="text" name="address"
+                  value={form.address} onChange={handleChange}
+                  placeholder="123 Main St, Kingston, Jamaica" />
               </div>
             </div>
           </div>
 
-          <div className="form-card">
-            <h3>Medical Information</h3>
-            
-            <div className="form-group">
-              <label className="form-label">Medical History</label>
-              <textarea
-                name="medicalHistory"
-                className="form-textarea"
-                value={formData.medicalHistory}
-                onChange={handleChange}
-                placeholder="Any relevant medical history, conditions, allergies, medications, etc."
-                rows="5"
-              />
+          {/* Medical Info */}
+          <div className="ap-card">
+            <div className="ap-card-head">
+              <p className="ap-card-title">Medical Information</p>
             </div>
-
-            <div className="form-group">
-              <label className="form-label">Notes</label>
-              <textarea
-                name="notes"
-                className="form-textarea"
-                value={formData.notes}
-                onChange={handleChange}
-                placeholder="Additional notes (e.g., preferred appointment times, special requirements, family history)"
-                rows="4"
-              />
+            <div className="ap-grid ap-grid--single">
+              <div className="ap-field">
+                <label className="ap-label">Medical History</label>
+                <textarea className="ap-textarea" name="medicalHistory"
+                  value={form.medicalHistory} onChange={handleChange} rows={5}
+                  placeholder="Conditions, allergies, medications, etc." />
+              </div>
+              <div className="ap-field">
+                <label className="ap-label">Notes</label>
+                <textarea className="ap-textarea" name="notes"
+                  value={form.notes} onChange={handleChange} rows={4}
+                  placeholder="Preferred appointment times, special requirements, etc." />
+              </div>
             </div>
           </div>
 
-          <div className="form-actions">
-            <button 
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate(isEditMode ? `/staff/patients/${patientId}` : '/staff/patients')}
-              disabled={saving}
-            >
+          {/* Actions */}
+          <div className="ap-actions">
+            <button type="button" className="ap-btn ap-btn--ghost" disabled={saving}
+              onClick={() => navigate(isEdit ? `/staff/patients/${patientId}` : '/staff/patients')}>
               Cancel
             </button>
-
-            <button 
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : isEditMode ? 'Update Patient' : 'Add Patient'}
+            <button type="submit" className="ap-btn ap-btn--primary" disabled={saving}>
+              {saving ? 'Saving…' : isEdit ? 'Update Patient' : 'Add Patient'}
             </button>
           </div>
         </form>

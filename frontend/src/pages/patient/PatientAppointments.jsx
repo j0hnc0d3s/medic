@@ -1,476 +1,346 @@
-import { useState, useEffect, useNavigate } from 'react'
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, Timestamp } from 'firebase/firestore'
+// ─────────────────────────────────────────────────────────
+// FILE : src/pages/patient/PatientAppointments.jsx
+// CSS  : src/pages/styles/Appointment.css
+// ─────────────────────────────────────────────────────────
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  collection, addDoc, getDocs, updateDoc, deleteDoc,
+  doc, query, orderBy, Timestamp,
+} from 'firebase/firestore'
 import { db } from '../../services/firebase'
-
 import '../styles/Appointment.css'
 
-import search from '../../assets/images/search.png';
-import calendar from '../../assets/images/calendar.png';
-import add from '../../assets/images/plus.png';
-import down from '../../assets/images/down.png';
+import homeImg   from '../../assets/images/home.png'
+import phoneImg  from '../../assets/images/phone.png'
+import clockImg  from '../../assets/images/clock.png'
+import schedImg  from '../../assets/images/schedule.png'
+import searchImg from '../../assets/images/search.png'
+import addImg    from '../../assets/images/plus.png'
+import downImg   from '../../assets/images/down.png'
 
-export default function Appointments() {
-  const [appointments, setAppointments] = useState([])
+const SIDEBAR_NAV = [
+  { img: homeImg,  path: '/patient/overview',     title: 'Home',         active: false },
+  { img: phoneImg, path: '/patient/messaging',    title: 'Messaging',    active: false },
+  { img: clockImg, path: '/patient/appointments', title: 'Appointments', active: true  },
+  { img: schedImg, path: '/patient/calendar',     title: 'Calendar',     active: false },
+]
 
-  const [loading, setLoading] = useState(true)
+const TYPES    = ['General Checkup', 'Follow-up', 'Emergency', 'Consultation', 'Procedure']
+const DOCTORS  = ['Dr. Sarah Mitchell', 'Dr. James Wilson', 'Dr. Paula Chen']
+const STATUSES = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show']
 
-  const [showModal, setShowModal] = useState(false)
-  const [editingAppt, setEditingAppt] = useState(null)
+const STATUS_COLORS = {
+  scheduled   : '#F59E0B',
+  confirmed   : '#3B82F6',
+  'in-progress': '#2D9C9C',
+  completed   : '#22C55E',
+  cancelled   : '#EF4444',
+  'no-show'   : '#6B7280',
+}
 
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [filterDate, setFilterDate] = useState('all')
-  const [filterType, setFilterType] = useState('all')
+const fmtDate = ts => {
+  if (!ts) return ''
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const fmtStatus = s =>
+  (s || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+const DATE_FILTERS   = ['all', 'today', 'upcoming', 'past']
+const STATUS_FILTERS = ['all', ...STATUSES]
+
+export default function PatientAppointments() {
+  const navigate = useNavigate()
+
+  const [appointments,  setAppointments]  = useState([])
+  const [loading,       setLoading]       = useState(true)
+  const [showModal,     setShowModal]     = useState(false)
+  const [editingAppt,   setEditingAppt]   = useState(null)
+  const [filterStatus,  setFilterStatus]  = useState('all')
+  const [filterDate,    setFilterDate]    = useState('all')
 
   const [formData, setFormData] = useState({
-    patientName: '',
-    patientPhone: '',
+    patientName: '', patientPhone: '',
     appointmentDate: new Date().toISOString().split('T')[0],
-    appointmentTime: '',
-    type: '',
-    doctor: '',
-    status: 'scheduled',
-    notes: ''
+    appointmentTime: '', type: '', doctor: '',
+    status: 'scheduled', notes: '',
   })
 
-  useEffect(() => {
-    loadAppointments()
-  }, [])
+  useEffect(() => { loadAppointments() }, [])
 
   const loadAppointments = async () => {
     try {
-      const apptsQuery = query(
-        collection(db, 'appointments'),
-        orderBy('appointmentDate', 'desc')
-      )
-      const snapshot = await getDocs(apptsQuery)
-      const appts = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      setAppointments(appts)
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading appointments:', error)
-      setLoading(false)
-    }
+      const snap = await getDocs(query(collection(db, 'appointments'), orderBy('appointmentDate', 'desc')))
+      setAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    } catch (e) { console.error(e) }
+    setLoading(false)
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const handleChange = e => setFormData(p => ({ ...p, [e.target.name]: e.target.value }))
 
   const resetForm = () => {
     setFormData({
-      patientName: '',
-      patientPhone: '',
+      patientName: '', patientPhone: '',
       appointmentDate: new Date().toISOString().split('T')[0],
-      appointmentTime: '',
-      type: '',
-      doctor: '',
-      status: 'scheduled',
-      notes: ''
+      appointmentTime: '', type: '', doctor: '',
+      status: 'scheduled', notes: '',
     })
     setEditingAppt(null)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault()
-
-    if (!formData.patientName.trim()) {
-      alert('Patient name is required')
-      return
-    }
-
+    if (!formData.patientName.trim()) return alert('Patient name is required')
     try {
       const data = {
         ...formData,
         patientName: formData.patientName.trim(),
         appointmentDate: Timestamp.fromDate(new Date(formData.appointmentDate)),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       }
-
       if (editingAppt) {
         await updateDoc(doc(db, 'appointments', editingAppt.id), data)
-        alert('Appointment updated successfully')
       } else {
         data.createdAt = Timestamp.now()
         await addDoc(collection(db, 'appointments'), data)
-        alert('Appointment created successfully')
       }
-
-      setShowModal(false)
-      resetForm()
-      loadAppointments()
-    } catch (error) {
-      console.error('Error saving appointment:', error)
-      alert('Failed to save appointment')
-    }
+      setShowModal(false); resetForm(); loadAppointments()
+    } catch (e) { console.error(e); alert('Failed to save appointment') }
   }
 
-  const handleEdit = (appt) => {
+  const handleEdit = appt => {
     setEditingAppt(appt)
     setFormData({
       patientName: appt.patientName || '',
       patientPhone: appt.patientPhone || '',
       appointmentDate: appt.appointmentDate?.toDate().toISOString().split('T')[0] || '',
       appointmentTime: appt.appointmentTime || '',
-      type: appt.type || '',
-      doctor: appt.doctor || '',
-      status: appt.status || 'scheduled',
-      notes: appt.notes || ''
+      type: appt.type || '', doctor: appt.doctor || '',
+      status: appt.status || 'scheduled', notes: appt.notes || '',
     })
     setShowModal(true)
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     if (!window.confirm('Delete this appointment?')) return
+    try { await deleteDoc(doc(db, 'appointments', id)); loadAppointments() }
+    catch (e) { console.error(e) }
+  }
 
+  const updateStatus = async (id, status) => {
     try {
-      await deleteDoc(doc(db, 'appointments', id))
-      alert('Appointment deleted')
+      await updateDoc(doc(db, 'appointments', id), { status, updatedAt: Timestamp.now() })
       loadAppointments()
-    } catch (error) {
-      console.error('Error deleting appointment:', error)
-    }
+    } catch (e) { console.error(e) }
   }
 
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await updateDoc(doc(db, 'appointments', id), {
-        status: newStatus,
-        updatedAt: Timestamp.now()
-      })
-      loadAppointments()
-    } catch (error) {
-      console.error('Error updating status:', error)
-    }
-  }
-
-  const getStatusColor = (status) => {
-    const colors = {
-      scheduled: '#F59E0B',
-      confirmed: '#3B82F6',
-      'in-progress': '#2D9C9C',
-      completed: '#22C55E',
-      cancelled: '#EF4444',
-      'no-show': '#6B7280'
-    }
-    return colors[status] || '#6B7280'
-  }
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return ''
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  const types = ['General Checkup', 'Follow-up', 'Emergency', 'Consultation', 'Procedure']
-  const doctors = ['Dr. Sarah Mitchell', 'Dr. James Wilson', 'Dr. Paula Chen']
-  const statuses = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show']
-
-  const filteredAppointments = appointments.filter(a => {
-    const matchesStatus = filterStatus === 'all' || a.status === filterStatus
-    
-    let matchesDate = true
+  const filtered = appointments.filter(a => {
+    const matchStatus = filterStatus === 'all' || a.status === filterStatus
+    let matchDate = true
     if (filterDate === 'today') {
-      const today = new Date().toDateString()
-      matchesDate = a.appointmentDate?.toDate().toDateString() === today
+      matchDate = a.appointmentDate?.toDate().toDateString() === new Date().toDateString()
     } else if (filterDate === 'upcoming') {
-      matchesDate = a.appointmentDate?.toDate() >= new Date()
+      matchDate = a.appointmentDate?.toDate() >= new Date()
     } else if (filterDate === 'past') {
-      matchesDate = a.appointmentDate?.toDate() < new Date()
+      matchDate = a.appointmentDate?.toDate() < new Date()
     }
-
-    return matchesStatus && matchesDate
+    return matchStatus && matchDate
   })
 
-  const todayCount = appointments.filter(a => 
-    a.appointmentDate?.toDate().toDateString() === new Date().toDateString()
-  ).length
+  if (loading) return (
+    <div className="appt-shell">
+      <div className="appt-loading"><div className="appt-spinner" /></div>
+    </div>
+  )
 
-  const upcomingCount = appointments.filter(a => 
-    a.appointmentDate?.toDate() >= new Date() && a.status !== 'cancelled'
-  ).length
+  return (
+    <div className="appt-shell">
 
-  if (loading) {
-    return (
-      <div className="appointments loading">
-        <div className="loading-spinner">Loading appointments...</div>
-      </div>
-    )
-  }
+      {/* ── Sidebar ───────────────────────────────── */}
+      <aside className="pv-aside">
+        {SIDEBAR_NAV.map(({ img, path, title, active }) => (
+          <button key={title} title={title} aria-label={title}
+            className={`pv-aside-btn${active ? ' active' : ''}`}
+            onClick={() => navigate(path)}>
+            <img src={img} alt={title} className="pv-aside-icon" />
+          </button>
+        ))}
+      </aside>
 
-return (
-    <div className="appointments">
-        <div className="appointments-container">
-            <header className="appointments-header">
-                    <div className="appointments-search">
-                            <div className="appointments-search-header">
-                                    <img 
-                                        src={search}
-                                        className="appointments-search-img"
-                                        alt="Search"
-                                    />
+      {/* ── Page ─────────────────────────────────── */}
+      <div className="appt-page">
 
-                                    <p className="notifications-search-text">Search</p>
-                            </div>
+        {/* Search + filter bar */}
+        <div className="appt-bar">
+          <div className="appt-search">
+            <img src={searchImg} alt="Search" className="appt-search-icon" />
+            <span className="appt-search-text">Search appointments</span>
+          </div>
 
-                            <div className="appointments-search-filters">
-                                    <div className="appointments-filter">
-                                            <p className="appointments-filter-title">All Types</p>
-                                            
-                                            <img 
-                                                src={down}
-                                                className="appointments-down-img"
-                                                alt="Filter"
-                                            />
-                                    </div>
+          <div className="appt-bar-right">
+            {/* Date filter pills */}
+            <div className="appt-pills">
+              {DATE_FILTERS.map(f => (
+                <button key={f}
+                  onClick={() => setFilterDate(f)}
+                  className={`appt-pill${filterDate === f ? ' active' : ''}`}>
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
 
-                                    <div className="appointments-filter">
-                                            <p className="appointments-filter-title">All</p>
-                                            
-                                            <img 
-                                                src={down}
-                                                className="appointments-down-img"
-                                                alt="Filter"
-                                            />
-                                    </div>
+            {/* Status dropdown */}
+            <div className="appt-select-wrap">
+              <select
+                className="appt-select"
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}>
+                {STATUS_FILTERS.map(s => (
+                  <option key={s} value={s}>{fmtStatus(s) || 'All Statuses'}</option>
+                ))}
+              </select>
+              <img src={downImg} alt="" className="appt-select-icon" />
+            </div>
 
-                                    <button className="appointments-filter" style={{background: '#3fa04a'}} onClick={() => window.location.href = '/patient/appointment'}>
-                                            <img 
-                                                src={add}
-                                                className="appointments-down-img"
-                                                alt="Add"
-                                            />
-
-                                            <p className="appointments-filter-title">Book Appointment</p>
-                                    </button>
-                            </div>
-                    </div>
-            </header>
-
-            {filteredAppointments.length > 0 ? (
-                <div className="appointments-list">
-                    {filteredAppointments.map(appt => (
-                        <div key={appt.id} className="appointment-card">
-                            <div className="appointment-header">
-                                <div className="appointment-time-block">
-                                    <div className="appointment-date">{formatDate(appt.appointmentDate)}</div>
-                                    <div className="appointment-time">{appt.appointmentTime}</div>
-                                </div>
-
-                                <div 
-                                    className="status-badge"
-                                    style={{
-                                        background: `${getStatusColor(appt.status)}15`,
-                                        color: getStatusColor(appt.status)
-                                    }}
-                                >
-                                    {appt.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                                </div>
-                            </div>
-
-                            <div className="appointment-body">
-                                <h3 className="patient-name">{appt.patientName}</h3>
-                                {appt.patientPhone && (
-                                    <p className="patient-phone">{appt.patientPhone}</p>
-                                )}
-                                <div className="appointment-details">
-                                    {appt.type && <span className="detail-badge">{appt.type}</span>}
-                                    {appt.doctor && <span className="detail-badge">{appt.doctor}</span>}
-                                </div>
-                                {appt.notes && (
-                                    <p className="appointment-notes">{appt.notes}</p>
-                                )}
-                            </div>
-
-                            <div className="appointment-footer">
-                                <div className="status-actions">
-                                    {appt.status === 'scheduled' && (
-                                        <button 
-                                            className="btn-sm btn-confirm"
-                                            onClick={() => updateStatus(appt.id, 'confirmed')}
-                                        >
-                                            Confirm
-                                        </button>
-                                    )}
-                                    {appt.status === 'confirmed' && (
-                                        <button 
-                                            className="btn-sm btn-start"
-                                            onClick={() => updateStatus(appt.id, 'in-progress')}
-                                        >
-                                            Start
-                                        </button>
-                                    )}
-                                    {appt.status === 'in-progress' && (
-                                        <button 
-                                            className="btn-sm btn-complete"
-                                            onClick={() => updateStatus(appt.id, 'completed')}
-                                        >
-                                            Complete
-                                        </button>
-                                    )}
-                                </div>
-
-                                <div className="action-buttons">
-                                    <button className="btn-text" onClick={() => handleEdit(appt)}>
-                                        Edit
-                                    </button>
-                                    <button className="btn-text delete" onClick={() => handleDelete(appt.id)}>
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="appointments-empty-state">
-                    <img 
-                        src={calendar} 
-                        alt="Calendar" 
-                        className="appointments-list-img xlrg"
-                    />
-
-                    <div className="appointments-empty-text">Cleared.</div>
-                    <div className="appointments-empty-subtext">Nothing to see here.</div>
-                </div>
-            )}
+            {/* Book button */}
+            <button
+              className="appt-book-btn"
+              onClick={() => navigate('/patient/appointment')}>
+              <img src={addImg} alt="" className="appt-book-icon" />
+              Book Appointment
+            </button>
+          </div>
         </div>
 
-        {showModal && (
-            <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <div className="modal-header">
-                        <h2 className="modal-title">
-                            {editingAppt ? 'Edit Appointment' : 'New Appointment'}
-                        </h2>
-                        <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+        {/* List */}
+        {filtered.length > 0 ? (
+          <div className="appt-list">
+            {filtered.map(appt => {
+              const color = STATUS_COLORS[appt.status] || '#6B7280'
+              return (
+                <div key={appt.id} className="appt-card">
+                  <div className="appt-card-left">
+                    <div className="appt-card-date">{fmtDate(appt.appointmentDate)}</div>
+                    {appt.appointmentTime && (
+                      <div className="appt-card-time">{appt.appointmentTime}</div>
+                    )}
+                  </div>
+
+                  <div className="appt-card-body">
+                    <p className="appt-card-name">{appt.patientName}</p>
+                    {appt.patientPhone && (
+                      <p className="appt-card-phone">{appt.patientPhone}</p>
+                    )}
+                    <div className="appt-card-tags">
+                      {appt.type   && <span className="appt-tag">{appt.type}</span>}
+                      {appt.doctor && <span className="appt-tag">{appt.doctor}</span>}
                     </div>
+                    {appt.notes && <p className="appt-card-notes">{appt.notes}</p>}
+                  </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label className="form-label">Patient Name *</label>
-                                    <input
-                                        type="text"
-                                        name="patientName"
-                                        className="form-input"
-                                        value={formData.patientName}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
+                  <div className="appt-card-right">
+                    <span className="appt-status-badge"
+                      style={{ background: `${color}18`, color }}>
+                      {fmtStatus(appt.status)}
+                    </span>
 
-                                <div className="form-group">
-                                    <label className="form-label">Phone</label>
-                                    <input
-                                        type="tel"
-                                        name="patientPhone"
-                                        className="form-input"
-                                        value={formData.patientPhone}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Date *</label>
-                                    <input
-                                        type="date"
-                                        name="appointmentDate"
-                                        className="form-input"
-                                        value={formData.appointmentDate}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Time *</label>
-                                    <input
-                                        type="time"
-                                        name="appointmentTime"
-                                        className="form-input"
-                                        value={formData.appointmentTime}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Type</label>
-                                    <select
-                                        name="type"
-                                        className="form-select"
-                                        value={formData.type}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="">Select type</option>
-                                        {types.map(type => (
-                                            <option key={type} value={type}>{type}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Doctor</label>
-                                    <select
-                                        name="doctor"
-                                        className="form-select"
-                                        value={formData.doctor}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="">Select doctor</option>
-                                        {doctors.map(doc => (
-                                            <option key={doc} value={doc}>{doc}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Status</label>
-                                    <select
-                                        name="status"
-                                        className="form-select"
-                                        value={formData.status}
-                                        onChange={handleChange}
-                                    >
-                                        {statuses.map(status => (
-                                            <option key={status} value={status}>
-                                                {status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="form-group full-width">
-                                    <label className="form-label">Notes</label>
-                                    <textarea
-                                        name="notes"
-                                        className="form-textarea"
-                                        value={formData.notes}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        placeholder="Additional notes or instructions..."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                                Cancel
-                            </button>
-                            <button type="submit" className="btn btn-primary">
-                                {editingAppt ? 'Update' : 'Create'} Appointment
-                            </button>
-                        </div>
-                    </form>
+                    <div className="appt-card-actions">
+                      {appt.status === 'scheduled'   && <button className="appt-action-btn confirm" onClick={() => updateStatus(appt.id, 'confirmed')}>Confirm</button>}
+                      {appt.status === 'confirmed'   && <button className="appt-action-btn start"   onClick={() => updateStatus(appt.id, 'in-progress')}>Start</button>}
+                      {appt.status === 'in-progress' && <button className="appt-action-btn complete" onClick={() => updateStatus(appt.id, 'completed')}>Complete</button>}
+                      <button className="appt-action-btn edit"   onClick={() => handleEdit(appt)}>Edit</button>
+                      <button className="appt-action-btn delete" onClick={() => handleDelete(appt.id)}>Delete</button>
+                    </div>
+                  </div>
                 </div>
-            </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="appt-empty">
+            <img src={schedImg} alt="" className="appt-empty-img" />
+            <p className="appt-empty-title">No appointments found</p>
+            <p className="appt-empty-sub">Nothing to see here.</p>
+          </div>
         )}
+      </div>
+
+      {/* ── Modal ────────────────────────────────── */}
+      {showModal && (
+        <div className="appt-modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="appt-modal" onClick={e => e.stopPropagation()}>
+            <div className="appt-modal-head">
+              <h2 className="appt-modal-title">
+                {editingAppt ? 'Edit Appointment' : 'New Appointment'}
+              </h2>
+              <button className="appt-modal-close" onClick={() => { setShowModal(false); resetForm() }}>×</button>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="appt-modal-body">
+                <div className="appt-form-grid">
+                  {[
+                    { label: 'Patient Name *', name: 'patientName', type: 'text',  required: true },
+                    { label: 'Phone',          name: 'patientPhone', type: 'tel'  },
+                    { label: 'Date *',         name: 'appointmentDate', type: 'date', required: true },
+                    { label: 'Time *',         name: 'appointmentTime', type: 'time', required: true },
+                  ].map(f => (
+                    <div key={f.name} className="appt-form-group">
+                      <label className="appt-form-label">{f.label}</label>
+                      <input type={f.type} name={f.name} required={f.required}
+                        className="appt-form-input" value={formData[f.name]}
+                        onChange={handleChange} />
+                    </div>
+                  ))}
+
+                  <div className="appt-form-group">
+                    <label className="appt-form-label">Type</label>
+                    <select name="type" className="appt-form-select"
+                      value={formData.type} onChange={handleChange}>
+                      <option value="">Select type</option>
+                      {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="appt-form-group">
+                    <label className="appt-form-label">Doctor</label>
+                    <select name="doctor" className="appt-form-select"
+                      value={formData.doctor} onChange={handleChange}>
+                      <option value="">Select doctor</option>
+                      {DOCTORS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="appt-form-group">
+                    <label className="appt-form-label">Status</label>
+                    <select name="status" className="appt-form-select"
+                      value={formData.status} onChange={handleChange}>
+                      {STATUSES.map(s => <option key={s} value={s}>{fmtStatus(s)}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="appt-form-group appt-form-full">
+                    <label className="appt-form-label">Notes</label>
+                    <textarea name="notes" className="appt-form-textarea"
+                      value={formData.notes} onChange={handleChange}
+                      rows={3} placeholder="Additional notes..." />
+                  </div>
+                </div>
+              </div>
+
+              <div className="appt-modal-foot">
+                <button type="button" className="appt-modal-cancel"
+                  onClick={() => { setShowModal(false); resetForm() }}>Cancel</button>
+                <button type="submit" className="appt-modal-confirm">
+                  {editingAppt ? 'Update' : 'Create'} Appointment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-)
+  )
 }
