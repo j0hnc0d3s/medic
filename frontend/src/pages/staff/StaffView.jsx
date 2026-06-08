@@ -107,9 +107,13 @@ export default function StaffView() {
     setLoading(false)
   }
 
-  if (authLoading || loading) return (
+  const firstName = userProfile?.firstName || 'Staff'
+
+  return (
     <div className="sv-shell">
-      <div className="pv-aside-staff">
+
+      {/* ── Sidebar ─────────────────────────────── */}
+      <div className="pv-aside">
         {[
           { img: homeImg,  path: '/staff/overview',     title: 'StaffHome',         active: true  },
           { img: phoneImg, path: '/staff/messaging',    title: 'StaffMessaging',    active: false },
@@ -117,32 +121,17 @@ export default function StaffView() {
           { img: schedImg, path: '/staff/calendar',     title: 'StaffCalendar',     active: false },
           { img: patImg, path: '/staff/patients',     title: 'StaffPatients',     active: false },
         ].map(({ img, path, title, active }) => (
-          <button key={title} title={title} aria-label={title}
+          <button
+            key={title}
             className={`pv-aside-btn${active ? ' active' : ''}`}
-            onClick={() => navigate(path)}>
+            onClick={() => navigate(path)}
+            title={title}
+            aria-label={title}
+          >
             <img src={img} alt={title} className="pv-aside-icon" />
           </button>
         ))}
       </div>
-      <div className="sv-loading-inner"><div className="sv-spinner" /></div>
-    </div>
-  )
-
-  const firstName = userProfile?.firstName || 'Staff'
-
-  return (
-    <div className="sv-shell">
-
-      {/* ── Sidebar ─────────────────────────────── */}
-      <aside className="pv-aside">
-        {STAFF_NAV.map(({ img, path, title, active }) => (
-          <button key={title} title={title} aria-label={title}
-            className={`pv-aside-btn${active ? ' active' : ''}`}
-            onClick={() => navigate(path)}>
-            <img src={img} alt={title} className="pv-aside-icon" />
-          </button>
-        ))}
-      </aside>
 
       {/* ── Page ────────────────────────────────── */}
       <div className="sv-page">

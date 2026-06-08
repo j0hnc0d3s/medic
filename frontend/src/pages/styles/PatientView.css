@@ -41,7 +41,7 @@
   gap            : 8px;
   border-radius  : 100px;
   background     : #dfe1e267;
-  padding        : 8px 0;
+  padding        : 8px 2px;
   position       : relative;
   align-self     : flex-start;
 }
