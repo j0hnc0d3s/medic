@@ -7,11 +7,13 @@
 }
 
 /* ===== LEFT SIDE - CAROUSEL ===== */
+
 .login-area {
   flex: 1;
+  height   : 100%;
   flex-direction: row;
   gap: 100px;
-  background: linear-gradient(180deg, #0088ff42 0%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #0166F8 0%, #ffffff5b 250%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,6 +37,7 @@
   flex-direction: column;
   align-items: flex-start;
   position: relative;
+  margin-top: 600px;
 }
 
 .hero-image {
@@ -75,21 +78,48 @@
   flex: 1;
   flex-direction: column;
   position: relative;
+  gap: 10px;
 }
 
 .carousel-subtitle {
   font-size: 16px;
   font-weight: 400;
-  color: #1A202C;
+  color: #ffffff;
   margin-bottom: 10px;
 }
 
 .carousel-title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #1A202C;
+  font-size: 76px;
+  font-weight: 300;
+  color: #ffffff;
   line-height: 1.3;
   margin: 0;
+}
+
+.carousel-subtext {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.carousel-altext {
+  font-size: 26px;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.carousel-description {
+  font-size: 20px;
+  font-weight: 250;
+  color: #ffffff;
+  line-height: 1.7;
+  margin: 0;
+  width: 550px;
+  margin-top: 20px;
 }
 
 .carousel-controls {
@@ -161,17 +191,22 @@
 }
 
 /* ===== RIGHT SIDE - LOGIN FORM ===== */
+
 .login-content {
   background: #FFFFFF;
   align-items: center;
   justify-content: center;
   padding: 60px;
-  border-radius: 20px;
+  border-radius: 60px 60px 0 0;
+  width: 600px;
+  height: 100%;
+  margin-top: 100px;
 }
 
 .login-card {
-  max-width: 480px;
+  min-width: 480px;
   width: 100%;
+
 }
 
 .medic-logo {
@@ -183,7 +218,6 @@
   height: 48px;
 }
 
-
 .medic-logo-img {
   height: 80px;
   top: 30px;
@@ -192,23 +226,135 @@
 }
 
 .login-title {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 700;
-  color: #1A202C;
+  color: #0000002f;
   margin: 0 0 12px 0;
+  text-align: center;
 }
 
 .login-subtitle {
   font-size: 13px;
   font-weight: 400;
   color: #718096;
-  line-height: 1.6;
-  margin: 0 0 32px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.login-subtitle p {
+  margin: 0;
+  display: inline;
+}
+
+.login-highlight {
+  font-size: 13px;
+  font-weight: 700;
+  color: #026afbd9;
+  display: inline;
+}
+
+/* ===== AUTH ===== */
+
+.auth-toggle {
+  display        : flex;
+  align-items    : center;
+  background     : #F1F1F1;
+  border-radius  : 50px;
+  padding        : 4px;
+  gap            : 4px;
+  width          : 100%;
+}
+
+.auth-toggle-group {
+  display        : flex;
+  align-items    : center;
+  border-radius  : 50px;
+  transition     : all 0.25s ease;
+  cursor         : pointer;
+}
+
+.auth-toggle-group.group-active {
+  flex           : 2;
+  gap            : 6px;
+  padding        : 4px 6px;
+}
+
+.auth-toggle-group.group-inactive {
+  flex           : 1;
+  justify-content: center;
+  padding        : 6px 12px;
+}
+
+.auth-toggle-btn {
+  padding        : 10px 42px;
+  border-radius  : 50px;
+  border         : none;
+  font-size      : 14px;
+  font-weight    : 500;
+  font-family    : 'Poppins', sans-serif;
+  cursor         : pointer;
+  transition     : all 0.2s ease;
+  background     : transparent;
+  color          : #858a8e;
+  white-space    : nowrap;
+}
+
+.auth-toggle-btn.active {
+  background     : #1a56db;
+  color          : #ffffff;
+  box-shadow     : 0 2px 8px rgba(26, 86, 219, 0.3);
+}
+
+.auth-toggle-btn:hover:not(.active) {
+  color          : #1a56db;
+}
+
+.auth-toggle-side-label {
+  font-size      : 13px;
+  font-weight    : 500;
+  color          : #858a8e;
+  font-family    : 'Poppins', sans-serif;
+  white-space    : nowrap;
+}
+
+.auth-toggle-collapsed {
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  cursor         : pointer;
+}
+
+.auth-collapsed-title {
+  font-size      : 13px;
+  font-weight    : 500;
+  color          : #9ca3af;
+  font-family    : 'Poppins', sans-serif;
+  line-height    : 1.2;
+}
+
+.auth-collapsed-sub {
+  font-size      : 10px;
+  color          : #b0b7c3;
+  font-family    : 'Poppins', sans-serif;
+  line-height    : 1.2;
+}
+
+.auth-highlight {
+   background: #ffffff; 
+   border-radius: 50px;
+   padding: 5px;
 }
 
 /* ===== FORM STYLES ===== */
+
 .login-form {
   margin-bottom: 24px;
+  margin-top: 20px;
+  padding: 10px;
 }
 
 .form-group {
@@ -225,11 +371,11 @@
 
 .form-group input {
   width: 100%;
-  padding: 14px 16px;
+  padding: 20px 20px;
   font-size: 12px;
   border: 0px;
-  border-radius: 12px;
-  background: #F7FAFC;
+  border-radius: 25px;
+  background: #F1F1F1;
   color: #2D3748;
   transition: all 0.3s ease;
   box-sizing: border-box;
@@ -252,7 +398,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #FFFFFF;
-  background: #0088FF;
+  background: #0269FB;
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -261,7 +407,7 @@
 }
 
 .get-started-btn:hover {
-  background: #0088FF;
+  background: #40A6FF;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(31, 71, 136, 0.3);
 }
@@ -271,6 +417,7 @@
 }
 
 /* ===== DIVIDER ===== */
+
 .divider {
   position: relative;
   text-align: center;
@@ -297,6 +444,7 @@
 }
 
 /* ===== SOCIAL LOGIN BUTTONS ===== */
+
 .social-login {
   display: flex;
   gap: 12px;
@@ -332,6 +480,7 @@
 }
 
 /* ===== FORGOT LINK ===== */
+
 .forgot-link {
   text-align: right;
   font-size: 12px;
@@ -340,18 +489,27 @@
 }
 
 .forgot-link a {
-  color: #c0c0c0;
-  font-weight: 400;
+  color: #0269FB;
+  font-weight: 700;
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .forgot-link a:hover {
-  color: #2D9C9C;
-  text-decoration: underline;
+  color: #40A6FF;
+}
+
+.notice {
+  margin-top: 20px;
+  gap: 10px;
+  flex: 1;
+  display: flex;
+  position: relative;
+  flex-direction: column;
 }
 
 /* ===== SIGNUP LINK ===== */
+
 .signup-link {
   text-align: center;
   font-size: 10px;
@@ -360,15 +518,117 @@
 }
 
 .signup-link a {
-  color: #0088FF;
-  font-weight: 600;
+  color: #0269FB;
+  font-weight: 700;
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .signup-link a:hover {
-  color: #2D9C9C;
-  text-decoration: underline;
+  color: #40A6FF;
+}
+
+/* ===== TERM LINK ===== */
+
+.term-link {
+  text-align: center;
+  font-size: 10px;
+  color: #718096;
+  margin: 0;
+}
+
+.term-link a {
+  color: #0269FB;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.term-link a:hover {
+  color: #40A6FF;
+}
+
+
+/* ===== LOGO ===== */
+
+.forgot-remember {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  position: relative;
+  flex: 1;
+  align-items: center;
+}
+
+.remember-text {
+  font-size: 12px;
+  color: #718096;
+}
+
+.remember-me {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  position: relative;
+  align-items: center;
+  align-content: center;
+  align-self: center;
+}
+
+.check-area {
+  align-items: center;
+  align-content: center;
+  margin-bottom: 12px;
+}
+
+.check-logo {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== REVIEW ===== */
+
+.review-indicator {
+  display     : flex;
+  align-items : center;
+  gap         : 12px;
+  padding     : 8px 4px;
+  animation   : fadeIn 0.25s ease forwards;
+}
+ 
+.review-indicator-text {
+  display       : flex;
+  flex-direction: column;
+}
+ 
+.review-indicator-title {
+  font-size   : 16px;
+  font-weight : 600;
+  color       : #9ca3af;
+  font-family : 'Poppins', sans-serif;
+  line-height : 1.2;
+}
+ 
+.review-indicator-sub {
+  font-size   : 11px;
+  color       : #b0b7c3;
+  font-family : 'Poppins', sans-serif;
+}
+ 
+.review-indicator-pill {
+  width        : 52px;
+  height       : 32px;
+  border-radius: 50px;
+  background   : #1a56db;
+  opacity      : 0.85;
+}
+
+/* ===== LOGOS ===== */
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
