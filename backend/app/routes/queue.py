@@ -8,8 +8,8 @@ from app.config.firebase import get_db
 from app.middleware.authRequired import auth_required
 from app.middleware.roleRequired import staff_required
 from app.utils.triage import compute_triage_level, estimate_wait_minutes, LEVEL_TO_LETTER
-from app.services.smtp import email_service          # adjust to wherever smtp.py actually lives
-from app.emailTemplates import get_queue_code_email   # adjust to wherever emailTemplates.py actually lives
+from app.config.smtp import email_service          # adjust to wherever smtp.py actually lives
+from app.utils.emailTemplates import get_queue_code_email   # adjust to wherever emailTemplates.py actually lives
 from google.cloud.firestore_v1.base_query import FieldFilter
 import logging
 
