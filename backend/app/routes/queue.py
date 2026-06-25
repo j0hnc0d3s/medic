@@ -11,6 +11,7 @@ from app.utils.triage import compute_triage_level, estimate_wait_minutes, LEVEL_
 from app.config.smtp import email_service          # adjust to wherever smtp.py actually lives
 from app.utils.emailTemplates import get_queue_code_email   # adjust to wherever emailTemplates.py actually lives
 from google.cloud.firestore_v1.base_query import FieldFilter
+from firebase_admin.firestore import transactional   # add this near your other imports in queue.py
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,23 +24,19 @@ def _generate_code():
 
 
 def _next_queue_number(db, letter: str) -> str:
-    """Atomically increments today's counter for a given priority letter
-    and returns a formatted queue number like 'A007'.
-    NOTE: keyed on UTC date — if the hospital isn't on UTC, this can roll
-    over mid-shift rather than at local midnight. Swap in a local-timezone
-    date string if that matters for you."""
     today_key = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     counter_ref = db.collection('queueCounters').document(f'{today_key}_{letter}')
 
-    @db.transaction()
-    def bump(transaction):
-        snapshot = counter_ref.get(transaction=transaction)
+    @transactional
+    def bump(transaction, ref):
+        snapshot = ref.get(transaction=transaction)
         current = snapshot.get('count') if snapshot.exists else 0
         new_count = (current or 0) + 1
-        transaction.set(counter_ref, {'count': new_count, 'date': today_key}, merge=True)
+        transaction.set(ref, {'count': new_count, 'date': today_key}, merge=True)
         return new_count
 
-    count = bump(db.transaction())
+    transaction = db.transaction()
+    count = bump(transaction, counter_ref)
     return f"{letter}{str(count).zfill(3)}"
 
 
