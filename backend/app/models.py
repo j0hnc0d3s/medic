@@ -379,3 +379,77 @@ class ResetCode:
         reset_code.created_at = data.get('created_at')
         
         return reset_code
+    
+@dataclass
+class QueueEntry:
+    """A public queue/intake submission — created before any user account
+    exists. Lives in its own 'queueEntries' collection rather than
+    'appointments' since most submissions come from anonymous walk-ins via
+    the public Join form."""
+    id: Optional[str] = None
+
+    fullName: str = ""
+    dateOfBirth: Optional[str] = None
+    phone: str = ""
+    email: str = ""
+
+    reason: str = ""
+    appointmentDate: Optional[str] = None
+    appointmentTime: Optional[str] = None
+
+    duration: Optional[str] = None
+    painLevel: Optional[int] = None
+    symptoms: List[str] = field(default_factory=list)
+    isEmergency: bool = False
+
+    govIdUrl: Optional[str] = None
+    insuranceUrl: Optional[str] = None
+
+    condition: Optional[str] = None
+    allergies: List[str] = field(default_factory=list)
+    medications: List[str] = field(default_factory=list)
+
+    hadSurgery: bool = False
+    surgeryDetails: Optional[str] = None
+
+    contactName: Optional[str] = None
+    contactRelation: Optional[str] = None
+    contactPhone: Optional[str] = None
+    contactEmail: Optional[str] = None
+    contactMethod: Optional[str] = None
+
+    triageLevel: Optional[int] = None      # 1 (critical) – 5 (non-urgent)
+    priorityLetter: Optional[str] = None   # 'A'..'E'
+    triageOverride: bool = False           # staff manually changed the auto-triage
+    queueNumber: Optional[str] = None      # e.g. "A007", assigned at verification
+    assignedDoctor: Optional[str] = None
+    assignedRoom: Optional[str] = None
+
+    verificationCode: Optional[str] = None
+    codeExpiresAt: Optional[datetime] = None
+    codeVerified: bool = False
+
+    status: str = "pending_verification"
+    # pending_verification -> queued -> called -> in_progress -> completed
+    # (or cancelled / no_show at any point after queued)
+
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
+    queuedAt: Optional[datetime] = None
+    calledAt: Optional[datetime] = None
+    completedAt: Optional[datetime] = None
+
+    def to_dict(self):
+        data = asdict(self)
+        data.pop('id', None)
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], doc_id: Optional[str] = None):
+        entry = cls()
+        if doc_id:
+            entry.id = doc_id
+        for key in data:
+            if hasattr(entry, key):
+                setattr(entry, key, data[key])
+        return entry
