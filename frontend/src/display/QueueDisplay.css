@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+.qd-shell {
+  min-height: 100vh; background: #0c0d10; color: #fff; font-family: 'Poppins', sans-serif;
+  padding: 40px 56px; display: flex; flex-direction: column; gap: 40px;
+}
+
+.qd-header { display: flex; justify-content: space-between; align-items: center; }
+.qd-logo { display: flex; align-items: center; gap: 10px; }
+.qd-logo-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.qd-logo-text { font-size: 22px; font-weight: 700; }
+.qd-clock { font-size: 28px; font-weight: 700; color: #9ca3af; }
+
+.qd-error { color: #f59e0b; font-size: 14px; }
+
+.qd-logo-icon {
+  filter: brightness(0) invert(1);
+  height: 50px;
+}
+
+.qd-section-label { font-size: 20px; font-weight: 600; color: #9ca3af; margin: 0 0 20px; text-transform: uppercase; letter-spacing: 1px; }
+
+.qd-now-serving-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+.qd-now-card { background: #0066ff; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 40px rgba(0,102,255,0.3); }
+.qd-now-card.in-progress { background: #1e293b; }
+.qd-now-id { font-size: 48px; font-weight: 800; }
+.qd-now-room { font-size: 14px; color: rgba(255,255,255,0.8); }
+
+.qd-waiting-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+.qd-waiting-chip { background: #16181c; border: 2px solid #6b7280; border-radius: 16px; padding: 18px 26px; font-size: 24px; font-weight: 700; }
+
+.qd-empty { color: #6b7280; font-size: 14px; }
+
+.qd-legend { display: flex; gap: 24px; margin-top: auto; padding-top: 20px; border-top: 1px solid #1f2228; }
+.qd-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9ca3af; }
+.qd-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.qf-link-btn--back { display: block; margin-top: 14px; font-size: 12px; color: #9ca3af;}
+
+.qf-link-btn--back:hover { color: #1e293b; }
+
+.qf-appt-queue-id { font-size: 20px; font-weight: 800; color: #0066ff; }

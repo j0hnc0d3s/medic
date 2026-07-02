@@ -6,6 +6,11 @@
   font-family: var(--font-family);
 }
 
+.login-error {
+  color: red;
+  font-size: 12px;
+}
+
 /* ===== LEFT SIDE - CAROUSEL ===== */
 
 .login-area {
@@ -270,37 +275,89 @@
 }
 
 .auth-toggle-group {
-  display        : flex;
-  align-items    : center;
+  position       : relative;
+  min-height     : 52px;
   border-radius  : 50px;
-  transition     : all 0.25s ease;
+  overflow       : hidden;
   cursor         : pointer;
+  flex-shrink    : 0;
+  transition     : flex-grow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                   background 0.25s ease,
+                   box-shadow 0.25s ease;
 }
 
 .auth-toggle-group.group-active {
-  flex           : 2;
-  gap            : 6px;
-  padding        : 4px 6px;
+  flex-grow: 1;
+  background     : #fff;
+  box-shadow     : 0 2px 12px rgba(0, 0, 0, 0.08);
+  cursor         : default;
+  display: flex;
+  width: 100px;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  align-self: center;
+  flex-direction: row;
 }
 
 .auth-toggle-group.group-inactive {
-  flex           : 1;
-  justify-content: center;
-  padding        : 6px 12px;
+  flex-grow      : 1;
+  background     : transparent;
+  box-shadow     : none;
 }
 
+/* ── Expanded state (buttons) ───────────────────────────── */
+.auth-expanded-state {
+  display        : flex;
+  gap            : 4px;
+  align-items    : center;
+  padding        : 8px 6px;
+  transition     : opacity 0.2s ease, transform 0.2s ease;
+}
+
+.group-inactive .auth-expanded-state {
+  position       : absolute;
+  top            : 8px;
+  left           : 8px;
+  opacity        : 0;
+  transform      : scale(0.95) translateY(-4px);
+  pointer-events : none;
+}
+
+/* ── Collapsed state (label) ────────────────────────────── */
+.auth-collapsed-state {
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  justify-content: center;
+  gap            : 2px;
+  padding        : 12px 8px;
+  height         : 100%;
+  transition     : opacity 0.2s ease, transform 0.2s ease;
+}
+
+.group-active .auth-collapsed-state {
+  position       : absolute;
+  top            : 12px;
+  left           : 8px;
+  opacity        : 0;
+  transform      : scale(0.95) translateY(4px);
+  pointer-events : none;
+}
+
+/* ── Tab buttons ────────────────────────────────────────── */
 .auth-toggle-btn {
-  padding        : 10px 42px;
+  padding        : 10px 28px;
   border-radius  : 50px;
   border         : none;
   font-size      : 14px;
   font-weight    : 500;
   font-family    : 'Poppins', sans-serif;
   cursor         : pointer;
-  transition     : all 0.2s ease;
   background     : transparent;
   color          : #858a8e;
   white-space    : nowrap;
+  transition     : background 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
 .auth-toggle-btn.active {
@@ -313,27 +370,18 @@
   color          : #1a56db;
 }
 
-.auth-toggle-side-label {
-  font-size      : 13px;
-  font-weight    : 500;
-  color          : #858a8e;
-  font-family    : 'Poppins', sans-serif;
-  white-space    : nowrap;
+.auth-toggle-btn:active {
+  transform      : scale(0.97);
 }
 
-.auth-toggle-collapsed {
-  display        : flex;
-  flex-direction : column;
-  align-items    : center;
-  cursor         : pointer;
-}
-
+/* ── Collapsed label text ───────────────────────────────── */
 .auth-collapsed-title {
   font-size      : 13px;
   font-weight    : 500;
   color          : #9ca3af;
   font-family    : 'Poppins', sans-serif;
   line-height    : 1.2;
+  white-space    : nowrap;
 }
 
 .auth-collapsed-sub {
@@ -341,12 +389,7 @@
   color          : #b0b7c3;
   font-family    : 'Poppins', sans-serif;
   line-height    : 1.2;
-}
-
-.auth-highlight {
-   background: #ffffff; 
-   border-radius: 50px;
-   padding: 5px;
+  white-space    : nowrap;
 }
 
 /* ===== FORM STYLES ===== */
@@ -355,6 +398,13 @@
   margin-bottom: 24px;
   margin-top: 20px;
   padding: 10px;
+}
+
+.form-groups {
+  flex-direction: row;
+  flex: 1;
+  justify-content: space-between;
+  display: flex;
 }
 
 .form-group {

@@ -14,8 +14,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './QueueForm.css'
 
-import leftImg  from '../../assets/images/left.png'
-import rightImg from '../../assets/images/right.png'
+import left  from '../../assets/black/left.png'
+import right from '../../assets/black/right.png'
+import down from '../../assets/black/down.png'
 
 // ── Step metadata ─────────────────────────────────────────
 const STEPS = [
@@ -32,6 +33,8 @@ const DURATION_OPTIONS  = ['24 hours', '1 to 3 days', '3 to 7 days', 'More than 
 const MONTH_NAMES       = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAY_NAMES         = ['SUN','MON','TUE','WED','THU','FRI','SAT']
 const TIME_SLOTS        = ['8–9 AM','9–11 AM','11–1 PM','1–3 PM','3–5 PM']
+
+const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:5173'
 
 // ── Helper sub-components ─────────────────────────────────
 
@@ -56,29 +59,50 @@ function PillRadio({ options, value, onChange, name }) {
 function TagInput({ tags, onAdd, onRemove, placeholder }) {
   const [input, setInput] = useState('')
 
-  const add = () => {
-    const val = input.trim()
-    if (val && !tags.includes(val)) onAdd(val)
+  const tryAdd = (rawVal) => {
+    const val = rawVal.trim()
+    if (val && !tags.includes(val)) {
+      onAdd(val)
+    }
     setInput('')
   }
 
   return (
     <div className="qf-tag-input-wrap">
-      <input
-        className="qf-input"
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add() }
-        }}
-        placeholder={placeholder}
-      />
+      <div className="qf-tag-input-row">
+        <input
+          className="qf-input tag"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault()
+              e.stopPropagation()
+              tryAdd(e.target.value) // ← DOM value, not state closure
+            }
+          }}
+          placeholder={placeholder}
+        />
+
+        <button
+          type="button"
+          className="qf-tag-add-btn"
+          onClick={() => tryAdd(input)}
+        >
+          Add
+        </button>
+      </div>
+
       {tags.length > 0 && (
         <div className="qf-tags">
           {tags.map(t => (
             <span key={t} className="qf-tag">
               {t}
-              <button className="qf-tag-remove" onClick={() => onRemove(t)}>×</button>
+              <button
+                type="button"
+                className="qf-tag-remove"
+                onClick={() => onRemove(t)}
+              >×</button>
             </span>
           ))}
         </div>
@@ -86,25 +110,101 @@ function TagInput({ tags, onAdd, onRemove, placeholder }) {
     </div>
   )
 }
+// ── Custom pain slider — draggable thumb + live value bubble ──
+function PainSlider({ value, onChange, min = 1, max = 10 }) {
+  const trackRef = useRef()
+  const [dragging, setDragging] = useState(false)
+
+  const pct = ((value - min) / (max - min)) * 100
+  const severity = value <= 3 ? 'low' : value <= 6 ? 'mid' : 'high'
+
+  const updateFromClientX = (clientX) => {
+    const rect = trackRef.current.getBoundingClientRect()
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+    const newVal = Math.round(min + ratio * (max - min))
+    if (newVal !== value) onChange(newVal)
+  }
+
+  const handlePointerDown = e => {
+    setDragging(true)
+    updateFromClientX(e.clientX)
+  }
+
+  useEffect(() => {
+    if (!dragging) return
+    const handleMove = e => updateFromClientX(e.clientX)
+    const handleUp    = () => setDragging(false)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    return () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+    }
+  }, [dragging])
+
+  const handleKeyDown = e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp')   onChange(Math.min(max, value + 1))
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowDown') onChange(Math.max(min, value - 1))
+  }
+
+  return (
+    <div className="qf-pain-slider">
+      <div
+        ref={trackRef}
+        className="qf-pain-track"
+        onPointerDown={handlePointerDown}
+      >
+        <div className={`qf-pain-fill qf-pain-fill--${severity}`} style={{ width: `${pct}%` }} />
+
+        {/* Tick marks */}
+        <div className="qf-pain-ticks">
+          {Array.from({ length: max - min + 1 }, (_, i) => (
+            <span key={i} className="qf-pain-tick" />
+          ))}
+        </div>
+
+        <div
+          className={`qf-pain-thumb qf-pain-thumb--${severity}${dragging ? ' dragging' : ''}`}
+          style={{ left: `${pct}%` }}
+          role="slider"
+          tabIndex={0}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={value}
+          onKeyDown={handleKeyDown}
+        >
+          <span className="qf-pain-bubble"></span>
+        </div>
+      </div>
+
+      <div className="qf-pain-labels">
+        <span>Mild</span><span>Moderate</span><span>Severe</span>
+      </div>
+    </div>
+  )
+}
 
 // File drop zone
-function FileDropZone({ label, onFile }) {
-  const ref  = useRef()
-  const [file, setFile] = useState(null)
+function FileDropZone({ value, onFile }) {
+  const ref   = useRef()
   const [drag, setDrag] = useState(false)
 
-  const handle = f => { setFile(f); onFile?.(f) }
+  // Derive display name from whatever is in the parent form state —
+  // survives step navigation because the parent holds the File object.
+  const displayName = value instanceof File ? value.name : null
+
+  const handle = f => { onFile?.(f) }
 
   return (
     <div
-      className={`qf-dropzone${drag ? ' drag' : ''}${file ? ' has-file' : ''}`}
+      className={`qf-dropzone${drag ? ' drag' : ''}${displayName ? ' has-file' : ''}`}
       onDragOver={e => { e.preventDefault(); setDrag(true)  }}
       onDragLeave={() => setDrag(false)}
       onDrop={e => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files[0]) }}
       onClick={() => ref.current.click()}>
       <input ref={ref} type="file" hidden onChange={e => handle(e.target.files[0])} />
-      {file ? (
-        <p className="qf-dropzone-name">✓ {file.name}</p>
+      {displayName ? (
+        <p className="qf-dropzone-name">✓ {displayName}</p>
       ) : (
         <>
           <svg className="qf-dropzone-icon" viewBox="0 0 24 24" fill="none">
@@ -164,45 +264,44 @@ function DatePicker({ value, onChange }) {
 
 // Step indicator (shows in login-buttons area via onStepChange)
 function StepIndicator({ currentStep }) {
-  // Show 4 steps: anchor window so current + next are always visible
-  const start   = Math.max(1, Math.min(currentStep - 1, STEPS.length - 3))
-  const visible = STEPS.slice(start - 1, start + 3)  // up to 4
- 
+  const stepNum = Number(currentStep)
+  const start   = Math.max(1, Math.min(stepNum - 1, STEPS.length - 3))
+  const visible = STEPS.slice(start - 1, start + 3)
+
   return (
     <div className="qf-step-indicator">
-      {visible.map((s, i) => {
-        const isCurrent = s.num === currentStep
-        const isNext    = s.num === currentStep + 1
-        const isPast    = s.num < currentStep
- 
-        if (isCurrent) {
-          return (
-            <div key={s.num} className="qf-si-pill qf-si-pill--current">
-              <span className="qf-si-num">Step {String(s.num).padStart(2,'0')}</span>
-              <span className="qf-si-sub">{s.label}</span>
-            </div>
-          )
-        }
- 
-        if (isNext) {
-          return (
+      {/* Everything else — wrapped in one shared background */}
+      <div className="qf-si-rest">
+        {visible.map(s => {
+          const isCurrent = s.num === stepNum
+          const isNext = s.num === stepNum + 1
+          const isPast = s.num < stepNum
+
+          if (isCurrent) {
+            return (
+              <div key={s.num} className="qf-si-pill qf-si-pill--current">
+                <span className="qf-si-num">Step {String(s.num).padStart(2,'0')}</span>
+                <span className="qf-si-sub">{s.label}</span>
+              </div>
+            )
+          }
+
+          return isNext ? (
             <div key={s.num} className="qf-si-pill qf-si-pill--next">
               <span className="qf-si-next-label">Next</span>
               <span className="qf-si-num">Step {String(s.num).padStart(2,'0')}</span>
             </div>
+          ) : (
+            <span key={s.num} className={`qf-si-plain${isPast ? ' past' : ''}`}>
+              Step {String(s.num).padStart(2,'0')}
+            </span>
           )
-        }
- 
-        // Past or far future — plain text only
-        return (
-          <span key={s.num} className={`qf-si-plain${isPast ? ' past' : ''}`}>
-            Step {String(s.num).padStart(2,'0')}
-          </span>
-        )
-      })}
+        })}
+      </div>
     </div>
   )
 }
+
 
 
 // ══════════════════════════════════════════════════════════
@@ -211,6 +310,8 @@ function StepIndicator({ currentStep }) {
 export function QueueJoinForm({ onStepChange }) {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const [form, setForm] = useState({
     // Step 0
@@ -235,15 +336,48 @@ export function QueueJoinForm({ onStepChange }) {
   useEffect(() => { onStepChange?.(step) }, [step])
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
-  const addTag   = (key, val)  => set(key, [...form[key], val])
-  const removeTag = (key, val) => set(key, form[key].filter(t => t !== val))
+
+  const addTag    = (key, val) => setForm(f => ({ ...f, [key]: [...f[key], val] }))
+  const removeTag = (key, val) => setForm(f => ({ ...f, [key]: f[key].filter(t => t !== val) }))
 
   const goNext = () => setStep(s => s + 1)
   const goBack = () => setStep(s => Math.max(0, s - 1))
 
-  const handleSubmit = () => {
-    console.log('Queue submission:', form)
-    navigate('/queue/confirmation')
+  const fileToBase64 = (file) => new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve({
+      name: file.name,
+      type: file.type,
+      data: reader.result.split(',')[1],  // base64 only, no data: prefix
+    })
+    reader.readAsDataURL(file)
+  })
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      // Shallow-clone form so we don't mutate state
+      const payload = { ...form }
+
+      // File objects can't travel through JSON.stringify — convert to base64.
+      // The backend receives { name, type, data } and can save to Firebase Storage.
+      if (form.govId instanceof File)     payload.govId     = await fileToBase64(form.govId)
+      if (form.insurance instanceof File) payload.insurance  = await fileToBase64(form.insurance)
+
+      const response = await fetch(`${API_URL}/api/queue/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || 'Something went wrong submitting your information.')
+      navigate('/queue/confirmation', { state: { queueEntryId: data.data.queueEntryId } })
+    } catch (err) {
+      setSubmitError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleChange = e => set(e.target.name, e.target.value)
@@ -332,18 +466,14 @@ export function QueueJoinForm({ onStepChange }) {
 
           <div className="qf-field">
             <label className="qf-label">On a scale of 1–10, how would you rate your pain?</label>
-            <input className="qf-slider" type="range" min={1} max={10}
+            <PainSlider
               value={form.painLevel}
-              onChange={e => set('painLevel', Number(e.target.value))} />
-            <div className="qf-slider-ticks">
-              {Array.from({length:10},(_,i)=>(
-                <span key={i} className={form.painLevel >= i+1 ? 'active' : ''}>{i+1}</span>
-              ))}
-            </div>
+              onChange={v => set('painLevel', v)} />
           </div>
 
           <div className="qf-field">
             <label className="qf-label">What symptoms do you have</label>
+
             <TagInput
               tags={form.symptoms}
               onAdd={v => addTag('symptoms', v)}
@@ -376,7 +506,7 @@ export function QueueJoinForm({ onStepChange }) {
               Please provide your government identification.{' '}
               <span className="qf-label-eg">e.g: TRN, Driver's License, and Passport</span>
             </label>
-            <FileDropZone onFile={f => set('govId', f)} />
+            <FileDropZone value={form.govId} onFile={f => set('govId', f)} />
           </div>
 
           <div className="qf-field">
@@ -384,7 +514,7 @@ export function QueueJoinForm({ onStepChange }) {
               If applicable, please provide your insurance details.{' '}
               <span className="qf-label-eg">e.g: front, and back of card.</span>
             </label>
-            <FileDropZone onFile={f => set('insurance', f)} />
+            <FileDropZone value={form.insurance}   onFile={f => set('insurance', f)} />
           </div>
         </div>
       )}
@@ -511,6 +641,13 @@ export function QueueJoinForm({ onStepChange }) {
               ]
             },
             {
+              key: 'documents', title: 'Your Documents',
+              rows: [
+                { q: 'Government ID',   v: form.govId     instanceof File ? `✓ ${form.govId.name}`     : '—' },
+                { q: 'Insurance card',  v: form.insurance instanceof File ? `✓ ${form.insurance.name}` : '—' },
+              ]
+            },
+            {
               key: 'symptoms', title: 'Your Symptoms',
               rows: [
                 { q: 'Duration',    v: form.duration    || '—' },
@@ -549,8 +686,9 @@ export function QueueJoinForm({ onStepChange }) {
               <button className="qf-accordion-head"
                 onClick={() => setOpenSection(s => s === key ? null : key)}>
                 <span className="qf-accordion-title">{title}</span>
-                <span className="qf-accordion-arrow">{openSection === key ? '↓' : '→'}</span>
+                <span className="qf-accordion-arrow">{openSection === key ? <img src={right} className="qf-icon" /> : <img src={down} className="qf-icon" />}</span>
               </button>
+
               {openSection === key && (
                 <div className="qf-accordion-body">
                   {rows.map(({ q, v, danger }) => (
@@ -571,15 +709,15 @@ export function QueueJoinForm({ onStepChange }) {
         <div className="qf-nav-btns">
           <button className="qf-nav-btn" onClick={goBack}
             disabled={step === 0} aria-label="Back">
-            <img src={leftImg} alt="Back" className="nav-icon" />
+            <img src={left} alt="Back" className="nav-icon" />
           </button>
           {step < 7 ? (
             <button className="qf-nav-btn qf-nav-btn--active" onClick={goNext} aria-label="Next">
-              <img src={rightImg} alt="Next" className="nav-icon" />
+              <img src={right} alt="Next" className="nav-icon" />
             </button>
           ) : (
-            <button className="qf-nav-btn qf-nav-btn--submit" onClick={handleSubmit}>
-              SUBMIT
+            <button className="qf-nav-btn qf-nav-btn--submit" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Submitting...' : 'SUBMIT'}
             </button>
           )}
         </div>
@@ -588,18 +726,327 @@ export function QueueJoinForm({ onStepChange }) {
   )
 }
 
+const getInitials = (name = '') =>
+  name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
+const AVATAR_COLORS = ['#1a56db', '#2D9C9C', '#8B5CF6']
+
 
 // ══════════════════════════════════════════════════════════
-//  CODE ENTRY FORM (unchanged)
+//  FIND MY APPOINTMENT  (Image 6 → Image 4)
+// ══════════════════════════════════════════════════════════
+function FindAppointmentForm({ onQueueIn, onBack }) {
+  const [name,  setName]  = useState('')
+  const [dob,   setDob]   = useState('')
+  const [phone, setPhone] = useState('')
+
+  const [searched,       setSearched]       = useState(false)
+  const [appointments,   setAppointments]   = useState([])
+  const [selectedId,     setSelectedId]     = useState(null)
+  const [loadingSearch,  setLoadingSearch]  = useState(false)
+  const [loadingQueueIn, setLoadingQueueIn] = useState(false)
+  const [error,          setError]          = useState('')
+
+  // Normalize phone to digits-only before sending so it matches
+  // what the backend stored from the join form.
+  const normalizePhone = (p) => p.replace(/\D/g, '')
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!name || !dob || !phone) { setError('Please fill in all fields'); return }
+    setError(''); setLoadingSearch(true)
+    try {
+      const response = await fetch(`${API_URL}/api/queue/find`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          dob,
+          phone: normalizePhone(phone),
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || 'Search failed')
+      setAppointments(data.data.appointments)
+      setSearched(true)
+      if (data.data.appointments.length) setSelectedId(data.data.appointments[0].id)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoadingSearch(false)
+    }
+  }
+
+  const handleQueueIn = async () => {
+    if (!selectedId) return
+    setLoadingQueueIn(true); setError('')
+    try {
+      const response = await fetch(`${API_URL}/api/queue/${selectedId}/queue-in`, { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || 'Failed to queue in')
+      onQueueIn(data.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoadingQueueIn(false)
+    }
+  }
+
+  // ── Pre-search ────────────────────────────────────────────
+  if (!searched) {
+    return (
+      <div className="qf-find">
+        {onBack && (
+          <button type="button" className="qf-back-btn" onClick={onBack}>
+            <img src={left} className="qf-icon" />
+            <p className="qf-btn-title">Back</p>
+          </button>
+        )}
+
+        <h3 className="qf-find-heading">Let's search!</h3>
+        <p className="qf-find-sub">
+          We need a few details to find your appointment.{' '}
+          <span className="qf-find-sub-blue">
+            Use the same details you entered when you joined.
+          </span>
+        </p>
+
+        <form onSubmit={handleSearch} className="qf-step-body-search">
+          <div className="qf-field">
+            <label className="qf-label">Full Name</label>
+            <input className="qf-input" type="text" placeholder="Enter your full name"
+              value={name} onChange={e => setName(e.target.value)} />
+          </div>
+
+          <div className="qf-field-row">
+            <div className="qf-field">
+              <label className="qf-label">Date of Birth</label>
+              <input className="qf-input" type="date"
+                value={dob} onChange={e => setDob(e.target.value)} />
+            </div>
+            <div className="qf-field">
+              <label className="qf-label">Phone Number</label>
+              <input className="qf-input" type="tel" placeholder="+1 (###) ###-####"
+                value={phone} onChange={e => setPhone(e.target.value)} />
+            </div>
+          </div>
+
+          {error && <p className="qf-error">{error}</p>}
+
+          <button type="submit" className="qf-join-btn" disabled={loadingSearch}>
+            {loadingSearch ? 'Searching...' : 'Search'}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  // ── No results ────────────────────────────────────────────
+  if (appointments.length === 0) {
+    return (
+      <div className="qf-find">
+        {onBack && (
+          <button type="button" className="qf-back-btn" onClick={onBack}>
+            <img src={left} className="qf-icon" />
+            <p className="qf-btn-title">Back</p>
+          </button>
+        )}
+
+        <h3 className="qf-find-heading">No appointments found</h3>
+        <p className="qf-find-sub">
+          We couldn't find any active appointments with those details.{' '}
+          <span className="qf-find-sub-blue">
+            Double-check that your name, date of birth, and phone number are
+            exactly as you entered them when you joined the queue.
+          </span>
+        </p>
+        
+        <button className="qf-join-btn" onClick={() => { setSearched(false); setError('') }}>
+          Try again
+        </button>
+      </div>
+    )
+  }
+
+  // ── Results ───────────────────────────────────────────────
+  return (
+    <div className="qf-find">
+      <button type="button" className="qf-back-btn"         
+        onClick={() => { setSearched(false); setError('') }}>
+        <img src={left} className="qf-icon" />
+        <p className="qf-btn-title">Back</p>
+      </button>
+
+      <h3 className="qf-find-heading">Let's search!</h3>
+      
+      <p className="qf-find-sub">
+        We found{' '}
+        <span className="qf-find-sub-blue">
+          {appointments.length} {appointments.length === 1 ? 'appointment' : 'appointments'}
+        </span>{' '}
+        for you. Which are you checking in for?
+      </p>
+
+      <div className="qf-appt-list">
+        {appointments.map((a, i) => (
+          <button key={a.id} type="button"
+            className={`qf-appt-card${selectedId === a.id ? ' selected' : ''}`}
+            onClick={() => setSelectedId(a.id)}>
+
+            <div className="qf-appt-avatar"
+              style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}>
+              {getInitials(a.doctor)}
+            </div>
+
+            <div className="qf-appt-doc">
+              <span className="qf-appt-doctor">{a.doctor}</span>
+              <span className="qf-appt-role">
+                {a.status === 'queued' ? 'Already in queue' : 'Pending check-in'}
+              </span>
+            </div>
+
+            <div className="qf-appt-type">
+              <span className="qf-appt-type-name">{a.type || 'General visit'}</span>
+              <span className="qf-appt-patient">for {a.patient}</span>
+            </div>
+
+            <div className="qf-appt-time">
+              {a.queueId ? (
+                <span className="qf-appt-queue-id">{a.queueId}</span>
+              ) : (
+                <>
+                  <span className="qf-appt-time-val">{a.time || '—'}</span>
+                  <span className="qf-appt-date">
+                    {a.date ? new Date(a.date).toLocaleDateString() : '—'}
+                  </span>
+                </>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {error && <p className="qf-error">{error}</p>}
+
+      <button className="qf-join-btn" onClick={handleQueueIn}
+        disabled={!selectedId || loadingQueueIn}>
+        {loadingQueueIn ? 'Joining queue...' : 'Queue in'}
+      </button>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════
+//  YOU'RE IN THE QUEUE  (Image 5)
+// ══════════════════════════════════════════════════════════
+function QueueWaitingScreen({ appointment, onExit }) {
+  const [muted, setMuted] = useState(false)
+  const [live, setLive] = useState(appointment)
+  const [secondsLeft, setSecondsLeft] = useState((appointment?.estimatedWaitMinutes || 15) * 60)
+
+  // Local ticking countdown between polls
+  useEffect(() => {
+    const id = setInterval(() => setSecondsLeft(s => Math.max(0, s - 1)), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Periodic resync with the server — corrects drift and picks up status
+  // changes (e.g. when staff calls this patient in)
+  useEffect(() => {
+    if (!appointment?.id) return
+    const poll = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/queue/status/${appointment.id}`)
+        const data = await res.json()
+        if (data.success) {
+          setLive(data.data)
+          setSecondsLeft((data.data.estimatedWaitMinutes || 0) * 60)
+        }
+      } catch { /* keep showing last-known state if a poll fails */ }
+    }
+    const id = setInterval(poll, 20000)
+    return () => clearInterval(id)
+  }, [appointment?.id])
+
+  const hours   = String(Math.floor(secondsLeft / 3600)).padStart(2, '0')
+  const minutes = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0')
+  const beingCalled = live?.status === 'called' || live?.status === 'in_progress'
+
+  const handleExit = () => {
+    if (window.confirm('Are you sure you want to leave the queue? You will lose your position.')) onExit?.()
+  }
+
+  return (
+    <div className="qw-screen">
+      <h1 className="qw-heading">{beingCalled ? "You're being called!" : "You're in the queue"}</h1>
+      <p className="qw-sub">
+        {beingCalled
+          ? <span className="qw-sub-blue">Please make your way to {live?.room || 'the front desk'} now.</span>
+          : <>All there's left to do is{' '}<span className="qw-sub-blue">wait for your number to be called.</span></>}
+      </p>
+
+      <div className="qw-card">
+        <div className="qw-card-handle" />
+        <div className="qw-appt-row">
+          <div>
+            <p className="qw-appt-type">{live?.type || appointment?.type || 'General Consultation'}</p>
+            <p className="qw-appt-for">
+              for <span className="qw-appt-name">{live?.patient || appointment?.patient || 'You'}</span>{' '}
+              with <span className="qw-appt-name">{live?.doctor || appointment?.doctor || 'Dr. White'}</span>
+            </p>
+          </div>
+          <div className="qw-appt-time-block">
+            <p className="qw-appt-time-val">{live?.time || appointment?.time || '9:00 PM'}</p>
+            <p className="qw-appt-date">{live?.date || appointment?.date || ''}</p>
+          </div>
+        </div>
+
+        <div className="qw-queue-box">
+          <span className="qw-queue-num">{live?.queueId || appointment?.queueId || '—'}</span>
+          <span className="qw-queue-ahead">
+            <span className="qw-queue-ahead-blue">{live?.peopleAhead ?? appointment?.peopleAhead ?? 0} people</span>{' '}ahead of you
+          </span>
+        </div>
+
+        <div className="qw-timer-box">
+          <div className="qw-timer-progress" />
+          <button className="qw-timer-btn" onClick={() => setMuted(m => !m)} aria-label="Toggle notifications">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              {muted ? (
+                <path d="M3 3l18 18M13.73 21a2 2 0 01-3.46 0M18.63 13A17.89 17.89 0 0018 8M6.26 6.26A5.86 5.86 0 006 8c0 7-3 9-3 9h14" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              ) : (
+                <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              )}
+            </svg>
+          </button>
+
+          <div className="qw-timer-display">
+            <div className="qw-timer-unit"><span className="qw-timer-num">{hours}</span><span className="qw-timer-label">Hour</span></div>
+            <span className="qw-timer-colon">:</span>
+            <div className="qw-timer-unit"><span className="qw-timer-num">{minutes}</span><span className="qw-timer-label">Minute</span></div>
+          </div>
+          <button className="qw-timer-close" onClick={handleExit} aria-label="Leave queue">×</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════
+//  CODE ENTRY FORM — now stage-aware
+//  stage: 'code' | 'find' | 'waiting'
 // ══════════════════════════════════════════════════════════
 export function QueueCodeForm() {
-  const navigate  = useNavigate()
   const inputRefs = useRef([])
+  const [stage,   setStage]   = useState('code')
   const [digits,  setDigits]  = useState(Array(6).fill(''))
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
+  const [confirmedAppt, setConfirmedAppt] = useState(null)
 
-  useEffect(() => { inputRefs.current[0]?.focus() }, [])
+  useEffect(() => {
+    if (stage === 'code') inputRefs.current[0]?.focus()
+  }, [stage])
 
   const handleDigitChange = (index, value) => {
     if (!/^\d?$/.test(value)) return
@@ -625,12 +1072,45 @@ export function QueueCodeForm() {
   const handleJoin = async () => {
     const code = digits.join('')
     if (code.length < 6) { setError('Please enter the full 6-digit code.'); return }
-    setLoading(true)
-    try { navigate('/queue/confirmation') }
-    catch { setError('Invalid code. Please try again.') }
-    finally { setLoading(false) }
+    setLoading(true); setError('')
+    try {
+      const response = await fetch(`${API_URL}/api/queue/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) throw new Error(data.error || 'Invalid code. Please try again.')
+      setConfirmedAppt(data.data)
+      setStage('waiting')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ── Stage: searching for appointment ──────────────────
+  if (stage === 'find') {
+    return (
+      <FindAppointmentForm
+        onQueueIn={(appt) => { setConfirmedAppt(appt); setStage('waiting') }}
+        onBack={() => setStage('code')}
+      />
+    )
+  }
+
+  // ── Stage: confirmed, waiting in queue ─────────────────
+  if (stage === 'waiting') {
+    return (
+      <QueueWaitingScreen
+        appointment={confirmedAppt}
+        onExit={() => { setStage('code'); setDigits(Array(6).fill('')); setConfirmedAppt(null) }}
+      />
+    )
+  }
+
+  // ── Stage: default code entry ──────────────────────────
   return (
     <div className="qf-code">
       <h3 className="qf-code-heading">Enter your code</h3>
@@ -648,6 +1128,7 @@ export function QueueCodeForm() {
               onKeyDown={e => handleKeyDown(i, e)} onPaste={handlePaste} />
           ))}
         </div>
+
         <div className="qf-digit-group">
           {[3,4,5].map(i => (
             <input key={i} ref={el => (inputRefs.current[i] = el)}
@@ -661,7 +1142,9 @@ export function QueueCodeForm() {
       {error && <p className="qf-error">{error}</p>}
       <p className="qf-code-fallback">
         Didn't get a code?{' '}
-        <a href="/queue/find-appointment">Let's search for your appointment.</a>
+        <button type="button" className="qf-link-btn" onClick={() => setStage('find')}>
+          Let's search for your appointment.
+        </button>
       </p>
 
       <button className="qf-join-btn" onClick={handleJoin}
