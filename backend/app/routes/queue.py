@@ -3,6 +3,8 @@ from flask import request, jsonify
 from datetime import datetime, timedelta, timezone
 import random
 import string
+import base64
+import uuid as uuid_lib
 
 from app.config.firebase import get_db
 from app.middleware.authRequired import auth_required
@@ -89,6 +91,38 @@ def _public_queue_view(doc_id, data, db):
         'estimatedWaitMinutes': estimate_wait_minutes(ahead, level),
     }
 
+# Add this helper above register_routes()
+def _upload_document(file_payload, folder: str) -> str | None:
+    """
+    Receives { name, type, data } from the frontend's base64 conversion,
+    uploads to Firebase Storage, returns the blob path.
+    Returns None silently if anything fails — a missing document
+    shouldn't block the patient from joining the queue.
+    """
+    if not file_payload or not isinstance(file_payload, dict):
+        return None
+
+    raw = file_payload.get('data')
+    if not raw:
+        return None
+
+    try:
+        from app.config.firebase import get_storage_bucket
+        bucket       = get_storage_bucket()
+        file_bytes   = base64.b64decode(raw)
+        filename     = file_payload.get('name', 'document')
+        content_type = file_payload.get('type', 'application/octet-stream')
+        blob_path    = f"{folder}/{uuid_lib.uuid4()}_{filename}"
+
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(file_bytes, content_type=content_type)
+
+        logger.info(f"✅ Document uploaded to Storage: {blob_path}")
+        return blob_path
+
+    except Exception as e:
+        logger.error(f"❌ Document upload failed: {str(e)}")
+        return None
 
 def register_routes(app):
     logger.info("🔧 Registering queue routes...")
@@ -112,41 +146,49 @@ def register_routes(app):
             now = datetime.now(timezone.utc)
             code = _generate_code()
 
-            db = get_db()
+            entry_id = str(uuid_lib.uuid4())
+            folder   = f'queue-documents/{entry_id}'
+
+            gov_id_path    = _upload_document(payload.get('govId'),     folder)
+            insurance_path = _upload_document(payload.get('insurance'), folder)
+
             entry_data = {
-                'fullName': payload.get('fullName'),
-                'dateOfBirth': payload.get('dateOfBirth'),
-                'phone': _normalize_phone(payload.get('phone')),
-                'email': payload.get('email'),
-                'reason': payload.get('reason'),
+                'fullName':        payload.get('fullName'),
+                'dateOfBirth':     payload.get('dateOfBirth'),
+                'phone':           _normalize_phone(payload.get('phone')),
+                'email':           payload.get('email'),
+                'reason':          payload.get('reason'),
                 'appointmentDate': payload.get('appointmentDate'),
                 'appointmentTime': payload.get('appointmentTime'),
-                'duration': payload.get('duration'),
-                'painLevel': payload.get('painLevel'),
-                'symptoms': payload.get('symptoms') or [],
-                'isEmergency': payload.get('isEmergency') == 'Yes',
-                'condition': payload.get('condition'),
-                'allergies': payload.get('allergies') or [],
-                'medications': payload.get('medications') or [],
-                'hadSurgery': payload.get('hadSurgery') == 'Yes',
-                'surgeryDetails': payload.get('surgeryDetails'),
-                'contactName': payload.get('contactName'),
+                'duration':        payload.get('duration'),
+                'painLevel':       payload.get('painLevel'),
+                'symptoms':        payload.get('symptoms') or [],
+                'isEmergency':     payload.get('isEmergency') == 'Yes',
+                'condition':       payload.get('condition'),
+                'allergies':       payload.get('allergies') or [],
+                'medications':     payload.get('medications') or [],
+                'hadSurgery':      payload.get('hadSurgery') == 'Yes',
+                'surgeryDetails':  payload.get('surgeryDetails'),
+                'contactName':     payload.get('contactName'),
                 'contactRelation': payload.get('contactRelation'),
-                'contactPhone': payload.get('contactPhone'),
-                'contactEmail': payload.get('contactEmail'),
-                'contactMethod': payload.get('contactMethod'),
-                'triageLevel': level,
-                'priorityLetter': letter,
-                'triageOverride': False,
+                'contactPhone':    payload.get('contactPhone'),
+                'contactEmail':    payload.get('contactEmail'),
+                'contactMethod':   payload.get('contactMethod'),
+                'govIdPath':       gov_id_path,
+                'insurancePath':   insurance_path,
+                'triageLevel':     level,
+                'priorityLetter':  letter,
+                'triageOverride':  False,
                 'verificationCode': code,
-                'codeExpiresAt': now + timedelta(minutes=CODE_TTL_MINUTES),
-                'codeVerified': False,
-                'status': 'pending_verification',
-                'createdAt': now,
-                'updatedAt': now,
+                'codeExpiresAt':    now + timedelta(minutes=CODE_TTL_MINUTES),
+                'codeVerified':     False,
+                'status':           'pending_verification',
+                'createdAt':        now,
+                'updatedAt':        now,
             }
 
-            doc_ref = db.collection('queueEntries').document()
+            db = get_db()
+            doc_ref = db.collection('queueEntries').document(entry_id)
             doc_ref.set(entry_data)
 
             sent = email_service.send_email(
@@ -446,3 +488,27 @@ def register_routes(app):
             return jsonify({'success': False, 'error': 'Failed to update status'}), 500
 
     logger.info("✅ Queue routes registered successfully")
+
+    @app.route('/api/queue/<entry_id>/document/<doc_type>', methods=['GET'])
+    @auth_required
+    @staff_required
+    def get_document_url(entry_id, doc_type):
+        from app.config.firebase import get_storage_bucket
+        from datetime import timedelta
+
+        db = get_db()
+        doc = db.collection('queueEntries').document(entry_id).get()
+        if not doc.exists:
+            return jsonify({'success': False, 'error': 'Entry not found'}), 404
+
+        path_key = 'govIdPath' if doc_type == 'gov_id' else 'insurancePath'
+        blob_path = doc.to_dict().get(path_key)
+
+        if not blob_path:
+            return jsonify({'success': False, 'error': 'Document not found'}), 404
+
+        bucket = get_storage_bucket()
+        blob = bucket.blob(blob_path)
+        signed_url = blob.generate_signed_url(expiration=timedelta(minutes=15), version='v4')
+
+        return jsonify({'success': True, 'data': {'url': signed_url}}), 200
