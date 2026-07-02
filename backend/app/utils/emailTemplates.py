@@ -140,11 +140,11 @@ def get_welcome_email(first_name):
                 <ul class="feature-list">
                     <li>
                         <span class="feature-dot"></span>
-                        <span><strong>Join the queue remotely</strong> — skip the front desk and check in from anywhere before you arrive.</span>
+                        <span><strong> Join the queue remotely</strong> — skip the front desk and check in from anywhere before you arrive.</span>
                     </li>
                     <li>
                         <span class="feature-dot"></span>
-                        <span><strong>Track your position</strong> — see real-time updates on where you are in the queue.</span>
+                        <span><strong> Track your position</strong> — see real-time updates on where you are in the queue.</span>
                     </li>
                     <li>
                         <span class="feature-dot"></span>
@@ -152,11 +152,11 @@ def get_welcome_email(first_name):
                     </li>
                     <li>
                         <span class="feature-dot"></span>
-                        <span><strong>Access your documents</strong> — your medical records and documents, available when you need them.</span>
+                        <span><strong> Access your documents</strong> — your medical records and documents, available when you need them.</span>
                     </li>
                     <li>
                         <span class="feature-dot"></span>
-                        <span><strong>Message your care team</strong> — communicate directly with your nurse or doctor.</span>
+                        <span><strong> Message your care team</strong> — communicate directly with your nurse or doctor.</span>
                     </li>
                 </ul>
 
@@ -165,7 +165,7 @@ def get_welcome_email(first_name):
                     reach out to us.
                 </p>
 
-                <a class="cta" href="https://medic-clinic.vercel.app">Get started</a>
+                <a class="cta" style="color: #ffffff;" href="https://medic-clinic.vercel.app">Get started</a>
 
                 <p style="font-size:13px; color:#9ca3af;">
                     If you didn't create this account, you can safely ignore this email.

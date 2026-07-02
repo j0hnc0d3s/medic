@@ -22,6 +22,9 @@ CODE_TTL_MINUTES = 30
 def _generate_code():
     return ''.join(random.choices(string.digits, k=6))
 
+def _normalize_phone(phone):
+    """Strip everything except digits so +1 (876) 123-4567 and 8761234567 match."""
+    return ''.join(c for c in (phone or '') if c.isdigit())
 
 def _next_queue_number(db, letter: str) -> str:
     today_key = datetime.now(timezone.utc).strftime('%Y-%m-%d')
@@ -113,7 +116,7 @@ def register_routes(app):
             entry_data = {
                 'fullName': payload.get('fullName'),
                 'dateOfBirth': payload.get('dateOfBirth'),
-                'phone': payload.get('phone'),
+                'phone': _normalize_phone(payload.get('phone')),
                 'email': payload.get('email'),
                 'reason': payload.get('reason'),
                 'appointmentDate': payload.get('appointmentDate'),
@@ -226,7 +229,7 @@ def register_routes(app):
             data = request.get_json() or {}
             name = (data.get('name') or '').strip().lower()
             dob = data.get('dob')
-            phone = (data.get('phone') or '').strip()
+            phone = _normalize_phone(data.get('phone'))
 
             if not (name and dob and phone):
                 return jsonify({'success': False, 'error': 'Please fill in all fields'}), 400
