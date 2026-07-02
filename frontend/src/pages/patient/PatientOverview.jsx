@@ -3,8 +3,10 @@
 // CSS  : src/pages/staff/NurseOverview.css
 // ─────────────────────────────────────────────────────────
 import { useState, useRef, useEffect } from 'react'
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
+import { db } from '../../services/firebase'
+import { useAuth } from '../../contexts/AuthContext'
 import PatientSidebar from './PatientSidebar'
-import Calendar from '../../components/Calendar'
 import './PatientOverview.css'
 
 import close from '../../assets/inverted/close.png';
@@ -30,44 +32,45 @@ import line from '../../assets/black/line.png';
 import reverse_triangle from '../../assets/images/reverse_triangle.png';
 import triangle from '../../assets/images/triangle.png';
 
-import scan1 from '../../assets/images/scan1.jpeg';
-import scan2 from '../../assets/images/scan2.jpeg';
-import scan3 from '../../assets/images/scan3.jpeg';
-import scan4 from '../../assets/images/scan4.jpeg';
-
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-// ── Mock data ─────────────────────────────────────────────
-const MOCK_ALLERGIES = [
-  { id: 1, name: 'Peanuts', type: 'Food', severity: 'Severe',
-    desc: 'Patient breaks out with hives and swelling if peanuts or peanut based products are ingested.',
-    doctor: 'Dr. Marcel Brown' },
-  { id: 2, name: 'Penicillin', type: 'Drug', severity: 'Moderate',
-    desc: 'Mild rash and itching reported after administration. Documented during 2024 admission.',
-    doctor: 'Dr. Marcel Brown' },
-]
+// Normalizes "Dr. Marshall White" -> "marshall white" for matching a
+// prescribedBy/diagnosedBy string back to a real doctor record.
+const normalizeDoctorName = (s) =>
+  (s || '').replace(/^dr\.?\s*/i, '').trim().toLowerCase()
 
-const MOCK_MEDICATIONS = [
-  { id: 1, name: 'Ibuprofen', dose: '500mg', form: 'Tablet', route: 'Oral', freq: 'Once Daily',
-    desc: 'A common over-the-counter pain reliever and anti-inflammatory used to reduce fever, and treat pain from headaches, muscle aches, arthritis, and minor injuries.',
-    doctor: 'Dr. Marcel Brown', progress: 70 },
-  { id: 2, name: 'Lisinopril', dose: '10mg', form: 'Tablet', route: 'Oral', freq: 'Once Daily',
-    desc: 'ACE inhibitor used to manage high blood pressure and reduce strain on the cardiovascular system.',
-    doctor: 'Dr. Marcel Brown', progress: 40 },
-]
+const mapAllergy = (a, i) => ({
+  id:       a.id || i,
+  name:     a.name || a.allergen || 'Unknown allergen',
+  type:     a.type || 'Other',
+  severity: a.severity || 'Unknown',
+  desc:     a.reaction || a.description || a.desc || 'No reaction details on file.',
+  status:   (a.status || 'active').toLowerCase(), // active | historical | intolerance
+  doctor:   a.diagnosedBy || a.prescribedBy || a.doctor || null,
+})
 
-const MOCK_TASKS = {
-  18: [
-    { id: 1, label: 'Follow up with Martha' },
-    { id: 2, label: 'Follow up with Barry' },
-  ],
-}
+const mapMedication = (m, i) => ({
+  id:       m.id || i,
+  name:     m.name || 'Medication',
+  dose:     m.dosage || m.dose || '—',
+  form:     m.form || '—',
+  route:    m.route || '—',
+  freq:     m.frequency || m.freq || '—',
+  desc:     m.description || m.desc || 'No description on file.',
+  status:   (m.status || 'active').toLowerCase(), // active | completed | discontinued
+  doctor:   m.prescribedBy || m.doctor || null,
+  progress: computeMedProgress(m),
+})
 
-const MOCK_AGENDA = {
-  18: [
-    { id: 1, time: '9:00 AM', label: 'H. Evans — General Consultation' },
-    { id: 2, time: '11:30 AM', label: 'M. Vincent — Follow-up' },
-  ],
+// Elapsed-course percentage when start/end dates exist on the record;
+// otherwise null so the progress bar is simply skipped.
+const computeMedProgress = (m) => {
+  const start = m.startDate?.toDate ? m.startDate.toDate() : (m.startDate ? new Date(m.startDate) : null)
+  const end   = m.endDate?.toDate   ? m.endDate.toDate()   : (m.endDate   ? new Date(m.endDate)   : null)
+  if (!start || !end || end <= start) return null
+  const now = new Date()
+  const pct = ((now - start) / (end - start)) * 100
+  return Math.max(0, Math.min(100, Math.round(pct)))
 }
 
 const ICONS = {
@@ -77,7 +80,6 @@ const ICONS = {
   close: <span style={{ fontSize: 16, lineHeight: 1 }}>×</span>,
   pencil:<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   visit: <span style={{ fontSize: 13 }}>📝</span>,
-  bell:  <span style={{ fontSize: 15 }}>🔔</span>,
   flask: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   procedure: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M5 9l-3 3 3 3M19 9l3 3-3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   hospitalisation: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" stroke="currentColor" strokeWidth="1.6"/><path d="M9 11h6M12 8v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
@@ -128,11 +130,6 @@ const ConnectorNode = ({ x, y }) => (
   </div>
 )
 
-const MOCK_TIMELINE = {
-  2020: { 5: ['visit'], 8: ['visit', 'lab'] },
-  2021: { 1: ['procedure'], 5: ['visit'] },
-  2026: { 5: ['visit', 'lab'] },
-}
 const ACTIVITY_COLORS = { visit: '#0066ff', lab: '#161c18', procedure: '#0b51f5', hospitalisation: '#152fdb' }
 const YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026]
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -164,16 +161,21 @@ function useDraggable(initial) {
   return [pos, onPointerDown]
 }
 
-const CURRENT_USER = {
-  firstName: 'Sarah',
-  lastName: 'Johnson',
-  role: 'Registered Nurse',
-  image: doctor,
-  online: true,
-  notifications: true,
+const getInitials = (f, l) => `${f?.[0] || ''}${l?.[0] || ''}`.toUpperCase()
+
+const formatApptDate = (ts) => {
+  if (!ts) return '—'
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function NurseOverview() {
+const formatApptTime = (ts) => {
+  if (!ts) return '—'
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
+export default function PatientOverview() {
   const [leftFilters, setLeftFilters] = useState({
     visits: true, hospitalisations: false, procedure: false, labs: false,
   })
@@ -185,7 +187,122 @@ export default function NurseOverview() {
   const [allergyPos, allergyDrag]     = useDraggable({ left: 60, top: 360 })
   const [medicationPos, medicationDrag] = useDraggable({ left: 610, top: 230 })
 
-  const [selectedPatient, setSelectedPatient] = useState(null)
+  const { userProfile } = useAuth()
+
+  // ── Patient's appointments — single fetch feeds the canvas
+  //    cards (visits/labs/procedure/hospitalisation), the
+  //    timeline scrubber, and the Upcoming popup below.
+  const [patientAppointments, setPatientAppointments] = useState([])
+  const [apptsLoading, setApptsLoading] = useState(true)
+
+  const [upcomingIdx, setUpcomingIdx]   = useState(0)
+  const [showUpcoming, setShowUpcoming] = useState(true)
+
+  useEffect(() => {
+    if (userProfile?.uid) loadAppointments()
+  }, [userProfile?.uid])
+
+  const loadAppointments = async () => {
+    setApptsLoading(true)
+    try {
+      const byUid = await getDocs(
+        query(collection(db, 'appointments'), where('patientId', '==', userProfile.uid))
+      )
+      const fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()
+      const byName = fullName
+        ? await getDocs(query(collection(db, 'appointments'), where('patientName', '==', fullName)))
+        : { docs: [] }
+
+      const seen = new Set()
+      const all = [...byUid.docs, ...byName.docs]
+        .filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true })
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(a => a.status !== 'cancelled')
+        .sort((a, b) => {
+          const da = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+          const db_ = b.appointmentDate?.toDate ? b.appointmentDate.toDate() : new Date(b.appointmentDate)
+          return db_ - da // newest first
+        })
+
+      setPatientAppointments(all)
+      setUpcomingIdx(0)
+    } catch (err) {
+      console.error('Failed to load appointments:', err)
+    } finally {
+      setApptsLoading(false)
+    }
+  }
+
+  const upcoming = patientAppointments
+    .filter(a => {
+      const when = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+      return when && when >= new Date()
+    })
+    .slice()
+    .sort((a, b) => {
+      const da = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+      const db_ = b.appointmentDate?.toDate ? b.appointmentDate.toDate() : new Date(b.appointmentDate)
+      return da - db_ // soonest first
+    })
+
+  const currentUpcoming = upcoming[upcomingIdx] || null
+  const upcomingLoading = apptsLoading
+
+  // ── Allergies & medications (real data) ──────────────────
+  const [allergies, setAllergies]         = useState([])
+  const [medications, setMedications]     = useState([])
+  const [recordsLoading, setRecordsLoading] = useState(true)
+  const [doctorPhotos, setDoctorPhotos]   = useState(new Map())
+  const [allergyFilter, setAllergyFilter]     = useState('current') // current | past
+  const [medicationFilter, setMedicationFilter] = useState('current')
+
+  useEffect(() => {
+    if (userProfile?.uid) loadMedicalRecord()
+  }, [userProfile?.uid])
+
+  const loadMedicalRecord = async () => {
+    setRecordsLoading(true)
+    try {
+      const [recordSnap, doctorsSnap] = await Promise.all([
+        getDoc(doc(db, 'users', userProfile.uid, 'medicalRecords', 'main')),
+        getDocs(query(collection(db, 'users'), where('role', '==', 'doctor'))),
+      ])
+
+      const photoMap = new Map()
+      doctorsSnap.docs.forEach(d => {
+        const data = d.data()
+        photoMap.set(normalizeDoctorName(`${data.firstName} ${data.lastName}`), data.profilePictureUrl || null)
+      })
+      setDoctorPhotos(photoMap)
+
+      if (recordSnap.exists()) {
+        const data = recordSnap.data()
+        setAllergies((data.allergies || []).map(mapAllergy))
+        setMedications((data.currentMedications || data.medications || []).map(mapMedication))
+      } else {
+        setAllergies([])
+        setMedications([])
+      }
+    } catch (err) {
+      console.error('Failed to load medical record:', err)
+    } finally {
+      setRecordsLoading(false)
+    }
+  }
+
+  const isCurrentStatus = (status) => status === 'active'
+
+  const filteredAllergies = allergies.filter(a =>
+    allergyFilter === 'current' ? isCurrentStatus(a.status) : !isCurrentStatus(a.status)
+  )
+  const filteredMedications = medications.filter(m =>
+    medicationFilter === 'current' ? isCurrentStatus(m.status) : !isCurrentStatus(m.status)
+  )
+
+  const doctorPhotoFor = (name) => doctorPhotos.get(normalizeDoctorName(name)) || null
+
+  useEffect(() => { setAllergyPage(0) }, [allergyFilter])
+  useEffect(() => { setMedicationPage(0) }, [medicationFilter])
 
   const canvasRef = useRef(null)
   const timelineRef = useRef(null)
@@ -245,29 +362,58 @@ export default function NurseOverview() {
 
   const toggleCard = (key) => setCardVisible(c => ({ ...c, [key]: !c[key] }))
 
-  const allergy    = MOCK_ALLERGIES[allergyPage]
-  const medication  = MOCK_MEDICATIONS[medicationPage]
+  // ── Derive canvas sections from real appointments ────────
+  const visitAppts = patientAppointments
+    .filter(a => !['Lab Work', 'Procedure'].includes(a.type))
+    .slice(0, 2)
+
+  const labAppts = patientAppointments
+    .filter(a => a.type === 'Lab Work')
+    .slice(0, 1)
+
+  const hospitalisationAppts = patientAppointments
+    .filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
+    .slice(0, 1)
+
+  const procedureAppts = patientAppointments
+    .filter(a => a.type === 'Procedure')
+    .slice(0, 1)
+
+  // ── Timeline scrubber built from real appointment dates ──
+  const timeline = {}
+  patientAppointments.forEach(a => {
+    const d = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+    if (!d || isNaN(d)) return
+    const yr = d.getFullYear()
+    const mo = d.getMonth()
+    if (!timeline[yr]) timeline[yr] = {}
+    if (!timeline[yr][mo]) timeline[yr][mo] = []
+    const activityType = a.type === 'Lab Work'      ? 'lab'
+                        : a.type === 'Procedure'      ? 'procedure'
+                        : (a.type === 'Hospitalisation' || a.type === 'Emergency') ? 'hospitalisation'
+                        : 'visit'
+    if (!timeline[yr][mo].includes(activityType)) timeline[yr][mo].push(activityType)
+  })
+
+  const allergy    = filteredAllergies[Math.min(allergyPage, Math.max(0, filteredAllergies.length - 1))]
+  const medication = filteredMedications[Math.min(medicationPage, Math.max(0, filteredMedications.length - 1))]
 
   const CONNECTOR_LINKS = [
-    { id: 'h-v1',   from: 'headaches', to: 'visit1',           active: leftFilters.visits },
-    { id: 'h-v2',   from: 'headaches', to: 'visit2',           active: leftFilters.visits },
-    { id: 'v2-lv',  from: 'visit2',    to: 'labsVisit',        active: leftFilters.visits },
-    { id: 'v1-hos', from: 'visit1',    to: 'hospitalisations', active: leftFilters.hospitalisations },
-    { id: 'v1-pro', from: 'visit1',    to: 'procedure',        active: leftFilters.procedure },
-    { id: 'lv-ls',  from: 'labsVisit', to: 'labsStandalone',   active: leftFilters.labs },
+    { id: 'h-v1',   from: 'headaches', to: 'visit1',           active: leftFilters.visits && visitAppts.length > 0 },
+    { id: 'h-v2',   from: 'headaches', to: 'visit2',           active: leftFilters.visits && visitAppts.length > 1 },
+    { id: 'v2-lv',  from: 'visit2',    to: 'labsVisit',        active: leftFilters.visits && visitAppts.length > 1 && labAppts.length > 0 },
+    { id: 'v1-hos', from: 'visit1',    to: 'hospitalisations', active: leftFilters.hospitalisations && visitAppts.length > 0 && hospitalisationAppts.length > 0 },
+    { id: 'v1-pro', from: 'visit1',    to: 'procedure',        active: leftFilters.procedure && visitAppts.length > 0 && procedureAppts.length > 0 },
+    { id: 'lv-ls',  from: 'labsVisit', to: 'labsStandalone',   active: leftFilters.labs && labAppts.length > 0 },
   ]
 
   const visibleLinks = CONNECTOR_LINKS.filter(l => l.active)
   const originPoints = [...new Map(visibleLinks.map(l => [l.from, rightMid(l.from)])).entries()]
   const destPoints    = [...new Map(visibleLinks.map(l => [l.to,   leftMid(l.to)])).entries()]
 
-  // ── Calendar grid calc ───────────────────────────────────
-  const dayTasks  = MOCK_TASKS[18]  || []
-  const dayAgenda = MOCK_AGENDA[18] || []
-
   return (
     <div className="no-shell">
-      <PatientSidebar onSelectPatient={setSelectedPatient} />
+      <PatientSidebar />
 
       <div className="no-main">
 
@@ -319,96 +465,143 @@ export default function NurseOverview() {
               <DestTriangle key={key} x={pos.x} y={pos.y} />
             ))}
 
-            {leftFilters.visits && (
+            {leftFilters.visits && !apptsLoading && (
               <>
                 <div className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
                   <div className="no-card-tags">
-                    <p className="no-card-tag">Tension headache</p>
-                    
+                    <p className="no-card-tag">{visitAppts[0]?.type || 'No visits yet'}</p>
                     <img src={lightning} className="no-card-icon inverted" />
                   </div>
 
-                  <h2 className="no-card-title">Headaches</h2>
+                  <h2 className="no-card-title">{visitAppts[0]?.reason || 'No condition on file'}</h2>
 
                   <div className="no-card-action condition">
                   </div>
                 </div>
 
-                <div className="no-card no-card--white" style={{ left: 610, top: 100, width: 250 }}>
-                  <div className="no-visit-head">
-                    <div className="no-visit-icon">
-                      <img src={notes} className="no-action-icon inverted"/>
-                    </div>
+                {visitAppts[0] && (
+                  <div className="no-card no-card--white" style={{ left: 610, top: 100, width: 250 }}>
+                    <div className="no-visit-head">
+                      <div className="no-visit-icon">
+                        <img src={notes} className="no-action-icon inverted"/>
+                      </div>
 
-                    <div>
-                      <p className="no-visit-title">Visits</p>
-                      <p className="no-visit-sub">Symptoms and Tests</p>
-                    </div>
+                      <div>
+                        <p className="no-visit-title">Visits</p>
+                        <p className="no-visit-sub">{visitAppts[0].reason || visitAppts[0].type || 'Visit'}</p>
+                      </div>
 
-                    <div className="no-visit-time">4:09 P</div>
+                      <div className="no-visit-time">{formatApptTime(visitAppts[0].appointmentDate)}</div>
+                    </div>
+                    {visitAppts[0].symptoms?.length > 0 && (
+                      <div className="no-visit-tags">
+                        {visitAppts[0].symptoms.slice(0, 3).map((s, i) => (
+                          <span key={i} className="no-visit-tag">{s}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="no-visit-tags">
-                    <span className="no-visit-tag">Stress</span>
-                    <span className="no-visit-tag">Dizziness</span>
-                    <span className="no-visit-tag">Fever</span>
+                )}
+
+                {visitAppts[1] && (
+                  <div className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
+                    <div className="no-visit-head">
+                      <div className="no-visit-icon">
+                        <img src={notes} className="no-action-icon inverted"/>
+                      </div>
+
+                      <div>
+                        <p className="no-visit-title">Visits</p>
+                        <p className="no-visit-sub">{visitAppts[1].reason || visitAppts[1].type || 'Visit'}</p>
+                      </div>
+
+                      <div className="no-visit-time">{formatApptTime(visitAppts[1].appointmentDate)}</div>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
-                  <div className="no-visit-head">
-                    <div className="no-visit-icon">
-                      <img src={notes} className="no-action-icon inverted"/>
-                    </div>
+                {labAppts[0] && (
+                  <div className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
+                    <div className="no-visit-head">
+                      <div className="no-visit-icon">
+                        <img src={notes} className="no-action-icon inverted"/>
+                      </div>
 
-                    <div>
-                      <p className="no-visit-title">Visits</p>
-                      <p className="no-visit-sub">Scheduled checkup</p>
-                    </div>
-
-                    <div className="no-visit-time">4:09 P</div>
-                  </div>
-                </div>
-
-                <div className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
-                  <div className="no-visit-head">
-                    <div className="no-visit-icon">
-                      <img src={notes} className="no-action-icon inverted"/>
-                    </div>
-
-                    <div>
-                      <p className="no-visit-title">Labs</p>
-                      <p className="no-visit-sub">Symptoms and Tests</p>
+                      <div>
+                        <p className="no-visit-title">Labs</p>
+                        <p className="no-visit-sub">{labAppts[0].reason || 'Lab work'}</p>
+                      </div>
+                      
+                      <div className="no-visit-time">{formatApptTime(labAppts[0].appointmentDate)}</div>
                     </div>
                     
-                    <div className="no-visit-time">4:09 P</div>
+                    {labAppts[0].documents?.length > 0 ? (
+                      <div className="no-visit-scans">
+                        {labAppts[0].documents.slice(0, 4).map((doc_, i) => (
+                          <img key={i} src={doc_.url} className="no-scan-thumb" alt={doc_.name || `document ${i+1}`} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-visit-sub no-visit-empty">No documents attached</p>
+                    )}
                   </div>
-                  
-                  <div className="no-visit-scans">
-                    {[scan1, scan2, scan3, scan4].map((src, i) => <img key={i} src={src} className="no-scan-thumb" alt={`scan ${i+1}`} />)}
-                  </div>
-                </div>
+                )}
               </>
             )}
 
-            {leftFilters.hospitalisations && (
-              <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
-                <p className="no-visit-title">Hospitalisations</p>
-                <p className="no-visit-sub">ED admission — June 2025</p>
+            {leftFilters.visits && !apptsLoading && visitAppts.length === 0 && (
+              <div className="no-card no-card--white no-card--extra" style={{ left: 20, top: 140, width: 330 }}>
+                <p className="no-visit-title">No visits yet</p>
+                <p className="no-visit-sub">Visit history will show up here once you have an appointment.</p>
               </div>
             )}
 
-            {leftFilters.procedure && (
-              <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
-                <p className="no-visit-title">Procedure</p>
-                <p className="no-visit-sub">Appendectomy — March 2024</p>
-              </div>
+            {leftFilters.hospitalisations && !apptsLoading && (
+              hospitalisationAppts[0] ? (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
+                  <p className="no-visit-title">Hospitalisations</p>
+                  <p className="no-visit-sub">
+                    {(hospitalisationAppts[0].reason || 'Admission')} — {formatApptDate(hospitalisationAppts[0].appointmentDate)}
+                  </p>
+                </div>
+              ) : (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
+                  <p className="no-visit-title">Hospitalisations</p>
+                  <p className="no-visit-sub">None on file</p>
+                </div>
+              )
+            )}
+
+            {leftFilters.procedure && !apptsLoading && (
+              procedureAppts[0] ? (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
+                  <p className="no-visit-title">Procedure</p>
+                  <p className="no-visit-sub">
+                    {(procedureAppts[0].reason || 'Procedure')} — {formatApptDate(procedureAppts[0].appointmentDate)}
+                  </p>
+                </div>
+              ) : (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
+                  <p className="no-visit-title">Procedure</p>
+                  <p className="no-visit-sub">None on file</p>
+                </div>
+              )
             )}
             
-            {leftFilters.labs && (
-              <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
-                <p className="no-visit-title">Labs</p>
-                <p className="no-visit-sub">Standalone order — CBC panel</p>
-              </div>
+            {leftFilters.labs && !apptsLoading && (
+              labAppts[0] ? (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
+                  <p className="no-visit-title">Labs</p>
+                  <p className="no-visit-sub">
+                    {(labAppts[0].reason || 'Lab order')} — {formatApptDate(labAppts[0].appointmentDate)}
+                  </p>
+                </div>
+              ) : (
+                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
+                  <p className="no-visit-title">Labs</p>
+                  <p className="no-visit-sub">None on file</p>
+                </div>
+              )
             )}
           </div>
 
@@ -418,7 +611,10 @@ export default function NurseOverview() {
             <div className="no-card no-card--blue no-card--float" style={{ left: allergyPos.left, top: allergyPos.top, width: 355 }}>
               <div className="no-card-toggles">
                 <div className="no-card-toggle">
-                  <span className="active">Past</span> <span>Current</span>
+                  <span className={allergyFilter === 'past' ? 'active' : ''}
+                    onClick={() => setAllergyFilter('past')} style={{ cursor: 'pointer' }}>Past</span>
+                  <span className={allergyFilter === 'current' ? 'active' : ''}
+                    onClick={() => setAllergyFilter('current')} style={{ cursor: 'pointer' }}>Current</span>
                 </div>
 
                 <button className="no-card-close" onClick={() => toggleCard('allergies')}>
@@ -438,22 +634,26 @@ export default function NurseOverview() {
                   <div className="no-med-tags"><span>{allergy.type}</span><span>{allergy.severity}</span></div>
                   <p className="no-med-desc">{allergy.desc}</p>
 
-                  <div className="no-med-profile">
-                    <div className="no-med-profile-photo">
-                      <img src={doctor} className="no-med-doctor-photo" />
-                    </div>
+                  {allergy.doctor && (
+                    <div className="no-med-profile">
+                      <div className="no-med-profile-photo">
+                        {doctorPhotoFor(allergy.doctor)
+                          ? <img src={doctorPhotoFor(allergy.doctor)} className="no-med-doctor-photo" />
+                          : <img src={doctor} className="no-med-doctor-photo" />}
+                      </div>
 
-                    <div className="no-med-doctor-assigned">
-                      <p className="no-med-doctor">Prescribed by</p>
-                      <p className="no-med-doctor-name">{allergy.doctor}</p>
+                      <div className="no-med-doctor-assigned">
+                        <p className="no-med-doctor">Diagnosed by</p>
+                        <p className="no-med-doctor-name">{allergy.doctor}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {MOCK_ALLERGIES.length > 1 && (
+              {filteredAllergies.length > 1 && (
                 <div className="no-mini-pagination">
-                  {MOCK_ALLERGIES.map((_, i) => (
+                  {filteredAllergies.map((_, i) => (
                     <button key={i} className={`no-mini-dot${allergyPage === i ? ' active' : ''}`}
                       onClick={() => setAllergyPage(i)} />
                   ))}
@@ -470,13 +670,34 @@ export default function NurseOverview() {
             </div>
           )}
 
+          {cardVisible.allergies && !allergy && !recordsLoading && (
+            <div className="no-card no-card--blue no-card--float" style={{ left: allergyPos.left, top: allergyPos.top, width: 355 }}>
+              <div className="no-card-toggles">
+                <div className="no-card-toggle">
+                  <span className={allergyFilter === 'past' ? 'active' : ''}
+                    onClick={() => setAllergyFilter('past')} style={{ cursor: 'pointer' }}>Past</span>
+                  <span className={allergyFilter === 'current' ? 'active' : ''}
+                    onClick={() => setAllergyFilter('current')} style={{ cursor: 'pointer' }}>Current</span>
+                </div>
+                <button className="no-card-close" onClick={() => toggleCard('allergies')}>
+                  <img src={close} className="no-card-icon"/>
+                </button>
+              </div>
+              <h2 className="no-card-title">Allergies</h2>
+              <p className="no-med-desc">No {allergyFilter} allergies on file.</p>
+            </div>
+          )}
+
           {/* ── Medication card (draggable) ───────────── */}
 
           {cardVisible.medication && medication && (
             <div className="no-card no-card--blue no-card--float" style={{ left: medicationPos.left, top: medicationPos.top, width: 355, zIndex: 3 }}> 
               <div className="no-card-toggles">
                 <div className="no-card-toggle">
-                  <span className="active">Past</span> <span>Current</span>
+                  <span className={medicationFilter === 'past' ? 'active' : ''}
+                    onClick={() => setMedicationFilter('past')} style={{ cursor: 'pointer' }}>Past</span>
+                  <span className={medicationFilter === 'current' ? 'active' : ''}
+                    onClick={() => setMedicationFilter('current')} style={{ cursor: 'pointer' }}>Current</span>
                 </div>
 
                 <button className="no-card-close" onClick={() => toggleCard('medication')}>
@@ -501,22 +722,32 @@ export default function NurseOverview() {
 
                   <p className="no-med-desc">{medication.desc}</p>
 
-                  <div className="no-med-profile">
-                    <div className="no-med-profile-photo">
-                      <img src={doctor} className="no-med-doctor-photo" />
-                    </div>
+                  {medication.doctor && (
+                    <div className="no-med-profile">
+                      <div className="no-med-profile-photo">
+                        {doctorPhotoFor(medication.doctor)
+                          ? <img src={doctorPhotoFor(medication.doctor)} className="no-med-doctor-photo" />
+                          : <img src={doctor} className="no-med-doctor-photo" />}
+                      </div>
 
-                    <div className="no-med-doctor-assigned">
-                      <p className="no-med-doctor">Prescribed by</p>
-                      <p className="no-med-doctor-name">{medication.doctor}</p>
+                      <div className="no-med-doctor-assigned">
+                        <p className="no-med-doctor">Prescribed by</p>
+                        <p className="no-med-doctor-name">{medication.doctor}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {MOCK_MEDICATIONS.length > 1 && (
+              {medication.progress != null && (
+                <div className="no-progress">
+                  <div className="no-progress-fill" style={{ width: `${medication.progress}%` }} />
+                </div>
+              )}
+
+              {filteredMedications.length > 1 && (
                 <div className="no-mini-pagination">
-                  {MOCK_MEDICATIONS.map((_, i) => (
+                  {filteredMedications.map((_, i) => (
                     <button key={i} className={`no-mini-dot${medicationPage === i ? ' active' : ''}`}
                       onClick={() => setMedicationPage(i)} />
                   ))}
@@ -532,6 +763,24 @@ export default function NurseOverview() {
               </div>
             </div>
           )}
+
+          {cardVisible.medication && !medication && !recordsLoading && (
+            <div className="no-card no-card--blue no-card--float" style={{ left: medicationPos.left, top: medicationPos.top, width: 355, zIndex: 3 }}>
+              <div className="no-card-toggles">
+                <div className="no-card-toggle">
+                  <span className={medicationFilter === 'past' ? 'active' : ''}
+                    onClick={() => setMedicationFilter('past')} style={{ cursor: 'pointer' }}>Past</span>
+                  <span className={medicationFilter === 'current' ? 'active' : ''}
+                    onClick={() => setMedicationFilter('current')} style={{ cursor: 'pointer' }}>Current</span>
+                </div>
+                <button className="no-card-close" onClick={() => toggleCard('medication')}>
+                  <img src={close} className="no-card-icon"/>
+                </button>
+              </div>
+              <h2 className="no-card-title">Medication</h2>
+              <p className="no-med-desc">No {medicationFilter} medications on file.</p>
+            </div>
+          )}
         </div>
 
         <div className="no-timeline">
@@ -543,7 +792,7 @@ export default function NurseOverview() {
 
             <div className="no-timeline-months">
               {MONTHS_SHORT.map((m, i) => {
-                const activity = MOCK_TIMELINE[timelineYear]?.[i]
+                const activity = timeline[timelineYear]?.[i]
                 return (
                   <div key={m} className="no-timeline-month">
                     {activity && (
@@ -587,12 +836,90 @@ export default function NurseOverview() {
         </div>
       </div>
 
-      {/* ── Right: calendar / agenda panel ────────────── */}
-      <Calendar 
-        currentUser={CURRENT_USER}
-        dayTasks={dayTasks}
-        dayAgenda={dayAgenda}
-      />
+      {/* ── Upcoming appointments popup ─────────────────── */}
+      {showUpcoming && !upcomingLoading && currentUpcoming && (
+        <div className="no-upcoming-card">
+          <div className="no-upcoming-head">
+            <h3 className="no-upcoming-title">Upcoming</h3>
+            <button className="no-card-close no-upcoming-close" onClick={() => setShowUpcoming(false)}>
+              <img src={close} className="no-card-icon normal" alt="" />
+            </button>
+          </div>
+
+          <div className="no-upcoming-row">
+            <div className="no-upcoming-av">
+              {currentUpcoming.doctorImage ? (
+                <img src={currentUpcoming.doctorImage} className="ns-full-icon" alt="" />
+              ) : (
+                getInitials(...String(currentUpcoming.doctor || '').replace(/^Dr\.?\s*/i, '').split(' '))
+              )}
+            </div>
+
+            <div className="no-upcoming-info">
+              <p className="no-upcoming-doctor">{currentUpcoming.doctor || 'Doctor'}</p>
+              <p className="no-upcoming-type">{currentUpcoming.type || 'Appointment'}</p>
+            </div>
+
+            <div className="no-upcoming-badges">
+              <span className="no-upcoming-badge">{formatApptDate(currentUpcoming.appointmentDate)}</span>
+              <span className="no-upcoming-badge">{formatApptTime(currentUpcoming.appointmentDate)}</span>
+            </div>
+          </div>
+
+          {upcoming.length > 1 && (
+            <div className="no-upcoming-progress">
+              <div className="no-upcoming-progress-fill"
+                style={{ width: `${((upcomingIdx + 1) / upcoming.length) * 100}%` }} />
+            </div>
+          )}
+
+          <div className="no-upcoming-footer">
+            {upcoming.length > 1 && (
+              <div className="no-upcoming-dots">
+                {upcoming.map((_, i) => (
+                  <button key={i} className={`no-mini-dot${upcomingIdx === i ? ' active' : ''}`}
+                    onClick={() => setUpcomingIdx(i)} />
+                ))}
+              </div>
+            )}
+
+            <div className="no-upcoming-nav">
+              <button className="no-upcoming-back"
+                disabled={upcomingIdx === 0}
+                onClick={() => setUpcomingIdx(i => Math.max(0, i - 1))}>
+                <img src={left} className="no-card-icon normal" alt="Previous" />
+              </button>
+              <button className="no-upcoming-next"
+                disabled={upcomingIdx >= upcoming.length - 1}
+                onClick={() => setUpcomingIdx(i => Math.min(upcoming.length - 1, i + 1))}>
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!upcomingLoading && upcoming.length === 0 && (
+        <div className="no-upcoming-card no-upcoming-card--empty">
+          <p className="no-upcoming-empty-label">No upcoming appointments</p>
+        </div>
+      )}
+
+      {/* ── Bottom-left: current patient strip ──────────── */}
+      <div className="no-doctor-card no-doctor-card--right">
+        <div className="no-doctor-av">
+          {userProfile?.profilePictureUrl
+            ? <img src={userProfile.profilePictureUrl} className="ns-full-icon" alt="" />
+            : getInitials(userProfile?.firstName, userProfile?.lastName)}
+        </div>
+        <div>
+          <p className="no-doctor-name">{userProfile?.firstName} {userProfile?.lastName}</p>
+          <p className="no-doctor-role">Patient</p>
+        </div>
+        <button className="no-bell-btn" aria-label="Notifications">
+          <img src={notification} className="no-card-icon normal" alt="" />
+        </button>
+      </div>
     </div>
   )
 }

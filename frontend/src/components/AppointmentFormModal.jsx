@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import './FormModal.css'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../services/firebase'
 
 const TYPES = ['General Checkup', 'Follow-up', 'Emergency', 'Consultation', 'Procedure']
-const DOCTORS = ['Dr. Sarah Mitchell', 'Dr. James Wilson', 'Dr. Paula Chen']
 const STATUSES = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show']
 
 const labelize = (s) => s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -14,6 +15,7 @@ export default function AppointmentFormModal({ mode = 'add', initial = null, onS
     appointmentTime: '', type: '', doctor: '', status: 'scheduled', notes: '',
   }
   const [values, setValues] = useState({ ...empty, ...initial })
+  const [doctors, setDoctors] = useState([])
 
   useEffect(() => { setValues({ ...empty, ...initial }) }, [initial])
 
@@ -24,6 +26,17 @@ export default function AppointmentFormModal({ mode = 'add', initial = null, onS
     onSubmit?.(values)
     onClose()
   }
+  
+  useEffect(() => {
+    getDocs(query(collection(db, 'users'), where('role', '==', 'doctor')))
+      .then(snap => {
+        setDoctors(snap.docs.map(d => {
+          const { firstName, lastName } = d.data()
+          return `Dr. ${firstName} ${lastName}`
+        }))
+      })
+      .catch(() => setDoctors([]))
+  }, [])
 
   return (
     <div className="no-modal-backdrop" onClick={onClose}>
@@ -71,7 +84,8 @@ export default function AppointmentFormModal({ mode = 'add', initial = null, onS
               <div className="no-form-select-wrap">
                 <select className="no-form-input no-form-select" value={values.doctor} onChange={e => setField('doctor', e.target.value)}>
                   <option value="">Select doctor</option>
-                  {DOCTORS.map(d => <option key={d} value={d}>{d}</option>)}
+                  {doctors.map(d => <option key={d} value={d}>{d}</option>)}
+                  {doctors.length === 0 && <option value="">No doctors on file</option>}
                 </select>
               </div>
             </div>

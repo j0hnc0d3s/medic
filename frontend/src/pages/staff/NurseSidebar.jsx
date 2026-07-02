@@ -13,6 +13,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { patientService } from '../../services'
 import './NurseSidebar.css'
 
+import { signOut } from 'firebase/auth'
+import { auth } from '../../services/firebase'
+
 import send from '../../assets/black/send.png';
 import blood from '../../assets/black/blood.png';
 import ruler from '../../assets/black/ruler.png';
@@ -35,6 +38,7 @@ import image1 from '../../assets/images/image1.jpeg';
 
 const NAV_ITEMS = [
   { key: 'overview',     label: 'Overview',     path: '/staff/overview',     icon: 'home'  },
+  { key: 'patients',     label: 'Patients',     path: '/staff/patients',     icon: 'user'  },
   { key: 'appointments', label: 'Appointments', path: '/staff/appointments', icon: 'clock' },
   { key: 'notes',        label: 'Notes',         path: '/staff/notes',        icon: 'note'  },
   { key: 'documents',    label: 'Documents',     path: '/staff/documents',   icon: 'folder'},
@@ -44,6 +48,7 @@ const NAV_ITEMS = [
 
 const ICONS = {
   home: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  user: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   clock: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   note: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4h13l3 3v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.8"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   folder: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 7a1 1 0 011-1h5l2 2h9a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.8"/></svg>,
@@ -68,41 +73,88 @@ const ICONS = {
 const getInitials = (f, l) => `${f?.[0] || ''}${l?.[0] || ''}`.toUpperCase()
 const AV_COLORS = ['#2D9C9C', '#1F4788', '#8B5CF6', '#F59E0B', '#6B7280']
 
-// ── Mock fallback data (swap for real patientService results) ──
-const MOCK_PATIENTS = [
-  {
-    id: 'p1', firstName: 'H', lastName: 'Evans', gender: 'Male', age: 25, online: true,
-    image: image1,
-    diagnosis: { name: 'Atherosclerosis', severity: 'Chronic' },
-    blood: 'AB+', heightWeight: "5'5 ft, 160 lbs", bmi: '22.4',
-    vitals: { temp: '98.6°F', respRate: '16/min', heartRate: '72 bpm', bp: '120/80', painRating: '3/10', o2sat: '98%' },
-  },
-  { id: 'p2', firstName: 'M', lastName: 'Vincent', gender: 'Female', age: 24, online: true,
-    image: image1,
-    diagnosis: { name: 'Hypertension', severity: 'Chronic' },
-    blood: 'O+', heightWeight: "5'6 ft, 140 lbs", bmi: '21.8',
-    vitals: { temp: '98.4°F', respRate: '14/min', heartRate: '78 bpm', bp: '138/90', painRating: '1/10', o2sat: '99%' },
-  },
-]
+// ── Remove MOCK_PATIENTS entirely and replace with these helpers ──
+
+const SIDEBAR_KEY = 'medic_sidebar_patient_ids'
+
+const calculateAge = (dob) => {
+  if (!dob) return null
+  try {
+    const birth = new Date(dob)
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+    return age
+  } catch { return null }
+}
+
+const mapToSidebarShape = (p) => ({
+  id:           p.uid || p.id,
+  firstName:    p.firstName || '',
+  lastName:     p.lastName  || '',
+  gender:       p.gender
+    ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1)
+    : 'Unknown',
+  age:          calculateAge(p.dob),
+  online:       false,
+  image:        p.profilePictureUrl || null,
+  diagnosis:    p.medicalRecord?.conditions?.[0]
+    ? { name: p.medicalRecord.conditions[0], severity: null }
+    : null,
+  blood:        p.medicalRecord?.bloodType  || null,
+  heightWeight: (p.medicalRecord?.height && p.medicalRecord?.weight)
+    ? `${p.medicalRecord.height} cm, ${p.medicalRecord.weight} kg`
+    : null,
+  bmi:          p.medicalRecord?.bmi                     || null,
+  vitals:       p.medicalRecord?.vitals                  || {},
+  allergies:    p.medicalRecord?.allergies               || [],
+  medications:  p.medicalRecord?.currentMedications      || [],
+})
 
 export default function NurseSidebar({ onSelectPatient, selectedPatient: externalSelected }) {
   const navigate  = useNavigate()
   const location  = useLocation()
 
-  const [patients, setPatients]   = useState(MOCK_PATIENTS)
-  const [search, setSearch]       = useState('')
-  const [selected, setSelected]   = useState(MOCK_PATIENTS[0])
-  const [page, setPage]           = useState(0)
-  const [showAdd, setShowAdd]     = useState(false)
+  const [patients,    setPatients]    = useState([])
+  const [search,      setSearch]      = useState('')
+  const [selected,    setSelected]    = useState(null)
+  const [page,        setPage]        = useState(0)
+  const [showAdd,     setShowAdd]     = useState(false)
   const [allPatients, setAllPatients] = useState([])
+  const [addSearch,   setAddSearch]   = useState('')
+  const [loading,     setLoading]     = useState(true)
 
   useEffect(() => { loadAllPatients() }, [])
 
   const loadAllPatients = async () => {
+    setLoading(true)
     try {
       const res = await patientService.getPatients()
-      if (res.success) setAllPatients(res.patients)
-    } catch (e) { /* fall back to mock silently */ }
+      if (!res.success) return
+
+      const all = res.patients || []
+      setAllPatients(all)
+
+      // Restore the sidebar list the staff member had last session
+      const savedIds = JSON.parse(localStorage.getItem(SIDEBAR_KEY) || '[]')
+
+      if (savedIds.length > 0) {
+        const pinned = savedIds
+          .map(id => all.find(p => (p.uid || p.id) === id))
+          .filter(Boolean)
+          .map(mapToSidebarShape)
+        setPatients(pinned)
+        if (pinned.length > 0) {
+          setSelected(pinned[0])
+          onSelectPatient?.(pinned[0])
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load patients:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const filtered = patients.filter(p =>
@@ -117,23 +169,37 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
 
   const removeFromList = (id, e) => {
     e.stopPropagation()
-    setPatients(p => p.filter(x => x.id !== id))
+    const updated = patients.filter(x => x.id !== id)
+    setPatients(updated)
+    localStorage.setItem(SIDEBAR_KEY, JSON.stringify(updated.map(x => x.id)))
     if (selected?.id === id) setSelected(null)
   }
 
   const closeDetail = () => setSelected(null)
 
   const addPatientToList = (p) => {
-    if (!patients.find(x => x.id === p.id)) {
-      setPatients(prev => [...prev, {
-        id: p.id, firstName: p.firstName, lastName: p.lastName,
-        gender: p.gender || 'Male', age: 0, online: false,
-        diagnosis: { name: p.diagnosis || 'No diagnosis on file', severity: null },
-        blood: p.bloodType || '—', heightWeight: '—', bmi: '—',
-        vitals: {},
-      }])
+    const shaped = mapToSidebarShape(p)
+    if (patients.find(x => x.id === shaped.id)) {
+      setShowAdd(false)
+      return
     }
+    const updated = [...patients, shaped]
+    setPatients(updated)
+    localStorage.setItem(SIDEBAR_KEY, JSON.stringify(updated.map(x => x.id)))
     setShowAdd(false)
+    setAddSearch('')
+  }
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userData')
+      navigate('/login')
+    }
   }
 
   const activeKey = NAV_ITEMS.find(item => location.pathname.startsWith(item.path))?.key || 'overview'
@@ -157,15 +223,46 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
         {showAdd && (
           <div className="ns-add-panel">
             <p className="ns-add-title">Add a patient to view</p>
+
+            <input
+              className="ns-search-input"
+              placeholder="Search by name…"
+              value={addSearch}
+              onChange={e => setAddSearch(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+
             <div className="ns-add-list">
-              {allPatients.slice(0, 6).map(p => (
-                <button key={p.id} className="ns-add-item" onClick={() => addPatientToList(p)}>
-                  {p.firstName} {p.lastName}
-                </button>
-              ))}
-              {allPatients.length === 0 && <p className="ns-add-empty">No other patients found</p>}
+              {allPatients
+                .filter(p => {
+                  const name = `${p.firstName || ''} ${p.lastName || ''}`.toLowerCase()
+                  return name.includes(addSearch.toLowerCase())
+                })
+                .filter(p => !patients.find(x => x.id === (p.uid || p.id)))
+                .slice(0, 8)
+                .map(p => (
+                  <button key={p.uid || p.id} className="ns-add-item"
+                    onClick={() => addPatientToList(p)}>
+                    {p.firstName} {p.lastName}
+                  </button>
+                ))
+              }
+              {allPatients.filter(p => !patients.find(x => x.id === (p.uid || p.id))).length === 0
+                && !loading && <p className="ns-add-empty">All patients are already added</p>}
+              {allPatients.length === 0 && !loading
+                && <p className="ns-add-empty">No patients found in system</p>}
             </div>
           </div>
+        )}
+
+        {loading && (
+          <p className="ns-loading-label">Loading patients…</p>
+        )}
+
+        {!loading && patients.length === 0 && (
+          <p className="ns-loading-label">
+            No patients added. Use + to add a patient.
+          </p>
         )}
 
         <div className="ns-patient-list">
@@ -175,14 +272,18 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
               onClick={() => selectPatient(p)}>
               <div className="ns-patient-av-wrap">
                 <div className="ns-patient-av">
-                  <img
-                    src={p.image}
-                    className="ns-full-icon"
-                    alt={`${p.firstName} ${p.lastName}`}
-                    onClick={(e) => { e.stopPropagation(); selectPatient(p) }}
-                  />
-
-                  {/* {getInitials(p.firstName, p.lastName)} */}
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      className="ns-full-icon"
+                      alt={`${p.firstName} ${p.lastName}`}
+                      onClick={e => { e.stopPropagation(); selectPatient(p) }}
+                    />
+                  ) : (
+                    <span className="ns-av-initials">
+                      {getInitials(p.firstName, p.lastName)}
+                    </span>
+                  )}
                 </div>
 
                 {p.online && <span className="ns-online-dot" />}
@@ -379,7 +480,7 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
             <img src={settings} className="ns-alt-icon"/>
           </button>
 
-          <button className="ns-icon-btn" onClick={() => navigate('/login')} aria-label="Log out">
+          <button className="ns-icon-btn" onClick={handleLogout} aria-label="Log out">
             <img src={logout} className="ns-other-icon"/>
           </button>
         </div>

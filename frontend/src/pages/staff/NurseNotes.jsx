@@ -166,8 +166,16 @@ export default function NurseNotes() {
         )}
       </div>
 
-      <Calendar currentUser={CURRENT_USER} dayTasks={MOCK_TASKS_TODAY} dayAgenda={MOCK_AGENDA_TODAY} />
-
+      {/* ── Calendar with real data ─────────────────────── */}
+      <Calendar
+        currentUser={currentUser}
+        dayTasks={calendarTasks}
+        dayAgenda={calendarAgenda}
+        onAddTask={addTask}
+        onCompleteTask={completeTask}
+        newTaskValue={newTask}
+        onNewTaskChange={setNewTask}
+      />
       {modal && (
         <RecordFormModal
           typeLabel="Note"

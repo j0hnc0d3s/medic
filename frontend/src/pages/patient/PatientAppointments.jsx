@@ -1,166 +1,328 @@
 // ─────────────────────────────────────────────────────────
-// FILE : src/pages/staff/NurseAppointments.jsx
-// CSS  : src/pages/staff/NurseAppointments.css
+// FILE : src/pages/patient/PatientAppointments.jsx
+// CSS  : src/pages/patient/PatientAppointments.css
+//
+// Patients see:
+//   1. Appointments from the 'appointments' collection
+//      matched by their UID or full name
+//   2. Queue entries from 'queueEntries'
+//      matched by their email (used in the join form)
+// They can cancel upcoming appointments but not edit.
 // ─────────────────────────────────────────────────────────
-import { useState } from 'react'
-import PatientSidebar from './PatientSidebar'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  collection, query, where, getDocs, orderBy, Timestamp
+} from 'firebase/firestore'
+import { db } from '../../services/firebase'
+import { useAuth } from '../../contexts/AuthContext'
+import appointmentService from '../../services/appointmentService'
+import notificationService from '../../services/notificationService'
+import Sidebar from '../staff/NurseSidebar'
 import Calendar from '../../components/Calendar'
-import AppointmentFormModal from '../../components/AppointmentFormModal'
 import './PatientAppointments.css'
 
-import doctor from '../../assets/images/doctor1.jpeg'
+import doctorImg from '../../assets/images/doctor1.jpeg'
 
-const ICONS = {
-  chevronDown: <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  calendarAdd: <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M12 13v5M9.5 15.5h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-  grid: <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.8"/></svg>,
-  menu: <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
-  image: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.8"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  flask: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  note: <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg>,
+const STATUS_COLORS = {
+  scheduled:    '#F59E0B',
+  confirmed:    '#3B82F6',
+  'in-progress':'#2D9C9C',
+  completed:    '#22C55E',
+  cancelled:    '#EF4444',
+  'no-show':    '#6B7280',
+  queued:       '#8B5CF6',
 }
 
-const CURRENT_USER = { firstName: 'Sarah', lastName: 'Johnson', role: 'Registered Nurse', image: doctor, online: true, notifications: true }
-const MOCK_TASKS_TODAY = [
-  { id: 1, label: 'Follow up with Martha' },
-  { id: 2, label: 'Follow up with Barry' },
-]
-const MOCK_AGENDA_TODAY = [
-  { id: 1, time: '9:00 AM', label: 'H. Evans — General Consultation' },
-  { id: 2, time: '11:30 AM', label: 'M. Vincent — Follow-up' },
-]
+const labelize = s => (s || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-const INITIAL_APPOINTMENTS = [
-  [{
-    id: 1, name: 'Mr. Harry Evans', meta: 'Male, 24', av: doctor,
-    reason: 'Having headaches and fevers.',
-    tags: [{ label: 'Peanut', active: false }, { label: 'Apples', active: true }],
-    date: 'June 9th.', time: '09:00 PM',
-    counts: { image: 2, flask: 2, note: 2 },
-    patientName: 'H. Evans', doctorName: 'Dr. Kunett', apptType: 'General', notes: '',
-  }],
-  [{
-    id: 2, name: 'Ms. Tameka Vincent', meta: 'Female, 30', av: doctor,
-    reason: 'Routine hypertension follow-up.',
-    tags: [{ label: 'Penicillin', active: true }],
-    date: 'June 11th.', time: '11:00 AM',
-    counts: { image: 1, flask: 3, note: 1 },
-    patientName: 'M. Vincent', doctorName: 'Dr. Kunett', apptType: 'Specialist', notes: '',
-  }],
-]
+const formatDate = ts => {
+  if (!ts) return '—'
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
-export default function NurseAppointments() {
-  const [selectedPatient, setSelectedPatient] = useState(null)
-  const [page, setPage] = useState(0)
-  const [search, setSearch] = useState('')
-  const [apptPages, setApptPages] = useState(INITIAL_APPOINTMENTS)
-  const [modal, setModal] = useState(null)
+// Maps a queueEntry into the same display shape as an appointment.
+const queueEntryToAppt = entry => ({
+  id:              `queue_${entry.id}`,
+  _rawId:          entry.id,
+  _isQueueEntry:   true,
+  patientName:     entry.fullName,
+  patientPhone:    entry.phone,
+  type:            'Queue Visit',
+  doctor:          entry.assignedDoctor || 'To be assigned',
+  notes:           entry.reason,
+  appointmentDate: entry.queuedAt || entry.createdAt,
+  appointmentTime: entry.appointmentTime || '—',
+  status:          ({
+    pending_verification: 'scheduled',
+    queued:       'confirmed',
+    called:       'in-progress',
+    in_progress:  'in-progress',
+    completed:    'completed',
+    cancelled:    'cancelled',
+    no_show:      'no-show',
+  }[entry.status] || 'scheduled'),
+  queueNumber:     entry.queueNumber,
+  priorityLetter:  entry.priorityLetter,
+  cancellable:     false, // queue entries can't be cancelled from here
+})
 
-  const appointments = apptPages[page] || []
+export default function PatientAppointments() {
+  const { userProfile } = useAuth()
 
-  const openAdd = () => setModal({ mode: 'add' })
-  const openEdit = (record) => setModal({ mode: 'edit', record })
+  const currentUser = useMemo(() => ({
+    firstName:    userProfile?.firstName || 'Patient',
+    lastName:     userProfile?.lastName  || '',
+    role:         'Patient',
+    image:        userProfile?.profilePictureUrl || doctorImg,
+    online:       true,
+    notifications: true,
+  }), [userProfile])
 
-  const handleSubmit = (values) => {
-    if (modal.mode === 'edit') {
-      setApptPages(pages => pages.map(p => p.map(a => a.id === modal.record.id
-        ? {
-            ...a, ...values,
-            name: values.patientName || a.name,
-            date: values.date || a.date,
-            time: values.time || a.time,
+  const [appointments, setAppointments] = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [filterDate, setFilterDate]     = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [search, setSearch]             = useState('')
+  const [todayAgenda, setTodayAgenda]   = useState([])
+  const [tasks, setTasks]               = useState([])
+
+  // ── Load all relevant appointments for this patient ────
+  useEffect(() => {
+    if (!userProfile?.uid) return
+    loadPatientAppointments()
+  }, [userProfile?.uid])
+
+  const loadPatientAppointments = async () => {
+    setLoading(true)
+    try {
+      const uid      = userProfile.uid
+      const fullName = `${userProfile.firstName} ${userProfile.lastName}`.trim()
+      const email    = userProfile.email
+
+      const results = []
+      const seenIds = new Set()
+
+      // ── 1. Appointments by UID ──────────────────────
+      try {
+        const byId = await appointmentService.getAppointments({ patientId: uid })
+        if (byId.success) {
+          byId.appointments.forEach(a => {
+            if (!seenIds.has(a.id)) { seenIds.add(a.id); results.push({ ...a, cancellable: true }) }
+          })
+        }
+      } catch { /* silent */ }
+
+      // ── 2. Appointments by name (older records without UID) ──
+      try {
+        const byName = await getDocs(query(
+          collection(db, 'appointments'),
+          where('patientName', '==', fullName),
+          orderBy('appointmentDate', 'desc')
+        ))
+        byName.docs.forEach(d => {
+          if (!seenIds.has(d.id)) {
+            seenIds.add(d.id)
+            results.push({ id: d.id, ...d.data(), cancellable: true })
           }
-        : a)))
-    } else {
-      const newAppt = {
-        id: Date.now(),
-        name: values.patientName || 'Unnamed Patient',
-        meta: '—',
-        av: doctor,
-        reason: values.notes || '—',
-        tags: [],
-        date: values.date || '—',
-        time: values.time || '—',
-        counts: { image: 0, flask: 0, note: 0 },
-        ...values,
+        })
+      } catch { /* silent — index may not exist yet */ }
+
+      // ── 3. Queue entries by email ──────────────────
+      if (email) {
+        try {
+          const queueSnap = await getDocs(query(
+            collection(db, 'queueEntries'),
+            where('email', '==', email),
+            orderBy('createdAt', 'desc')
+          ))
+          queueSnap.docs.forEach(d => {
+            const mapped = queueEntryToAppt({ id: d.id, ...d.data() })
+            if (!seenIds.has(mapped.id)) {
+              seenIds.add(mapped.id)
+              results.push(mapped)
+            }
+          })
+        } catch { /* silent */ }
       }
-      setApptPages(pages => {
-        const next = [...pages]
-        next[page] = [...(next[page] || []), newAppt]
-        return next
+
+      // Sort by date descending (Timestamps first, then fallback)
+      results.sort((a, b) => {
+        const da = a.appointmentDate?.toDate?.() || new Date(a.appointmentDate || 0)
+        const db_ = b.appointmentDate?.toDate?.() || new Date(b.appointmentDate || 0)
+        return db_ - da
       })
+
+      setAppointments(results)
+    } catch (err) {
+      console.error('Error loading patient appointments:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
+  // ── Calendar agenda: patient's upcoming appointments ───
+  useEffect(() => {
+    if (!userProfile?.uid) return
+    const today    = new Date(); today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+
+    getDocs(query(
+      collection(db, 'appointments'),
+      where('patientId', '==', userProfile.uid),
+      where('appointmentDate', '>=', Timestamp.fromDate(today)),
+      where('appointmentDate', '<',  Timestamp.fromDate(tomorrow)),
+      orderBy('appointmentDate')
+    ))
+      .then(snap => setTodayAgenda(snap.docs.map(d => ({
+        id:    d.id,
+        time:  d.data().appointmentTime || '—',
+        label: `${d.data().type || 'Appointment'} — ${d.data().doctor || '—'}`,
+      }))))
+      .catch(() => setTodayAgenda([]))
+  }, [userProfile?.uid])
+
+  // ── Cancel appointment ─────────────────────────────────
+  const handleCancel = async appt => {
+    if (!appt.cancellable) return
+    if (!window.confirm('Cancel this appointment?')) return
+    try {
+      await appointmentService.cancelAppointment(appt.id, 'Cancelled by patient')
+
+      // Notify patient (themselves) for confirmation
+      await notificationService.createNotification({
+        title:    'Appointment Cancelled',
+        message:  `Your appointment with ${appt.doctor} on ${formatDate(appt.appointmentDate)} has been cancelled.`,
+        type:     'appointment',
+        userId:   userProfile.uid,
+        metadata: { appointmentId: appt.id },
+      })
+
+      loadPatientAppointments()
+    } catch (err) {
+      console.error('Cancel error:', err)
+      alert('Failed to cancel appointment')
+    }
+  }
+
+  // ── Filter ─────────────────────────────────────────────
+  const filtered = appointments.filter(a => {
+    const matchesSearch = (a.doctor || '').toLowerCase().includes(search.toLowerCase())
+                       || (a.type  || '').toLowerCase().includes(search.toLowerCase())
+    const matchesStatus = filterStatus === 'all' || a.status === filterStatus
+    let   matchesDate   = true
+
+    const d = a.appointmentDate?.toDate?.() || new Date(a.appointmentDate || 0)
+    if (filterDate === 'today') {
+      matchesDate = d.toDateString() === new Date().toDateString()
+    } else if (filterDate === 'upcoming') {
+      matchesDate = d >= new Date()
+    } else if (filterDate === 'past') {
+      matchesDate = d < new Date()
+    }
+
+    return matchesSearch && matchesStatus && matchesDate
+  })
+
+  // ─────────────────────────────────────────────────────
+
   return (
     <div className="no-shell">
-      <PatientSidebar onSelectPatient={setSelectedPatient} />
+      <NurseSidebar role="patient" onSelectPatient={() => {}} />
 
       <div className="no-main">
         <div className="no-content-header">
-          <input className="no-content-search" placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="no-content-search" placeholder="Search by doctor or type"
+            value={search} onChange={e => setSearch(e.target.value)} />
 
-          <button className="no-content-filter">
-            <span className="no-content-filter-label">Filter {ICONS.chevronDown}</span>
-            <span className="no-content-filter-sub">by patient</span>
-          </button>
+          <select className="no-content-filter-select" value={filterDate}
+            onChange={e => setFilterDate(e.target.value)}>
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="past">Past</option>
+          </select>
 
-          <button className="no-content-icon-btn" aria-label="Add appointment" onClick={openAdd}>{ICONS.calendarAdd}</button>
-          <button className="no-content-icon-btn" aria-label="Grid view">{ICONS.grid}</button>
-          <button className="no-content-icon-btn" aria-label="Menu">{ICONS.menu}</button>
+          <select className="no-content-filter-select" value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value)}>
+            <option value="all">All Statuses</option>
+            {Object.keys(STATUS_COLORS).map(s =>
+              <option key={s} value={s}>{labelize(s)}</option>)}
+          </select>
         </div>
 
-        <div className="no-appt-list">
-          {appointments.map(appt => (
-            <div key={appt.id} className="no-appt-card" onClick={() => openEdit(appt)}>
-              <img src={appt.av} className="no-appt-av" alt="" />
+        {loading ? (
+          <p style={{ color: '#9ca3af', fontSize: 13 }}>Loading your appointments…</p>
+        ) : (
+          <div className="no-appt-list">
+            {filtered.map(appt => (
+              <div key={appt.id} className="no-appt-card">
+                <div className="no-appt-av-wrap">
+                  <div className="no-appt-av-initials">
+                    {(appt.doctor || 'DR').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                </div>
 
-              <div className="no-appt-patient">
-                <p className="no-appt-name">{appt.name}</p>
-                <p className="no-appt-meta">{appt.meta}</p>
-              </div>
+                <div className="no-appt-patient">
+                  <p className="no-appt-name">{appt.doctor || 'Doctor TBA'}</p>
+                  {appt._isQueueEntry && appt.queueNumber && (
+                    <p className="no-appt-meta">Queue #{appt.queueNumber}</p>
+                  )}
+                </div>
 
-              <div className="no-appt-reason">
-                <p className="no-appt-reason-label">Reason to visit.</p>
-                <p className="no-appt-reason-text">{appt.reason}</p>
-                <div className="no-appt-tags">
-                  {appt.tags.map((t, i) => (
-                    <span key={i} className={`no-appt-tag${t.active ? ' active' : ''}`}>{t.label}</span>
-                  ))}
+                <div className="no-appt-reason">
+                  <p className="no-appt-reason-label">{appt.type || 'Appointment'}</p>
+                  <p className="no-appt-reason-text">{appt.notes || 'No notes'}</p>
+                  <div className="no-appt-tags">
+                    {appt._isQueueEntry && (
+                      <span className="no-appt-tag" style={{ background: '#8B5CF620', color: '#8B5CF6' }}>
+                        Walk-in
+                      </span>
+                    )}
+                    <span className="no-status-badge"
+                      style={{
+                        background: `${STATUS_COLORS[appt.status] || '#6B7280'}1f`,
+                        color: STATUS_COLORS[appt.status] || '#6B7280',
+                      }}>
+                      {labelize(appt.status)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="no-appt-time">
+                  <p className="no-appt-date">{formatDate(appt.appointmentDate)}</p>
+                  <p className="no-appt-time-value">{appt.appointmentTime}</p>
+                </div>
+
+                <div className="no-appt-actions-col">
+                  {appt.cancellable &&
+                   !['completed', 'cancelled', 'no-show'].includes(appt.status) && (
+                    <button className="no-appt-text-btn danger"
+                      onClick={() => handleCancel(appt)}>
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </div>
+            ))}
 
-              <div className="no-appt-time">
-                <p className="no-appt-date">{appt.date}</p>
-                <p className="no-appt-time-value">{appt.time}</p>
+            {filtered.length === 0 && !loading && (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <p style={{ color: '#9ca3af', fontSize: 13 }}>No appointments found.</p>
+                <p style={{ color: '#c4c9d4', fontSize: 12, marginTop: 6 }}>
+                  Appointments you book will appear here, including any walk-in queue visits.
+                </p>
               </div>
-
-              <div className="no-appt-actions" onClick={e => e.stopPropagation()}>
-                <button className="no-appt-action">{ICONS.image}<span className="no-appt-badge">{appt.counts.image}</span></button>
-                <button className="no-appt-action">{ICONS.flask}<span className="no-appt-badge">{appt.counts.flask}</span></button>
-                <button className="no-appt-action">{ICONS.note}<span className="no-appt-badge">{appt.counts.note}</span></button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="no-pagination">
-          {apptPages.map((_, i) => (
-            <button key={i} className={`no-pagination-dot${page === i ? ' active' : ''}`} onClick={() => setPage(i)}>{i + 1}</button>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <Calendar currentUser={CURRENT_USER} dayTasks={MOCK_TASKS_TODAY} dayAgenda={MOCK_AGENDA_TODAY} />
-
-      {modal && (
-        <AppointmentFormModal
-          mode={modal.mode}
-          initial={modal.record}
-          onSubmit={handleSubmit}
-          onClose={() => setModal(null)}
-        />
-      )}
+      <Calendar
+        currentUser={currentUser}
+        dayTasks={tasks}
+        dayAgenda={todayAgenda}
+      />
     </div>
   )
 }
