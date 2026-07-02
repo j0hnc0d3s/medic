@@ -5,6 +5,7 @@ from firebase_admin import auth
 from datetime import datetime, timedelta, timezone
 from app.config.firebase import get_db
 from app.config.smtp import email_service
+from app.utils.emailTemplates import get_welcome_email, get_password_reset_email
 import secrets
 import string
 import logging
@@ -12,8 +13,8 @@ import logging
 logger = logging.getLogger(__name__)
  
 def generate_reset_code():
-    """Generate a 4-digit reset code"""
-    return ''.join(secrets.choice(string.digits) for _ in range(4))
+    """Generate a 6-digit reset code"""
+    return ''.join(secrets.choice(string.digits) for _ in range(6))
  
 def register_routes(app):
     """Register all auth routes for Medic"""
@@ -92,7 +93,7 @@ def register_routes(app):
                 'department': '',  # Only for staff
                 'trn': '',  # Tax Registration Number (Jamaica)
                 'nis': '',  # National Insurance Scheme (Jamaica)
-                'dob': None,
+                'dob': data.get('dob'),
                 'gender': '',
                 'address': '',
                 'parish': '',  # Jamaican parish
@@ -110,16 +111,11 @@ def register_routes(app):
                 email_service.send_email(
                     to_email=email,
                     subject="Welcome to Medic!",
-                    html_content=f"""
-                    <h1>Welcome to Medic, {first_name}!</h1>
-                    <p>Your account has been created successfully.</p>
-                    <p>You can now log in and start managing your healthcare appointments.</p>
-                    """
+                    html_content=get_welcome_email(first_name)
                 )
                 logger.info(f"✅ Welcome email sent to {email}")
             except Exception as email_error:
                 logger.error(f"❌ Welcome email failed: {str(email_error)}")
-                # Don't fail registration if email fails
             
             return jsonify({
                 'success': True,
