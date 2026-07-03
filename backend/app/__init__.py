@@ -37,7 +37,7 @@ def create_app():
     # ── Routes ───────────────────────────────────────────────────────────────
     from app.routes import health, auth, user
     from app.routes import admin, staff
-    from app.routes import queue
+    from app.routes import queue, patient_linking
 
     queue.register_routes(app)
     health.register_routes(app)
@@ -45,5 +45,6 @@ def create_app():
     user.register_routes(app)
     admin.register_routes(app)
     staff.register_routes(app)
+    patient_linking.register_routes(app)
 
     return app
