@@ -57,7 +57,7 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
   const [linkEmail, setLinkEmail]     = useState('')
   const [linking, setLinking]         = useState(false)
   const [linkError, setLinkError]     = useState('')
-  const [linkedUserId, setLinkedUserId] = useState(null) // from the selected patient's raw doc
+  const [linkedUserId, setLinkedUserId] = useState(null) // selected patient.raw?.userId — matches firestore.rules
 
   const suggestions = useMemo(() => {
     if (!nameQuery.trim()) return []
@@ -84,7 +84,7 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
     setMedicalHistory((p.medicalHistory || []).map(h => ({
       date: h.date || '', type: h.type || HISTORY_TYPES[0], purpose: h.purpose || h.notes || '',
     })))
-    setLinkedUserId(p.raw?.linkedUserId || null)
+    setLinkedUserId(p.raw?.userId || null)
     setLinkEmail('')
     setLinkError('')
     setShowSuggest(false)

@@ -300,7 +300,8 @@ class PatientService {
 
   /**
    * Link a patients-collection record to a real login account (users/{uid}).
-   * Writes both directions: linkedUserId on the patient doc, and
+   * Writes both directions: userId on the patient doc (matches the
+   * firestore.rules isOwner(resource.data.userId) check), and
    * patientRecordId on the user doc, so either side can look the other up.
    *
    * ⚠️ The users/{userId} write here will fail for staff with the same
@@ -317,7 +318,7 @@ class PatientService {
   async linkToUser(patientId, userId) {
     try {
       await updateDoc(doc(db, this.collectionName, patientId), {
-        linkedUserId: userId,
+        userId: userId,
         updatedAt: Timestamp.now()
       })
       await updateDoc(doc(db, 'users', userId), {

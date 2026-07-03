@@ -23,7 +23,7 @@ def link_existing_patient_record(db, uid, email):
     they're now creating — matched by email.
 
     Both directions get written so either side can look the other up:
-      patients/{id}.linkedUserId  -> uid
+      patients/{id}.userId  -> uid  (matches firestore.rules' isOwner check)
       users/{uid}.patientRecordId -> patients doc id
 
     Silent no-op if there's no match, and deliberately does NOT
@@ -47,7 +47,7 @@ def link_existing_patient_record(db, uid, email):
             return
 
         patient_doc = matches[0]
-        patient_doc.reference.update({'linkedUserId': uid})
+        patient_doc.reference.update({'userId': uid})
         db.collection('users').document(uid).update({'patientRecordId': patient_doc.id})
         logger.info(f"✅ Linked existing patient record {patient_doc.id} to new user {uid}")
 

@@ -1,4 +1,4 @@
-# app/services/patient_linking.py
+# app/routes/patient_linking.py
 #
 # Links a `patients`-collection record (staff-created, via the
 # Patients tab) to a real login account (`users/{uid}`), by email.
@@ -28,7 +28,7 @@ def register_routes(app):
         Finds the login account for `email` (Admin SDK — not a
         Firestore query, so it isn't subject to Firestore rules) and
         writes the link both directions:
-          patients/{patientId}.linkedUserId -> uid
+          patients/{patientId}.userId -> uid  (matches firestore.rules' isOwner check)
           users/{uid}.patientRecordId       -> patientId
         """
         try:
@@ -61,7 +61,7 @@ def register_routes(app):
 
             uid = user_record.uid
 
-            patient_ref.update({'linkedUserId': uid})
+            patient_ref.update({'userId': uid})
             db.collection('users').document(uid).update({'patientRecordId': patient_id})
 
             logger.info(f"✅ Linked patient {patient_id} to user {uid} ({email})")
