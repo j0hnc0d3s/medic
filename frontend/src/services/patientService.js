@@ -36,7 +36,7 @@ class PatientService {
         firstName: patientData.firstName,
         lastName: patientData.lastName,
         fullName: `${patientData.firstName} ${patientData.lastName}`,
-        email: patientData.email || '',
+        email: (patientData.email || '').toLowerCase(),
         phone: patientData.phone || '',
         dateOfBirth: patientData.dateOfBirth ? Timestamp.fromDate(new Date(patientData.dateOfBirth)) : null,
         gender: patientData.gender || '',
@@ -228,6 +228,11 @@ class PatientService {
         data.dateOfBirth = Timestamp.fromDate(new Date(updates.dateOfBirth))
       }
 
+      // Keep email casing consistent with users.email (auth.py lowercases on register)
+      if (updates.email) {
+        data.email = updates.email.toLowerCase()
+      }
+
       await updateDoc(docRef, data)
 
       // Log activity
@@ -245,6 +250,86 @@ class PatientService {
       }
     } catch (error) {
       console.error('Update patient error:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
+  /**
+   * Get a patient record by email — used to find a walk-in/staff-created
+   * record that belongs to someone who has since made (or already has)
+   * a login account, when no direct link exists yet.
+   * @param {string} email 
+   * @returns {Promise<Object>}
+   */
+  async getPatientByEmail(email) {
+    try {
+      if (!email) return { success: false, error: 'Email is required' }
+
+      const q = query(
+        collection(db, this.collectionName),
+        where('email', '==', email.toLowerCase()),
+        limit(5)
+      )
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        return { success: true, patient: null }
+      }
+
+      const matches = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+
+      return {
+        success: true,
+        patient: matches[0],
+        // Surfaced so callers can warn staff instead of silently
+        // picking one when there's an unresolved duplicate.
+        ambiguous: matches.length > 1,
+        matches
+      }
+    } catch (error) {
+      console.error('Get patient by email error:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
+  /**
+   * Link a patients-collection record to a real login account (users/{uid}).
+   * Writes both directions: linkedUserId on the patient doc, and
+   * patientRecordId on the user doc, so either side can look the other up.
+   * @param {string} patientId 
+   * @param {string} userId 
+   * @returns {Promise<Object>}
+   */
+  async linkToUser(patientId, userId) {
+    try {
+      await updateDoc(doc(db, this.collectionName, patientId), {
+        linkedUserId: userId,
+        updatedAt: Timestamp.now()
+      })
+      await updateDoc(doc(db, 'users', userId), {
+        patientRecordId: patientId
+      })
+
+      await activityService.logActivity({
+        action: 'Patient Record Linked',
+        description: `Patient record ${patientId} linked to user account ${userId}`,
+        type: 'patient-linked',
+        user: 'Admin',
+        entity: patientId
+      })
+
+      return {
+        success: true,
+        message: 'Patient record linked successfully'
+      }
+    } catch (error) {
+      console.error('Link patient to user error:', error)
       return {
         success: false,
         error: error.message

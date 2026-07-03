@@ -29,6 +29,8 @@
 
 .apm-label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; }
 .apm-hint { font-size: 10px; color: #9ca3af; margin: 6px 2px 0; }
+.apm-hint--linked { color: #16a34a; font-weight: 600; font-size: 11px; }
+.apm-hint--error { color: #ef4444; }
 
 .apm-input {
   width: 100%; background: #f1f3f5; border: none; border-radius: 16px;

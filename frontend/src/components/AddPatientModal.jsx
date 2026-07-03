@@ -15,6 +15,7 @@
 // separate Firestore reads/writes needed per field.
 // ─────────────────────────────────────────────────────────
 import { useState, useMemo, useEffect } from 'react'
+import { authService, patientService } from '../services'
 import './AddPatientModal.css'
 
 const HISTORY_TYPES = ['Consultation', 'Lab Work', 'Procedure', 'Hospitalisation', 'Emergency', 'Follow-up']
@@ -52,6 +53,12 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
   const [editingHistoryIndex, setEditingHistoryIndex] = useState(null)
   const [medicalHistory, setMedicalHistory] = useState([])
 
+  // ── Manual "link to account" (for records that predate auto-link) ──
+  const [linkEmail, setLinkEmail]     = useState('')
+  const [linking, setLinking]         = useState(false)
+  const [linkError, setLinkError]     = useState('')
+  const [linkedUserId, setLinkedUserId] = useState(null) // from the selected patient's raw doc
+
   const suggestions = useMemo(() => {
     if (!nameQuery.trim()) return []
     return patients
@@ -77,7 +84,34 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
     setMedicalHistory((p.medicalHistory || []).map(h => ({
       date: h.date || '', type: h.type || HISTORY_TYPES[0], purpose: h.purpose || h.notes || '',
     })))
+    setLinkedUserId(p.raw?.linkedUserId || null)
+    setLinkEmail('')
+    setLinkError('')
     setShowSuggest(false)
+  }
+
+  const handleLinkAccount = async () => {
+    if (!selected || !linkEmail.trim()) return
+    setLinking(true)
+    setLinkError('')
+    try {
+      const userRes = await authService.getUserByEmail(linkEmail.trim())
+      if (!userRes.success || !userRes.user) {
+        setLinkError('No account found with that email.')
+        return
+      }
+      const linkRes = await patientService.linkToUser(selected.id, userRes.user.uid)
+      if (!linkRes.success) {
+        setLinkError(linkRes.error || 'Failed to link.')
+        return
+      }
+      setLinkedUserId(userRes.user.uid)
+      setLinkEmail('')
+    } catch (err) {
+      setLinkError(err.message || 'Failed to link.')
+    } finally {
+      setLinking(false)
+    }
   }
 
   const addAllergy = () => {
@@ -291,6 +325,28 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
             </div>
           )}
         </div>
+
+        {/* Link to account — only relevant once a record exists */}
+        {selected && (
+          <div className="apm-field">
+            <label className="apm-label">Login account</label>
+            {linkedUserId ? (
+              <p className="apm-hint apm-hint--linked">✓ Linked to an account — data will show on their Overview screen.</p>
+            ) : (
+              <>
+                <div className="apm-add-row">
+                  <input className="apm-input" placeholder="Patient's account email"
+                    value={linkEmail} onChange={e => setLinkEmail(e.target.value)} />
+                  <button className="apm-add-btn apm-add-btn--inline" onClick={handleLinkAccount} disabled={linking}>
+                    {linking ? 'Linking…' : 'Link'}
+                  </button>
+                </div>
+                {linkError && <p className="apm-hint apm-hint--error">{linkError}</p>}
+                <p className="apm-hint">Not linked yet — matches by email automatically when they sign up, or link manually here now.</p>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="apm-footer">
           <button className="apm-btn apm-btn--cancel" onClick={onClose}>Cancel</button>

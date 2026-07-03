@@ -3,8 +3,10 @@
 // CSS  : src/pages/staff/NurseOverview.css
 // ─────────────────────────────────────────────────────────
 import { useState, useRef, useEffect } from 'react'
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
+import { authService, patientService } from '../../services'
+import appointmentService from '../../services/appointmentService'
 import { useAuth } from '../../contexts/AuthContext'
 import PatientSidebar from './PatientSidebar'
 import './PatientOverview.css'
@@ -39,28 +41,34 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const normalizeDoctorName = (s) =>
   (s || '').replace(/^dr\.?\s*/i, '').trim().toLowerCase()
 
-const mapAllergy = (a, i) => ({
-  id:       a.id || i,
-  name:     a.name || a.allergen || 'Unknown allergen',
-  type:     a.type || 'Other',
-  severity: a.severity || 'Unknown',
-  desc:     a.reaction || a.description || a.desc || 'No reaction details on file.',
-  status:   (a.status || 'active').toLowerCase(), // active | historical | intolerance
-  doctor:   a.diagnosedBy || a.prescribedBy || a.doctor || null,
-})
+const mapAllergy = (entry, i) => {
+  const a = typeof entry === 'string' ? { name: entry } : entry
+  return {
+    id:       a.id ?? i,
+    name:     a.name || a.allergen || 'Unknown allergen',
+    type:     a.type || 'Other',
+    severity: a.severity || 'Unknown',
+    desc:     a.reaction || a.description || a.desc || 'No reaction details on file.',
+    status:   (a.status || 'active').toLowerCase(), // active | historical | intolerance
+    doctor:   a.diagnosedBy || a.prescribedBy || a.doctor || null,
+  }
+}
 
-const mapMedication = (m, i) => ({
-  id:       m.id || i,
-  name:     m.name || 'Medication',
-  dose:     m.dosage || m.dose || '—',
-  form:     m.form || '—',
-  route:    m.route || '—',
-  freq:     m.frequency || m.freq || '—',
-  desc:     m.description || m.desc || 'No description on file.',
-  status:   (m.status || 'active').toLowerCase(), // active | completed | discontinued
-  doctor:   m.prescribedBy || m.doctor || null,
-  progress: computeMedProgress(m),
-})
+const mapMedication = (entry, i) => {
+  const m = typeof entry === 'string' ? { name: entry } : entry
+  return {
+    id:       m.id ?? i,
+    name:     m.name || 'Medication',
+    dose:     m.dosage || m.dose || '—',
+    form:     m.form || '—',
+    route:    m.route || '—',
+    freq:     m.frequency || m.freq || '—',
+    desc:     m.description || m.desc || 'No description on file.',
+    status:   (m.status || 'active').toLowerCase(), // active | completed | discontinued
+    doctor:   m.prescribedBy || m.doctor || null,
+    progress: computeMedProgress(m),
+  }
+}
 
 // Elapsed-course percentage when start/end dates exist on the record;
 // otherwise null so the progress bar is simply skipped.
@@ -205,18 +213,15 @@ export default function PatientOverview() {
   const loadAppointments = async () => {
     setApptsLoading(true)
     try {
-      const byUid = await getDocs(
-        query(collection(db, 'appointments'), where('patientId', '==', userProfile.uid))
-      )
       const fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()
-      const byName = fullName
-        ? await getDocs(query(collection(db, 'appointments'), where('patientName', '==', fullName)))
-        : { docs: [] }
+      const [byUidRes, byNameRes] = await Promise.all([
+        appointmentService.getAppointments({ patientId: userProfile.uid }),
+        fullName ? appointmentService.getAppointments({ patientName: fullName }) : Promise.resolve({ appointments: [] }),
+      ])
 
       const seen = new Set()
-      const all = [...byUid.docs, ...byName.docs]
-        .filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true })
-        .map(d => ({ id: d.id, ...d.data() }))
+      const all = [...(byUidRes.appointments || []), ...(byNameRes.appointments || [])]
+        .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true })
         .filter(a => a.status !== 'cancelled')
         .sort((a, b) => {
           const da = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
@@ -251,6 +256,7 @@ export default function PatientOverview() {
   // ── Allergies & medications (real data) ──────────────────
   const [allergies, setAllergies]         = useState([])
   const [medications, setMedications]     = useState([])
+  const [linkedPatientRecord, setLinkedPatientRecord] = useState(null)
   const [recordsLoading, setRecordsLoading] = useState(true)
   const [doctorPhotos, setDoctorPhotos]   = useState(new Map())
   const [allergyFilter, setAllergyFilter]     = useState('current') // current | past
@@ -263,26 +269,39 @@ export default function PatientOverview() {
   const loadMedicalRecord = async () => {
     setRecordsLoading(true)
     try {
-      const [recordSnap, doctorsSnap] = await Promise.all([
-        getDoc(doc(db, 'users', userProfile.uid, 'medicalRecords', 'main')),
-        getDocs(query(collection(db, 'users'), where('role', '==', 'doctor'))),
-      ])
-
+      const doctorsRes = await authService.getUsersByRole('doctor')
       const photoMap = new Map()
-      doctorsSnap.docs.forEach(d => {
-        const data = d.data()
-        photoMap.set(normalizeDoctorName(`${data.firstName} ${data.lastName}`), data.profilePictureUrl || null)
-      })
+      if (doctorsRes.success) {
+        doctorsRes.users.forEach(d => {
+          photoMap.set(normalizeDoctorName(`${d.firstName} ${d.lastName}`), d.profilePictureUrl || null)
+        })
+      }
       setDoctorPhotos(photoMap)
 
-      if (recordSnap.exists()) {
-        const data = recordSnap.data()
-        setAllergies((data.allergies || []).map(mapAllergy))
-        setMedications((data.currentMedications || data.medications || []).map(mapMedication))
-      } else {
-        setAllergies([])
-        setMedications([])
+      // Resolve this patient's clinical record. It lives in the
+      // `patients` collection (staff-managed), not on users/{uid} —
+      // patientRecordId is the link written when the account was
+      // registered (or manually linked by staff for accounts that
+      // predate that link). Email is a fallback for either case not
+      // having happened yet.
+      let record = null
+      if (userProfile.patientRecordId) {
+        const snap = await getDoc(doc(db, 'patients', userProfile.patientRecordId))
+        if (snap.exists()) record = { id: snap.id, ...snap.data() }
       }
+      if (!record && userProfile.email) {
+        const res = await patientService.getPatientByEmail(userProfile.email)
+        if (res.success && res.patient) {
+          record = res.patient
+          if (res.ambiguous) {
+            console.warn(`Multiple patient records match ${userProfile.email} — showing the first, ask staff to resolve the duplicate.`)
+          }
+        }
+      }
+
+      setLinkedPatientRecord(record)
+      setAllergies((record?.allergies || []).map(mapAllergy))
+      setMedications((record?.medications || []).map(mapMedication))
     } catch (err) {
       console.error('Failed to load medical record:', err)
     } finally {
@@ -362,26 +381,47 @@ export default function PatientOverview() {
 
   const toggleCard = (key) => setCardVisible(c => ({ ...c, [key]: !c[key] }))
 
-  // ── Derive canvas sections from real appointments ────────
-  const visitAppts = patientAppointments
+  // ── Combine real appointments with Medical History rows ──
+  // (added via the staff Patients tab, stored as a plain array on the
+  // patients-collection record — not appointment docs) into one
+  // activity pool, normalized to the same shape, sorted newest first.
+  const historyAsActivity = (linkedPatientRecord?.medicalHistory || [])
+    .map((h, i) => ({
+      id:              `history-${i}`,
+      appointmentDate: h.date ? new Date(h.date) : null,
+      type:            h.type || 'Consultation',
+      reason:          h.purpose || '',
+      status:          'completed',
+      fromHistory:      true,
+    }))
+    .filter(a => a.appointmentDate && !isNaN(a.appointmentDate))
+
+  const allActivity = [...patientAppointments, ...historyAsActivity].sort((a, b) => {
+    const da = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+    const db_ = b.appointmentDate?.toDate ? b.appointmentDate.toDate() : new Date(b.appointmentDate)
+    return db_ - da // newest first
+  })
+
+  // ── Derive canvas sections from the combined activity ────
+  const visitAppts = allActivity
     .filter(a => !['Lab Work', 'Procedure'].includes(a.type))
     .slice(0, 2)
 
-  const labAppts = patientAppointments
+  const labAppts = allActivity
     .filter(a => a.type === 'Lab Work')
     .slice(0, 1)
 
-  const hospitalisationAppts = patientAppointments
+  const hospitalisationAppts = allActivity
     .filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
     .slice(0, 1)
 
-  const procedureAppts = patientAppointments
+  const procedureAppts = allActivity
     .filter(a => a.type === 'Procedure')
     .slice(0, 1)
 
-  // ── Timeline scrubber built from real appointment dates ──
+  // ── Timeline scrubber built from the combined activity ───
   const timeline = {}
-  patientAppointments.forEach(a => {
+  allActivity.forEach(a => {
     const d = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
     if (!d || isNaN(d)) return
     const yr = d.getFullYear()

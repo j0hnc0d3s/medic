@@ -1,5 +1,5 @@
 # app/routes/auth.py - Updated for Medic with Role Support
- 
+
 from flask import request, jsonify
 from firebase_admin import auth
 from datetime import datetime, timedelta, timezone
@@ -9,20 +9,60 @@ from app.utils.emailTemplates import get_welcome_email, get_password_reset_email
 import secrets
 import string
 import logging
- 
+
 logger = logging.getLogger(__name__)
- 
+
 def generate_reset_code():
     """Generate a 6-digit reset code"""
     return ''.join(secrets.choice(string.digits) for _ in range(6))
- 
+
+def link_existing_patient_record(db, uid, email):
+    """
+    Auto-link a walk-in patient record (created by staff via the
+    Patients tab, before this person had a login) to the account
+    they're now creating — matched by email.
+
+    Both directions get written so either side can look the other up:
+      patients/{id}.linkedUserId  -> uid
+      users/{uid}.patientRecordId -> patients doc id
+
+    Silent no-op if there's no match, and deliberately does NOT
+    auto-link when there are multiple matches — that's a duplicate
+    that needs a human to resolve (staff can do it manually from the
+    Patients tab), not something to guess at silently.
+    """
+    try:
+        matches = list(
+            db.collection('patients').where('email', '==', email.lower()).stream()
+        )
+
+        if len(matches) == 0:
+            return
+
+        if len(matches) > 1:
+            logger.warning(
+                f"⚠️ Multiple patient records found for {email} "
+                f"({len(matches)} matches) — skipping auto-link, needs manual resolution"
+            )
+            return
+
+        patient_doc = matches[0]
+        patient_doc.reference.update({'linkedUserId': uid})
+        db.collection('users').document(uid).update({'patientRecordId': patient_doc.id})
+        logger.info(f"✅ Linked existing patient record {patient_doc.id} to new user {uid}")
+
+    except Exception as link_error:
+        # Don't fail registration over a linking hiccup — the account
+        # itself was created fine, this is a nice-to-have.
+        logger.error(f"❌ Patient record auto-link failed for {email}: {str(link_error)}")
+
 def register_routes(app):
     """Register all auth routes for Medic"""
- 
+
     # ============================================================================
     # REGISTRATION ENDPOINT - Updated for Medic
     # ============================================================================
- 
+
     @app.route('/api/auth/register', methods=['POST', 'OPTIONS'])
     def register():
         """Register new user with role assignment"""
@@ -105,6 +145,10 @@ def register_routes(app):
             
             db.collection('users').document(uid).set(user_data)
             logger.info(f"✅ Firestore user document created: {uid}")
+
+            # Link any pre-existing walk-in patient record (created by
+            # staff via the Patients tab before this person had a login).
+            link_existing_patient_record(db, uid, email)
             
             # Send welcome email
             try:
@@ -135,11 +179,11 @@ def register_routes(app):
                 'success': False,
                 'error': 'Registration failed'
             }), 500
- 
+
     # ============================================================================
     # LOGIN ENDPOINT - Updated for Medic with Role Return
     # ============================================================================
- 
+
     @app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
     def login():
         """Login with Firebase token - verify and return user data with role"""
@@ -206,6 +250,7 @@ def register_routes(app):
                     'role': user_role,
                     'department': user_data.get('department', ''),  # For staff
                     'profilePictureUrl': user_data.get('profilePictureUrl', ''),
+                    'patientRecordId': user_data.get('patientRecordId'),  # None if not linked yet
                 },
                 'token': id_token,
             }
@@ -220,11 +265,11 @@ def register_routes(app):
                 'success': False,
                 'error': 'Login failed'
             }), 500
- 
+
     # ============================================================================
     # Password Reset Endpoints (Keep your existing code)
     # ============================================================================
- 
+
     @app.route('/api/auth/forgot-password', methods=['POST', 'OPTIONS'])
     def forgot_password():
         """Send password reset code to email"""
