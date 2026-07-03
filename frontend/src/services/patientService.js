@@ -302,6 +302,14 @@ class PatientService {
    * Link a patients-collection record to a real login account (users/{uid}).
    * Writes both directions: linkedUserId on the patient doc, and
    * patientRecordId on the user doc, so either side can look the other up.
+   *
+   * ⚠️ The users/{userId} write here will fail for staff with the same
+   * "Missing or insufficient permissions" as getUserByEmail() above —
+   * writing another user's doc from the client hits the same rule.
+   * Use api.js's linkPatientToAccount() (backend, Admin SDK) instead.
+   * Left here rather than deleted only because the patients/{patientId}
+   * half might be callable independently later; don't call this method
+   * as-is for the linking flow.
    * @param {string} patientId 
    * @param {string} userId 
    * @returns {Promise<Object>}

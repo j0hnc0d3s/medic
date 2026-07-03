@@ -260,6 +260,14 @@ class AuthService {
   /**
    * Get a user by email — case-insensitive, matches the lowercased
    * email auth.py stores on registration.
+   *
+   * ⚠️ KNOWN TO FAIL for staff calling this about someone else's
+   * account — Firestore rules correctly block cross-account email
+   * lookups from the client. Confirmed via console error:
+   * "Missing or insufficient permissions." Use
+   * api.js's linkPatientToAccount() (backend, Admin SDK) instead for
+   * the patient-linking flow. This may still work for a user looking
+   * up their own record, if rules permit that — untested.
    * @param {string} email 
    * @returns {Promise<Object>}
    */

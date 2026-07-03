@@ -131,6 +131,16 @@ export const getPatientDetails = (patientId) => {
   return get(`/api/staff/patients/${patientId}`)
 }
 
+/**
+ * Link a patients-collection record to a login account, by email
+ * (staff only). Runs server-side via the Admin SDK — this is a
+ * cross-account operation Firestore rules won't allow directly from
+ * the client, so it has to go through the backend.
+ */
+export const linkPatientToAccount = (patientId, email) => {
+  return post('/api/staff/patients/link', { patientId, email })
+}
+
 // ========== Admin API Calls ==========
 
 /**

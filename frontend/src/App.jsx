@@ -9,11 +9,11 @@ import './index.css'
 
 // Staff
 import NurseOverview from './pages/staff/NurseOverview.jsx'
+import NursePatients from './pages/staff/NursePatients.jsx'
 /* import NurseMessaging from './pages/staff/NurseMessaging.jsx'
 import NurseNotes from './pages/staff/NurseNotes.jsx'
 import NurseDocuments from './pages/staff/NurseDocuments.jsx'
 import NurseAppointments from './pages/staff/NurseAppointments.jsx'
-import NursePatients from './pages/staff/NursePatients.jsx'
 import NurseImaging from './pages/staff/NurseImaging.jsx'
 import NurseLabs from './pages/staff/NurseLabs.jsx' */
 
@@ -59,7 +59,8 @@ function App() {
         >
           <Route index element={<Navigate to="/staff/overview" replace />} />
           <Route path="overview" element={<NurseOverview />} />
-{/*           <Route path="patients" element={<NursePatients />} />
+          <Route path="patients" element={<NursePatients />} />
+{/*          
           <Route path="messaging" element={<NurseMessaging />} />
           <Route path="appointments" element={<NurseAppointments />} />
           <Route path="notes" element={<NurseNotes />} />

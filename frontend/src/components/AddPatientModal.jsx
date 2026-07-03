@@ -15,7 +15,7 @@
 // separate Firestore reads/writes needed per field.
 // ─────────────────────────────────────────────────────────
 import { useState, useMemo, useEffect } from 'react'
-import { authService, patientService } from '../services'
+import { linkPatientToAccount } from '../services/api'
 import './AddPatientModal.css'
 
 const HISTORY_TYPES = ['Consultation', 'Lab Work', 'Procedure', 'Hospitalisation', 'Emergency', 'Follow-up']
@@ -95,17 +95,8 @@ export default function AddPatientModal({ patients, saving, onSubmit, onClose, i
     setLinking(true)
     setLinkError('')
     try {
-      const userRes = await authService.getUserByEmail(linkEmail.trim())
-      if (!userRes.success || !userRes.user) {
-        setLinkError('No account found with that email.')
-        return
-      }
-      const linkRes = await patientService.linkToUser(selected.id, userRes.user.uid)
-      if (!linkRes.success) {
-        setLinkError(linkRes.error || 'Failed to link.')
-        return
-      }
-      setLinkedUserId(userRes.user.uid)
+      const res = await linkPatientToAccount(selected.id, linkEmail.trim())
+      setLinkedUserId(res.uid)
       setLinkEmail('')
     } catch (err) {
       setLinkError(err.message || 'Failed to link.')
