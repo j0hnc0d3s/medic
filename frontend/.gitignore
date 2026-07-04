@@ -1,1 +1,21 @@
-.vercel
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Firebase
+.firebase/
+.firebaserc
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*node_modules/
