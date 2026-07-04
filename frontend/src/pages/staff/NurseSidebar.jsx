@@ -40,6 +40,7 @@ const NAV_ITEMS = [
   { key: 'overview',     label: 'Overview',     path: '/staff/overview',     icon: 'home'  },
   { key: 'patients',     label: 'Patients',     path: '/staff/patients',     icon: 'user'  },
   { key: 'appointments', label: 'Appointments', path: '/staff/appointments', icon: 'clock' },
+  { key: 'messaging',    label: 'Messaging',     path: '/staff/messaging',   icon: 'send'  },
   { key: 'notes',        label: 'Notes',         path: '/staff/notes',        icon: 'note'  },
   { key: 'documents',    label: 'Documents',     path: '/staff/documents',   icon: 'folder'},
   { key: 'imaging',      label: 'Imaging',       path: '/staff/imaging',     icon: 'brain' },

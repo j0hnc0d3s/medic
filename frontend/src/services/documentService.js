@@ -54,6 +54,8 @@ class DocumentService {
         type: metadata.type || this.getFileType(file.name),
         category: metadata.category || 'Other',
         description: metadata.description || '',
+        patientId: metadata.patientId || null,
+        patientName: metadata.patientName || '',
         fileName: file.name,
         fileSize: file.size,
         size: this.formatFileSize(file.size),
@@ -143,6 +145,10 @@ class DocumentService {
 
       if (filters.uploadedBy) {
         queryConstraints.push(where('uploadedBy', '==', filters.uploadedBy))
+      }
+
+      if (filters.patientId) {
+        queryConstraints.push(where('patientId', '==', filters.patientId))
       }
 
       queryConstraints.push(orderBy('uploadedAt', 'desc'))

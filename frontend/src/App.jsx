@@ -3,28 +3,37 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Unauthorized from './components/Unauthorized.jsx'
 import Login from './pages/auth/Login.jsx'
-
-// Index
 import './index.css'
 
 // Staff
+
 import NurseOverview from './pages/staff/NurseOverview.jsx'
 import NursePatients from './pages/staff/NursePatients.jsx'
-/* import NurseMessaging from './pages/staff/NurseMessaging.jsx'
+import NurseLabs from './pages/staff/NurseLabs.jsx'
+import NurseAppointments from './pages/staff/NurseAppointments.jsx'
 import NurseNotes from './pages/staff/NurseNotes.jsx'
 import NurseDocuments from './pages/staff/NurseDocuments.jsx'
-import NurseAppointments from './pages/staff/NurseAppointments.jsx'
 import NurseImaging from './pages/staff/NurseImaging.jsx'
-import NurseLabs from './pages/staff/NurseLabs.jsx' */
+import NurseMessaging from './pages/staff/NurseMessaging.jsx'
+
+/* 
+
+*/
 
 // Patient
+
 import PatientOverview from './pages/patient/PatientOverview.jsx'
-/* import PatientMessaging from './pages/patient/PatientMessaging.jsx'
+
+/* 
+import PatientMessaging from './pages/patient/PatientMessaging.jsx'
 import PatientDocuments from './pages/patient/PatientDocuments.jsx'
-import PatientAppointments from './pages/patient/PatientAppointments.jsx' */
+import PatientAppointments from './pages/patient/PatientAppointments.jsx' 
+*/
 
 // Admin
+
 import AdminOverview from './pages/admin/AdminOverview.jsx'
+
 /* import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminPatients from './pages/admin/AdminPatients.jsx'
 import AdminMessaging from './pages/admin/AdminMessaging.jsx' */
@@ -60,13 +69,16 @@ function App() {
           <Route index element={<Navigate to="/staff/overview" replace />} />
           <Route path="overview" element={<NurseOverview />} />
           <Route path="patients" element={<NursePatients />} />
-{/*          
-          <Route path="messaging" element={<NurseMessaging />} />
+          <Route path="labs" element={<NurseLabs />} />
           <Route path="appointments" element={<NurseAppointments />} />
           <Route path="notes" element={<NurseNotes />} />
           <Route path="documents" element={<NurseDocuments />} />
           <Route path="imaging" element={<NurseImaging />} />
-          <Route path="labs" element={<NurseLabs />} /> */}
+          <Route path="messaging" element={<NurseMessaging />} />
+
+          {/*          
+              None at the moment.
+           */}
 
           {/* Doctors also get access to the patients directory, per the
               AdminPatients page being shared between admin + doctor roles */}

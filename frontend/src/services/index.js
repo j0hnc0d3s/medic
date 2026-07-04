@@ -13,6 +13,9 @@ export { default as activityService } from './activityService'
 export { default as messagingService } from './messagingService'
 export { default as financeService } from './financeService'
 export { default as reportService } from './reportService'
+export { default as labService } from './labService'
+export { default as imagingService } from './imagingService'
+export { default as noteService } from './noteService'
 
 // Firebase exports
 export { db, auth, storage, functions } from './firebase'
