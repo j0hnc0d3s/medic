@@ -2,7 +2,7 @@
 // FILE : src/pages/staff/NurseOverview.jsx
 // CSS  : src/pages/staff/NurseOverview.css
 // ─────────────────────────────────────────────────────────
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { authService, patientService } from '../../services'
@@ -102,39 +102,41 @@ const CARD_POS = {
   procedure:        { left: 1080, top: 230, width: 200, height: 60  },
   labsStandalone:   { left: 1080, top: 320, width: 200, height: 60  },
 }
+// connectorPoints() (below, inside the component) picks the actual
+// facing edge between two cards using their real measured position —
+// these left/top/width/height values are only a same-frame fallback
+// before the first measurement lands.
 
-const rightMid = (k) => ({ x: CARD_POS[k].left + CARD_POS[k].width, y: CARD_POS[k].top + CARD_POS[k].height / 2 })
-const leftMid  = (k) => ({ x: CARD_POS[k].left, y: CARD_POS[k].top + CARD_POS[k].height / 2 })
-
+// Straight line from one card edge to another — no bend. The origin
+// circle and destination arrowhead are positioned independently of
+// this path (see ConnectorNode/DestTriangle), so removing the elbow
+// bend doesn't affect where those markers land.
 function elbowPath(from, to) {
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  if (Math.abs(dy) < 1) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
-
-  const radius = Math.min(20, Math.abs(dx) / 3, Math.abs(dy) / 2)
-  const midX = from.x + dx / 2
-  const dir = dy > 0 ? 1 : -1
-
-  return `M ${from.x} ${from.y}
-    L ${midX - radius} ${from.y}
-    Q ${midX} ${from.y} ${midX} ${from.y + radius * dir}
-    L ${midX} ${to.y - radius * dir}
-    Q ${midX} ${to.y} ${midX + radius} ${to.y}
-    L ${to.x} ${to.y}`
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
 }
 
-const DestTriangle = ({ x, y, size = 14 }) => (
+// Rotation applied on top of each asset's default (assumed
+// pointing-right) orientation. If these render backwards once you
+// see them live, the assets' true default orientation differs from
+// this assumption — swap 'right'/'left' or 'down'/'up' here to match.
+const DIR_ROTATION = { right: 0, down: 90, left: 180, up: 270 }
+
+const DestTriangle = ({ x, y, size = 14, direction = 'right' }) => (
   <img
     src={reverse_triangle}
     className="no-dest-triangle"
     alt=""
-    style={{ left: x - size, top: y - size / 2, width: size, height: size }}
+    style={{
+      left: x - size / 2, top: y - size / 2, width: size, height: size,
+      transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)`,
+    }}
   />
 )
 
-const ConnectorNode = ({ x, y }) => (
+const ConnectorNode = ({ x, y, direction = 'right' }) => (
   <div className="no-connector-node" style={{ left: x - 16, top: y - 16 }}>
-    <img src={triangle} className="no-connector-triangle" alt="" />
+    <img src={triangle} className="no-connector-triangle" alt=""
+      style={{ transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)` }} />
   </div>
 )
 
@@ -337,6 +339,96 @@ export default function PatientOverview() {
     return () => ro.disconnect()
   }, [])
 
+  // ── Real card position/size measurement ───────────────────
+  // Connector lines need each card's REAL rendered box (not a
+  // hardcoded guess) to pick the correct edge and land precisely on
+  // it. Every previous fix here assumed connections are always
+  // left-edge-to-right-edge — that's wrong for stacked cards like
+  // Consultation → Labs, which need top/bottom edges instead. See
+  // connectorPoints() below for the actual edge-selection rule.
+  const cardEls = useRef({}) // { headaches: el, visit1: el, ... }
+  const [cardRects, setCardRects] = useState({})
+
+  const setCardRef = (key) => (el) => {
+    if (cardEls.current[key] === el) return
+    cardEls.current[key] = el
+  }
+
+  useLayoutEffect(() => {
+    if (!canvasRef.current) return
+
+    const measure = () => {
+      const canvasBox = canvasRef.current.getBoundingClientRect()
+      setCardRects(prev => {
+        let changed = false
+        const next = { ...prev }
+        Object.entries(cardEls.current).forEach(([key, el]) => {
+          if (!el) return
+          const r = el.getBoundingClientRect()
+          const rect = {
+            left:   r.left - canvasBox.left,
+            top:    r.top  - canvasBox.top,
+            width:  r.width,
+            height: r.height,
+          }
+          const p = prev[key]
+          if (!p || p.left !== rect.left || p.top !== rect.top || p.width !== rect.width || p.height !== rect.height) {
+            next[key] = rect
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }
+
+    measure()
+    const observers = Object.values(cardEls.current).filter(Boolean).map(el => {
+      const ro = new ResizeObserver(measure)
+      ro.observe(el)
+      return ro
+    })
+    window.addEventListener('resize', measure)
+    return () => {
+      observers.forEach(ro => ro.disconnect())
+      window.removeEventListener('resize', measure)
+    }
+  })
+
+  // Real rect once measured; the static CARD_POS layout position is
+  // only a fallback for the very first paint before that happens.
+  const rectOf = (k) => cardRects[k] || CARD_POS[k]
+
+  // The actual rule: if two cards are side by side (their vertical
+  // ranges overlap), connect right-edge-center to left-edge-center.
+  // If they're stacked (their horizontal ranges overlap instead),
+  // connect bottom-edge-center to top-edge-center. Always the pair
+  // of edges that actually face each other, never a fixed side.
+  const connectorPoints = (fromKey, toKey) => {
+    const a = rectOf(fromKey)
+    const b = rectOf(toKey)
+    if (!a || !b) return null
+
+    const aCenterX = a.left + a.width / 2
+    const aCenterY = a.top + a.height / 2
+    const bCenterX = b.left + b.width / 2
+    const bCenterY = b.top + b.height / 2
+
+    const horizontallyOverlap = a.left < b.left + b.width && b.left < a.left + a.width
+    const verticallyOverlap   = a.top  < b.top  + b.height && b.top  < a.top  + a.height
+
+    if (horizontallyOverlap && !verticallyOverlap) {
+      // Stacked — bottom-center to top-center, or the reverse.
+      return aCenterY < bCenterY
+        ? { from: { x: aCenterX, y: a.top + a.height }, to: { x: bCenterX, y: b.top }, direction: 'down' }
+        : { from: { x: aCenterX, y: a.top }, to: { x: bCenterX, y: b.top + b.height }, direction: 'up' }
+    }
+
+    // Side by side (default) — right-center to left-center, or the reverse.
+    return aCenterX < bCenterX
+      ? { from: { x: a.left + a.width, y: aCenterY }, to: { x: b.left, y: bCenterY }, direction: 'right' }
+      : { from: { x: a.left, y: aCenterY }, to: { x: b.left + b.width, y: bCenterY }, direction: 'left' }
+  }
+
   const onTimelinePointerDown = (e) => {
     e.preventDefault()
     const startX = e.clientX
@@ -387,12 +479,14 @@ export default function PatientOverview() {
   // activity pool, normalized to the same shape, sorted newest first.
   const historyAsActivity = (linkedPatientRecord?.medicalHistory || [])
     .map((h, i) => ({
-      id:              `history-${i}`,
+      id:              `history-${h.id || i}`,
+      historyId:       h.id || null, // raw, unprefixed — used to match against latestConsultation.id
       appointmentDate: h.date ? new Date(h.date) : null,
       type:            h.type || 'Consultation',
       reason:          h.purpose || '',
       status:          'completed',
       fromHistory:      true,
+      linkedConsultationId: h.linkedConsultationId || '',
     }))
     .filter(a => a.appointmentDate && !isNaN(a.appointmentDate))
 
@@ -402,22 +496,47 @@ export default function PatientOverview() {
     return db_ - da // newest first
   })
 
-  // ── Derive canvas sections from the combined activity ────
-  const visitAppts = allActivity
-    .filter(a => !['Lab Work', 'Procedure'].includes(a.type))
-    .slice(0, 2)
+  // ── Most recent diagnosis — comes from Medical History's
+  //    Consultation rows (that's the only place diagnosis info
+  //    lives; real scheduled appointments don't carry it).
+  const consultations = (linkedPatientRecord?.medicalHistory || [])
+    .filter(h => h.type === 'Consultation')
+    .slice()
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const latestConsultation = consultations[0] || null
 
-  const labAppts = allActivity
-    .filter(a => a.type === 'Lab Work')
-    .slice(0, 1)
+  // ── Derive canvas sections ────────────────────────────────
+  // Prefer entries actually linked to the latest consultation once
+  // one exists — that's the consultation → follow-ups linkage from
+  // the Patients tab. A consultation counts as its own first visit
+  // (that's the appointment where the diagnosis was made), so it's
+  // included alongside anything that points at it via
+  // linkedConsultationId. Falls back to "most recent of type"
+  // otherwise so real scheduled appointments (which have no linkage
+  // field) still show up.
+  const linkedTo = (list) => latestConsultation
+    ? list.filter(a => a.historyId === latestConsultation.id || a.linkedConsultationId === latestConsultation.id)
+    : list
 
-  const hospitalisationAppts = allActivity
-    .filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
-    .slice(0, 1)
+  const visitAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => !['Lab Work', 'Procedure'].includes(a.type)))
+    : allActivity.filter(a => !['Lab Work', 'Procedure'].includes(a.type))
+  ).slice(0, 2)
 
-  const procedureAppts = allActivity
-    .filter(a => a.type === 'Procedure')
-    .slice(0, 1)
+  const labAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Lab Work'))
+    : allActivity.filter(a => a.type === 'Lab Work')
+  ).slice(0, 2)
+
+  const hospitalisationAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency'))
+    : allActivity.filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
+  ).slice(0, 1)
+
+  const procedureAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Procedure'))
+    : allActivity.filter(a => a.type === 'Procedure')
+  ).slice(0, 1)
 
   // ── Timeline scrubber built from the combined activity ───
   const timeline = {}
@@ -438,18 +557,42 @@ export default function PatientOverview() {
   const allergy    = filteredAllergies[Math.min(allergyPage, Math.max(0, filteredAllergies.length - 1))]
   const medication = filteredMedications[Math.min(medicationPage, Math.max(0, filteredMedications.length - 1))]
 
+  const hasCondition = !!latestConsultation
+  const hasVisit1    = leftFilters.visits && visitAppts.length >= 1
+  const hasVisit2    = leftFilters.visits && visitAppts.length >= 2
+  const hasLabsLink   = leftFilters.labs && labAppts.length > 0
+  const hasSecondLab  = leftFilters.labs && labAppts.length > 1
+  const hasHospital  = leftFilters.hospitalisations && hospitalisationAppts.length > 0
+  const hasProcedure = leftFilters.procedure && procedureAppts.length > 0
+
+  // Labs/hospitalisation/procedure should chain onto wherever the
+  // visit chain actually ends, not a fixed slot — a patient with just
+  // one visit (or none, just the consultation itself) should still
+  // see labs connect to that last real card, not float disconnected
+  // because a specific "visit2" slot happens to be empty.
+  const chainAnchor  = hasVisit2 ? 'visit2' : hasVisit1 ? 'visit1' : (hasCondition ? 'headaches' : null)
+  const branchAnchor = hasVisit1 ? 'visit1' : (hasCondition ? 'headaches' : null)
+
   const CONNECTOR_LINKS = [
-    { id: 'h-v1',   from: 'headaches', to: 'visit1',           active: leftFilters.visits && visitAppts.length > 0 },
-    { id: 'h-v2',   from: 'headaches', to: 'visit2',           active: leftFilters.visits && visitAppts.length > 1 },
-    { id: 'v2-lv',  from: 'visit2',    to: 'labsVisit',        active: leftFilters.visits && visitAppts.length > 1 && labAppts.length > 0 },
-    { id: 'v1-hos', from: 'visit1',    to: 'hospitalisations', active: leftFilters.hospitalisations && visitAppts.length > 0 && hospitalisationAppts.length > 0 },
-    { id: 'v1-pro', from: 'visit1',    to: 'procedure',        active: leftFilters.procedure && visitAppts.length > 0 && procedureAppts.length > 0 },
-    { id: 'lv-ls',  from: 'labsVisit', to: 'labsStandalone',   active: leftFilters.labs && labAppts.length > 0 },
+    { id: 'h-v1',     from: 'headaches',   to: 'visit1',           active: hasCondition && hasVisit1 },
+    { id: 'h-v2',     from: 'headaches',   to: 'visit2',           active: hasCondition && hasVisit2 },
+    { id: 'chain-lv', from: chainAnchor,   to: 'labsVisit',        active: hasLabsLink && !!chainAnchor },
+    { id: 'branch-h', from: branchAnchor,  to: 'hospitalisations', active: hasHospital && !!branchAnchor },
+    { id: 'branch-p', from: branchAnchor,  to: 'procedure',        active: hasProcedure && !!branchAnchor },
+    { id: 'lv-ls',    from: 'labsVisit',   to: 'labsStandalone',   active: hasSecondLab },
   ]
 
   const visibleLinks = CONNECTOR_LINKS.filter(l => l.active)
-  const originPoints = [...new Map(visibleLinks.map(l => [l.from, rightMid(l.from)])).entries()]
-  const destPoints    = [...new Map(visibleLinks.map(l => [l.to,   leftMid(l.to)])).entries()]
+
+  const resolvedLinks = visibleLinks
+    .map(l => {
+      const pts = connectorPoints(l.from, l.to)
+      return pts ? { id: l.id, fromKey: l.from, toKey: l.to, fromPoint: pts.from, toPoint: pts.to, direction: pts.direction } : null
+    })
+    .filter(Boolean)
+
+  const originMarkers = [...new Map(resolvedLinks.map(l => [`${l.fromKey}|${l.direction}`, { x: l.fromPoint.x, y: l.fromPoint.y, direction: l.direction }])).entries()]
+  const destMarkers    = [...new Map(resolvedLinks.map(l => [`${l.toKey}|${l.direction}`,   { x: l.toPoint.x,   y: l.toPoint.y,   direction: l.direction }])).entries()]
 
   return (
     <div className="no-shell">
@@ -492,35 +635,60 @@ export default function PatientOverview() {
         <div className="no-canvas" ref={canvasRef}>
           <div className="no-history">
             <svg className="no-connectors" viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`} preserveAspectRatio="none">
-              {visibleLinks.map(l => (
-                <path key={l.id} d={elbowPath(rightMid(l.from), leftMid(l.to))} className="no-line" />
+              {resolvedLinks.map(l => (
+                <path key={l.id} d={elbowPath(l.fromPoint, l.toPoint)} className="no-line" />
               ))}
             </svg>
 
-            {originPoints.map(([key, pos]) => (
-              <ConnectorNode key={key} x={pos.x} y={pos.y} />
+            {originMarkers.map(([key, m]) => (
+              <ConnectorNode key={key} x={m.x} y={m.y} direction={m.direction} />
             ))}
 
-            {destPoints.length > 0 && destPoints.map(([key, pos]) => (
-              <DestTriangle key={key} x={pos.x} y={pos.y} />
+            {destMarkers.map(([key, m]) => (
+              <DestTriangle key={key} x={m.x} y={m.y} direction={m.direction} />
             ))}
 
             {leftFilters.visits && !apptsLoading && (
               <>
-                <div className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
-                  <div className="no-card-tags">
-                    <p className="no-card-tag">{visitAppts[0]?.type || 'No visits yet'}</p>
-                    <img src={lightning} className="no-card-icon inverted" />
-                  </div>
+                {latestConsultation ? (
+                  <div ref={setCardRef('headaches')} className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330, height: 350 }}>
+                    <div className="no-card-tags">
+                      <p className="no-card-tag">{latestConsultation.diagnosisType || 'Consultation'}</p>
+                      <img src={lightning} className="no-card-icon inverted" />
+                    </div>
 
-                  <h2 className="no-card-title">{visitAppts[0]?.reason || 'No condition on file'}</h2>
+                    <h2 className="no-card-title">{latestConsultation.diagnosisName || 'Undiagnosed'}</h2>
 
-                  <div className="no-card-action condition">
+                    {(latestConsultation.painLevel || latestConsultation.symptoms?.length > 0) && (
+                      <div className="no-card-tags items" style={{ marginTop: 8 }}>
+                        {latestConsultation.painLevel && (
+                          <p className="no-card-tag item">Pain {latestConsultation.painLevel}/10</p>
+                        )}
+                        {(latestConsultation.symptoms || []).slice(0, 3).map(s => (
+                          <p key={s} className="no-card-tag item">{s}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="no-card-action condition">
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div ref={setCardRef('headaches')} className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
+                    <div className="no-card-tags">
+                      <p className="no-card-tag">{visitAppts[0]?.type || 'No visits yet'}</p>
+                      <img src={lightning} className="no-card-icon inverted" />
+                    </div>
+
+                    <h2 className="no-card-title">{visitAppts[0]?.reason || 'No condition on file'}</h2>
+
+                    <div className="no-card-action condition">
+                    </div>
+                  </div>
+                )}
 
                 {visitAppts[0] && (
-                  <div className="no-card no-card--white" style={{ left: 610, top: 100, width: 250 }}>
+                  <div ref={setCardRef('visit1')} className="no-card no-card--white" style={{ left: 619, top: 278, width: 250 }}>
                     <div className="no-visit-head">
                       <div className="no-visit-icon">
                         <img src={notes} className="no-action-icon inverted"/>
@@ -544,7 +712,7 @@ export default function PatientOverview() {
                 )}
 
                 {visitAppts[1] && (
-                  <div className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
+                  <div ref={setCardRef('visit2')} className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
                     <div className="no-visit-head">
                       <div className="no-visit-icon">
                         <img src={notes} className="no-action-icon inverted"/>
@@ -561,7 +729,7 @@ export default function PatientOverview() {
                 )}
 
                 {labAppts[0] && (
-                  <div className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
+                  <div ref={setCardRef('labsVisit')} className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
                     <div className="no-visit-head">
                       <div className="no-visit-icon">
                         <img src={notes} className="no-action-icon inverted"/>
@@ -589,8 +757,8 @@ export default function PatientOverview() {
               </>
             )}
 
-            {leftFilters.visits && !apptsLoading && visitAppts.length === 0 && (
-              <div className="no-card no-card--white no-card--extra" style={{ left: 20, top: 140, width: 330 }}>
+            {leftFilters.visits && !apptsLoading && !latestConsultation && visitAppts.length === 0 && (
+              <div ref={setCardRef('headaches')} className="no-card no-card--white no-card--extra" style={{ left: 20, top: 140, width: 330 }}>
                 <p className="no-visit-title">No visits yet</p>
                 <p className="no-visit-sub">Visit history will show up here once you have an appointment.</p>
               </div>
@@ -598,14 +766,14 @@ export default function PatientOverview() {
 
             {leftFilters.hospitalisations && !apptsLoading && (
               hospitalisationAppts[0] ? (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
+                <div ref={setCardRef('hospitalisations')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
                   <p className="no-visit-title">Hospitalisations</p>
                   <p className="no-visit-sub">
                     {(hospitalisationAppts[0].reason || 'Admission')} — {formatApptDate(hospitalisationAppts[0].appointmentDate)}
                   </p>
                 </div>
               ) : (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
+                <div ref={setCardRef('hospitalisations')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
                   <p className="no-visit-title">Hospitalisations</p>
                   <p className="no-visit-sub">None on file</p>
                 </div>
@@ -614,34 +782,30 @@ export default function PatientOverview() {
 
             {leftFilters.procedure && !apptsLoading && (
               procedureAppts[0] ? (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
+                <div ref={setCardRef('procedure')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
                   <p className="no-visit-title">Procedure</p>
                   <p className="no-visit-sub">
                     {(procedureAppts[0].reason || 'Procedure')} — {formatApptDate(procedureAppts[0].appointmentDate)}
                   </p>
                 </div>
               ) : (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
+                <div ref={setCardRef('procedure')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
                   <p className="no-visit-title">Procedure</p>
                   <p className="no-visit-sub">None on file</p>
                 </div>
               )
             )}
             
-            {leftFilters.labs && !apptsLoading && (
-              labAppts[0] ? (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
-                  <p className="no-visit-title">Labs</p>
-                  <p className="no-visit-sub">
-                    {(labAppts[0].reason || 'Lab order')} — {formatApptDate(labAppts[0].appointmentDate)}
-                  </p>
-                </div>
-              ) : (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
-                  <p className="no-visit-title">Labs</p>
-                  <p className="no-visit-sub">None on file</p>
-                </div>
-              )
+            {/* A genuinely distinct second lab entry beyond the one
+                already shown in the chain above — hidden entirely
+                when there's only one, rather than repeating it. */}
+            {leftFilters.labs && !apptsLoading && labAppts[1] && (
+              <div ref={setCardRef('labsStandalone')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
+                <p className="no-visit-title">Labs</p>
+                <p className="no-visit-sub">
+                  {(labAppts[1].reason || 'Lab order')} — {formatApptDate(labAppts[1].appointmentDate)}
+                </p>
+              </div>
             )}
           </div>
 
@@ -946,7 +1110,7 @@ export default function PatientOverview() {
       )}
 
       {/* ── Bottom-left: current patient strip ──────────── */}
-      <div className="no-doctor-card no-doctor-card--right">
+      <div className="no-doctor-card no-doctor-card--left">
         <div className="no-doctor-av">
           {userProfile?.profilePictureUrl
             ? <img src={userProfile.profilePictureUrl} className="ns-full-icon" alt="" />

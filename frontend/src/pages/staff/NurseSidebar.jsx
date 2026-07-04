@@ -77,40 +77,57 @@ const AV_COLORS = ['#2D9C9C', '#1F4788', '#8B5CF6', '#F59E0B', '#6B7280']
 
 const SIDEBAR_KEY = 'medic_sidebar_patient_ids'
 
+// patientService stores dateOfBirth as a Firestore Timestamp — this
+// accepts that, a plain Date, or a date string.
 const calculateAge = (dob) => {
   if (!dob) return null
-  try {
-    const birth = new Date(dob)
-    const today = new Date()
-    let age = today.getFullYear() - birth.getFullYear()
-    const m = today.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
-    return age
-  } catch { return null }
+  const birth = dob.toDate ? dob.toDate() : new Date(dob)
+  if (isNaN(birth)) return null
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age
 }
 
-const mapToSidebarShape = (p) => ({
-  id:           p.uid || p.id,
-  firstName:    p.firstName || '',
-  lastName:     p.lastName  || '',
-  gender:       p.gender
-    ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1)
-    : 'Unknown',
-  age:          calculateAge(p.dob),
-  online:       false,
-  image:        p.profilePictureUrl || null,
-  diagnosis:    p.medicalRecord?.conditions?.[0]
-    ? { name: p.medicalRecord.conditions[0], severity: null }
-    : null,
-  blood:        p.medicalRecord?.bloodType  || null,
-  heightWeight: (p.medicalRecord?.height && p.medicalRecord?.weight)
-    ? `${p.medicalRecord.height} cm, ${p.medicalRecord.weight} kg`
-    : null,
-  bmi:          p.medicalRecord?.bmi                     || null,
-  vitals:       p.medicalRecord?.vitals                  || {},
-  allergies:    p.medicalRecord?.allergies               || [],
-  medications:  p.medicalRecord?.currentMedications      || [],
-})
+// Allergy/medication entries are usually plain strings on this
+// collection, but tolerate richer {name} objects too.
+const nameOf = (entry) => typeof entry === 'string' ? entry : (entry?.name || '')
+
+const mapToSidebarShape = (p) => {
+  // Diagnosis comes from the most recent Consultation-type Medical
+  // History row — that's where diagnosisName/diagnosisType live now,
+  // not a separate `conditions` field (which never existed on this
+  // collection to begin with).
+  const consultations = (p.medicalHistory || [])
+    .filter(h => h.type === 'Consultation')
+    .slice()
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const latestConsultation = consultations[0] || null
+
+  return {
+    id:           p.uid || p.id,
+    firstName:    p.firstName || '',
+    lastName:     p.lastName  || '',
+    gender:       p.gender
+      ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1)
+      : 'Unknown',
+    age:          calculateAge(p.dateOfBirth),
+    online:       false,
+    image:        p.profilePictureUrl || null,
+    diagnosis:    latestConsultation
+      ? { name: latestConsultation.diagnosisName || latestConsultation.purpose || 'Undiagnosed', severity: latestConsultation.diagnosisType || null }
+      : null,
+    blood:        p.bloodType || null, // still awaiting a lab-work flow — expected null for now
+    heightWeight: (p.height && p.weight)
+      ? `${p.height} cm, ${p.weight} kg`
+      : null,
+    bmi:          p.bmi || null,
+    vitals:       {}, // no vitals source yet — filled in once labs/tests are wired up
+    allergies:    (p.allergies   || []).map(nameOf).filter(Boolean),
+    medications:  (p.medications || []).map(nameOf).filter(Boolean),
+  }
+}
 
 export default function NurseSidebar({ onSelectPatient, selectedPatient: externalSelected }) {
   const navigate  = useNavigate()
@@ -126,6 +143,21 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
   const [loading,     setLoading]     = useState(true)
 
   useEffect(() => { loadAllPatients() }, [])
+
+  // The parent (NurseOverview) does its own fresh fetch of the full
+  // patient doc every time a selection changes — that's a more
+  // up-to-date source than this sidebar's own list snapshot, which
+  // was only ever fetched once on mount. Reflect it here instead of
+  // the sidebar silently showing stale diagnosis/vitals/allergies
+  // for however long the page has been open.
+  useEffect(() => {
+    if (!externalSelected) return
+    const rawId = externalSelected.uid || externalSelected.id
+    if (!rawId) return
+    const shaped = mapToSidebarShape(externalSelected)
+    setSelected(prev => (prev && prev.id === rawId) ? shaped : prev)
+    setPatients(prev => prev.map(p => p.id === rawId ? shaped : p))
+  }, [externalSelected])
 
   const loadAllPatients = async () => {
     setLoading(true)

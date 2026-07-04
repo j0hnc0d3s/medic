@@ -2,13 +2,14 @@
 // FILE : src/pages/staff/NurseOverview.jsx
 // CSS  : src/pages/staff/NurseOverview.css
 // ─────────────────────────────────────────────────────────
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import {
   collection, query, where, getDocs, addDoc, updateDoc,
-  deleteDoc, doc, getDoc, orderBy, Timestamp
+  doc, orderBy, Timestamp
 } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
+import { patientService } from '../../services'
 import NurseSidebar from './NurseSidebar'
 import Calendar from '../../components/Calendar'
 import './NurseOverview.css'
@@ -53,36 +54,50 @@ const CARD_POS = {
   condition:        { left: 20,  top: 140, width: 330, height: 177 },
   visit1:           { left: 610, top: 100, width: 250, height: 178 },
   visit2:           { left: 610, top: 370, width: 250, height: 76  },
-  labsVisit:        { left: 610, top: 580, width: 270, height: 216 },
+  labsVisit:        { left: 610, top: 580, width: 270, height: 100 },
   hospitalisations: { left: 1080, top: 140, width: 200, height: 60 },
   procedure:        { left: 1080, top: 230, width: 200, height: 60 },
   labsStandalone:   { left: 1080, top: 320, width: 200, height: 60 },
 }
-const rightMid = k => ({ x: CARD_POS[k].left + CARD_POS[k].width, y: CARD_POS[k].top + CARD_POS[k].height / 2 })
-const leftMid  = k => ({ x: CARD_POS[k].left, y: CARD_POS[k].top + CARD_POS[k].height / 2 })
+// connectorPoints() (below, inside the component) picks the actual
+// facing edge between two cards using their real measured position —
+// these left/top/width/height values are only a same-frame fallback
+// before the first measurement lands.
 
+// Straight line from one card edge to another — no bend. The origin
+// circle and destination arrowhead are positioned independently of
+// this path (see ConnectorNode/DestTriangle), so removing the elbow
+// bend doesn't affect where those markers land.
 function elbowPath(from, to) {
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  if (Math.abs(dy) < 1) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
-  const radius = Math.min(20, Math.abs(dx) / 3, Math.abs(dy) / 2)
-  const midX   = from.x + dx / 2
-  const dir    = dy > 0 ? 1 : -1
-  return `M ${from.x} ${from.y}
-    L ${midX - radius} ${from.y}
-    Q ${midX} ${from.y} ${midX} ${from.y + radius * dir}
-    L ${midX} ${to.y - radius * dir}
-    Q ${midX} ${to.y} ${midX + radius} ${to.y}
-    L ${to.x} ${to.y}`
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`
 }
 
-const DestTriangle = ({ x, y, size = 14 }) => (
+// Rotation applied on top of each asset's default (assumed
+// pointing-right) orientation. If these render backwards once you
+// see them live, the assets' true default orientation differs from
+// this assumption — swap 'right'/'left' or 'down'/'up' here to match.
+const DIR_ROTATION = { right: 0, down: 90, left: 180, up: 270 }
+
+const DestTriangle = ({ x, y, size = 15, direction = 'right' }) => (
   <img src={reverse_triangle} className="no-dest-triangle" alt=""
-    style={{ left: x - size, top: y - size / 2, width: size, height: size }} />
+    style={{
+      left: x - size / 2, 
+      top: y - size / 2, 
+      width: size, 
+      height: size,
+      transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)`,
+      zIndex: 1000,
+    }} />
 )
-const ConnectorNode = ({ x, y }) => (
+
+const ConnectorNode = ({ x, y, direction = 'right' }) => (
   <div className="no-connector-node" style={{ left: x - 16, top: y - 16 }}>
-    <img src={triangle} className="no-connector-triangle" alt="" />
+    <img src={triangle} className="no-connector-triangle" alt=""
+      style={{ 
+        transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)`, 
+        zIndex: 1000,
+      }} 
+    />
   </div>
 )
 
@@ -106,6 +121,37 @@ const fmtApptDate = ts => {
   if (!ts) return '—'
   const d = ts.toDate ? ts.toDate() : new Date(ts)
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Allergy/medication entries are usually plain strings, but tolerate
+// richer {name,...} objects too (both exist in real data now).
+const nameOf = (entry) => typeof entry === 'string' ? entry : (entry?.name || '')
+
+const mapAllergy = (entry, i) => {
+  const a = typeof entry === 'string' ? { name: entry } : entry
+  return {
+    id: a.id ?? i,
+    name: a.name || 'Unknown allergen',
+    type: a.type || 'Other',
+    severity: a.severity || 'Unknown',
+    desc: a.reaction || a.description || '',
+    doctor: a.diagnosedBy || a.prescribedBy || '—',
+  }
+}
+
+const mapMedication = (entry, i) => {
+  const m = typeof entry === 'string' ? { name: entry } : entry
+  return {
+    id: m.id ?? i,
+    name: m.name || 'Medication',
+    dose: m.dosage || '—',
+    form: m.form || '—',
+    route: m.route || '—',
+    freq: m.frequency || '—',
+    desc: m.description || '',
+    doctor: m.prescribedBy || '—',
+    progress: 0,
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -139,10 +185,11 @@ export default function NurseOverview() {
 
   // ── Data state ────────────────────────────────────────────
   const [selectedPatient,     setSelectedPatient]     = useState(null)
+  const [freshPatientDoc,     setFreshPatientDoc]     = useState(null)
   const [allergies,           setAllergies]           = useState([])
   const [medications,         setMedications]         = useState([])
   const [patientAppointments, setPatientAppointments] = useState([])
-  const [patientCondition,    setPatientCondition]    = useState(null)
+  const [medicalHistory,      setMedicalHistory]      = useState([])
   const [timeline,            setTimeline]            = useState({})
   const [loadingPatient,      setLoadingPatient]      = useState(false)
 
@@ -160,6 +207,96 @@ export default function NurseOverview() {
     ro.observe(canvasRef.current)
     return () => ro.disconnect()
   }, [])
+
+  // ── Real card position/size measurement ───────────────────
+  // Connector lines need each card's REAL rendered box (not a
+  // hardcoded guess) to pick the correct edge and land precisely on
+  // it. Every previous fix here assumed connections are always
+  // left-edge-to-right-edge — that's wrong for stacked cards like
+  // Consultation → Labs, which need top/bottom edges instead. See
+  // connectorPoints() below for the actual edge-selection rule.
+  const cardEls = useRef({}) // { condition: el, visit1: el, ... }
+  const [cardRects, setCardRects] = useState({})
+
+  const setCardRef = (key) => (el) => {
+    if (cardEls.current[key] === el) return
+    cardEls.current[key] = el
+  }
+
+  useLayoutEffect(() => {
+    if (!canvasRef.current) return
+
+    const measure = () => {
+      const canvasBox = canvasRef.current.getBoundingClientRect()
+      setCardRects(prev => {
+        let changed = false
+        const next = { ...prev }
+        Object.entries(cardEls.current).forEach(([key, el]) => {
+          if (!el) return
+          const r = el.getBoundingClientRect()
+          const rect = {
+            left:   r.left - canvasBox.left,
+            top:    r.top  - canvasBox.top,
+            width:  r.width,
+            height: r.height,
+          }
+          const p = prev[key]
+          if (!p || p.left !== rect.left || p.top !== rect.top || p.width !== rect.width || p.height !== rect.height) {
+            next[key] = rect
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }
+
+    measure()
+    const observers = Object.values(cardEls.current).filter(Boolean).map(el => {
+      const ro = new ResizeObserver(measure)
+      ro.observe(el)
+      return ro
+    })
+    window.addEventListener('resize', measure)
+    return () => {
+      observers.forEach(ro => ro.disconnect())
+      window.removeEventListener('resize', measure)
+    }
+  })
+
+  // Real rect once measured; the static CARD_POS layout position is
+  // only a fallback for the very first paint before that happens.
+  const rectOf = (k) => cardRects[k] || CARD_POS[k]
+
+  // The actual rule: if two cards are side by side (their vertical
+  // ranges overlap), connect right-edge-center to left-edge-center.
+  // If they're stacked (their horizontal ranges overlap instead),
+  // connect bottom-edge-center to top-edge-center. Always the pair
+  // of edges that actually face each other, never a fixed side.
+  const connectorPoints = (fromKey, toKey) => {
+    const a = rectOf(fromKey)
+    const b = rectOf(toKey)
+    if (!a || !b) return null
+
+    const aCenterX = a.left + a.width / 2
+    const aCenterY = a.top + a.height / 2
+    const bCenterX = b.left + b.width / 2
+    const bCenterY = b.top + b.height / 2
+
+    const horizontallyOverlap = a.left < b.left + b.width && b.left < a.left + a.width
+    const verticallyOverlap   = a.top  < b.top  + b.height && b.top  < a.top  + a.height
+
+    if (horizontallyOverlap && !verticallyOverlap) {
+      // Stacked — bottom-center to top-center, or the reverse.
+      return aCenterY < bCenterY
+        ? { from: { x: aCenterX, y: a.top + a.height }, to: { x: bCenterX, y: b.top }, direction: 'down' }
+        : { from: { x: aCenterX, y: a.top }, to: { x: bCenterX, y: b.top + b.height }, direction: 'up' }
+    }
+
+    // Side by side (default) — right-center to left-center, or the reverse.
+    return aCenterX < bCenterX
+      ? { from: { x: a.left + a.width, y: aCenterY }, to: { x: b.left, y: bCenterY }, direction: 'right' }
+      : { from: { x: a.left, y: aCenterY }, to: { x: b.left + b.width, y: bCenterY }, direction: 'left' }
+  }
 
   // ── Fetch today's appointments for calendar ───────────────
   useEffect(() => {
@@ -213,10 +350,11 @@ export default function NurseOverview() {
       setAllergies([])
       setMedications([])
       setPatientAppointments([])
-      setPatientCondition(null)
+      setMedicalHistory([])
       setTimeline({})
       setAllergyPage(0)
       setMedicationPage(0)
+      setFreshPatientDoc(null)
       return
     }
     fetchPatientData(selectedPatient)
@@ -225,35 +363,24 @@ export default function NurseOverview() {
   const fetchPatientData = async (patient) => {
     setLoadingPatient(true)
     try {
-      // ── Medical record ──────────────────────────────────
-      try {
-        const recordDoc = await getDoc(
-          doc(db, 'users', patient.id, 'medicalRecords', 'main')
-        )
-        if (recordDoc.exists()) {
-          const data = recordDoc.data()
+      // ── Patient record — fetched fresh, not trusted from the
+      //    sidebar's already-flattened shape, so allergies/
+      //    medications/medicalHistory arrive with full structure
+      //    (dosage, severity, diagnosis fields, etc.) rather than
+      //    just names. This is the `patients` collection doc, not
+      //    a users/{uid} subcollection — that path never got written
+      //    to by anything, which is why this was always empty before.
+      const patientRes = await patientService.getPatient(patient.id)
+      const record = patientRes.success ? patientRes.patient : null
 
-          setAllergies((data.allergies || []).map((name, i) => ({
-            id: i, name, type: 'Allergy', severity: 'See notes', desc: '', doctor: '—'
-          })))
+      // Push the fresh full doc back down to the sidebar — it did its
+      // own fetch on mount and has no way to know this patient's
+      // diagnosis/vitals/allergies changed since, otherwise.
+      setFreshPatientDoc(record ? { id: patient.id, uid: patient.id, ...record } : null)
 
-          setMedications((data.currentMedications || []).map((name, i) => ({
-            id: i, name, dose: '—', form: '—', route: '—', freq: '—', desc: '', doctor: '—', progress: 0
-          })))
-
-          const conditions = data.conditions || []
-          setPatientCondition(conditions[0] || null)
-        } else {
-          // Fall back to sidebar data which already has diagnosis/allergy info
-          setPatientCondition(patient.diagnosis?.name || null)
-          setAllergies([])
-          setMedications([])
-        }
-      } catch {
-        setPatientCondition(patient.diagnosis?.name || null)
-        setAllergies([])
-        setMedications([])
-      }
+      setAllergies((record?.allergies || []).map(mapAllergy))
+      setMedications((record?.medications || []).map(mapMedication))
+      setMedicalHistory(record?.medicalHistory || [])
 
       // ── Appointments for canvas + timeline ──────────────
       // Query by patientName since that's what the UI stores
@@ -267,23 +394,6 @@ export default function NurseOverview() {
       ))
       const appts = apptSnap.docs.map(d => ({ id: d.id, ...d.data() }))
       setPatientAppointments(appts)
-
-      // ── Build timeline from appointment dates ───────────
-      const tl = {}
-      appts.forEach(a => {
-        const date = a.appointmentDate?.toDate?.()
-        if (!date) return
-        const yr = date.getFullYear()
-        const mo = date.getMonth()
-        if (!tl[yr]) tl[yr] = {}
-        if (!tl[yr][mo]) tl[yr][mo] = []
-        const type = a.type === 'Lab Work'        ? 'lab'
-                   : a.type === 'Procedure'        ? 'procedure'
-                   : a.type === 'Specialist'       ? 'hospitalisation'
-                   : 'visit'
-        if (!tl[yr][mo].includes(type)) tl[yr][mo].push(type)
-      })
-      setTimeline(tl)
 
     } catch (err) {
       console.error('Error fetching patient data:', err)
@@ -319,45 +429,131 @@ export default function NurseOverview() {
     }
   }
 
-  // ── Derive canvas sections from real appointments ─────────
-  const visitAppts = patientAppointments
-    .filter(a => !['Lab Work', 'Procedure'].includes(a.type))
-    .slice(0, 2)
+  // ── Combine real appointments with Medical History rows ──
+  // into one activity pool, normalized to the same shape, newest first.
+  const historyAsActivity = medicalHistory
+    .map(h => ({
+      id:              `history-${h.id}`,
+      historyId:       h.id || null, // used to match against latestConsultation.id
+      appointmentDate: h.date ? new Date(h.date) : null,
+      appointmentTime: '—',
+      type:            h.type || 'Consultation',
+      notes:           h.purpose || '',
+      doctor:          '',
+      linkedConsultationId: h.linkedConsultationId || '',
+      _history:        h, // keep the raw row for diagnosis fields
+    }))
+    .filter(a => a.appointmentDate && !isNaN(a.appointmentDate))
 
-  const labAppts = patientAppointments
-    .filter(a => a.type === 'Lab Work')
-    .slice(0, 1)
+  const allActivity = [...patientAppointments, ...historyAsActivity].sort((a, b) => {
+    const da = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+    const db_ = b.appointmentDate?.toDate ? b.appointmentDate.toDate() : new Date(b.appointmentDate)
+    return db_ - da
+  })
 
-  const hospitalisationAppts = patientAppointments
-    .filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
-    .slice(0, 1)
+  // ── Most recent diagnosis — comes from Medical History's
+  //    Consultation rows (that's the only place diagnosis info
+  //    lives; real scheduled appointments don't carry it).
+  const consultations = medicalHistory
+    .filter(h => h.type === 'Consultation')
+    .slice()
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const latestConsultation = consultations[0] || null
 
-  const procedureAppts = patientAppointments
-    .filter(a => a.type === 'Procedure')
-    .slice(0, 1)
+  // ── Derive canvas sections ─────────────────────────────────
+  // Prefer entries actually linked to the latest consultation once
+  // one exists (this is the "consultation → follow-ups" linkage from
+  // the Patients tab). A consultation counts as its own first visit
+  // (that's the appointment where the diagnosis was made), so it's
+  // included alongside anything that points at it. Falls back to
+  // "most recent of type" otherwise so real scheduled appointments
+  // (which have no linkage field) still show up.
+  const linkedTo = (list) => latestConsultation
+    ? list.filter(a => a.historyId === latestConsultation.id || a.linkedConsultationId === latestConsultation.id)
+    : list
+
+  const visitAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => !['Lab Work', 'Procedure'].includes(a.type)))
+    : allActivity.filter(a => !['Lab Work', 'Procedure'].includes(a.type))
+  ).slice(0, 2)
+
+  const labAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Lab Work'))
+    : allActivity.filter(a => a.type === 'Lab Work')
+  ).slice(0, 2)
+
+  const hospitalisationAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency'))
+    : allActivity.filter(a => a.type === 'Hospitalisation' || a.type === 'Emergency')
+  ).slice(0, 1)
+
+  const procedureAppts = (latestConsultation
+    ? linkedTo(allActivity.filter(a => a.type === 'Procedure'))
+    : allActivity.filter(a => a.type === 'Procedure')
+  ).slice(0, 1)
+
+  // ── Timeline built from the combined activity ─────────────
+  const timelineData = {}
+  allActivity.forEach(a => {
+    const d = a.appointmentDate?.toDate ? a.appointmentDate.toDate() : new Date(a.appointmentDate)
+    if (!d || isNaN(d)) return
+    const yr = d.getFullYear()
+    const mo = d.getMonth()
+    if (!timelineData[yr]) timelineData[yr] = {}
+    if (!timelineData[yr][mo]) timelineData[yr][mo] = []
+    const type = a.type === 'Lab Work'      ? 'lab'
+               : a.type === 'Procedure'      ? 'procedure'
+               : (a.type === 'Hospitalisation' || a.type === 'Emergency') ? 'hospitalisation'
+               : 'visit'
+    if (!timelineData[yr][mo].includes(type)) timelineData[yr][mo].push(type)
+  })
 
   // ── Allergy/medication current page items ─────────────────
   const allergy   = allergies[allergyPage]   || null
   const medication = medications[medicationPage] || null
 
   // ── Connector visibility (based on real data + filter) ────
-  const hasVisits        = leftFilters.visits        && visitAppts.length > 0 && !!patientCondition
-  const hasLabs          = leftFilters.labs          && labAppts.length > 0
-  const hasHospital      = leftFilters.hospitalisations && hospitalisationAppts.length > 0
-  const hasProcedure     = leftFilters.procedure     && procedureAppts.length > 0
+  // Every connector checks that BOTH its origin and destination
+  // card are actually rendered — a card that doesn't exist has no
+  // real screen position, so drawing a line from/to its fixed
+  // CARD_POS slot produces a disconnected line floating in empty
+  // space (this was the "wonky arrows" bug).
+  const hasCondition = !!latestConsultation
+  const hasVisit1    = leftFilters.visits && visitAppts.length >= 1
+  const hasVisit2    = leftFilters.visits && visitAppts.length >= 2
+  const hasLabs      = leftFilters.labs          && labAppts.length > 0
+  const hasSecondLab = leftFilters.labs          && labAppts.length > 1
+  const hasHospital  = leftFilters.hospitalisations && hospitalisationAppts.length > 0
+  const hasProcedure = leftFilters.procedure     && procedureAppts.length > 0
+
+  // Labs/hospitalisation/procedure chain onto wherever the visit
+  // chain actually ends, not a fixed slot — a patient with just one
+  // visit (or none, just the consultation itself) should still see
+  // labs connect to that last real card, not float disconnected
+  // because a specific "visit2" slot happens to be empty.
+  const chainAnchor  = hasVisit2 ? 'visit2' : hasVisit1 ? 'visit1' : (hasCondition ? 'condition' : null)
+  const branchAnchor = hasVisit1 ? 'visit1' : (hasCondition ? 'condition' : null)
 
   const CONNECTOR_LINKS = [
-    { id: 'c-v1', from: 'condition', to: 'visit1',           active: hasVisits && visitAppts.length >= 1 },
-    { id: 'c-v2', from: 'condition', to: 'visit2',           active: hasVisits && visitAppts.length >= 2 },
-    { id: 'v2-lv', from: 'visit2',  to: 'labsVisit',        active: hasVisits && hasLabs },
-    { id: 'v1-h', from: 'visit1',   to: 'hospitalisations', active: hasHospital },
-    { id: 'v1-p', from: 'visit1',   to: 'procedure',        active: hasProcedure },
-    { id: 'lv-ls', from: 'labsVisit', to: 'labsStandalone', active: hasLabs },
+    { id: 'c-v1',     from: 'condition',  to: 'visit1',           active: hasCondition && hasVisit1 },
+    { id: 'c-v2',     from: 'condition',  to: 'visit2',           active: hasCondition && hasVisit2 },
+    { id: 'chain-lv', from: chainAnchor,  to: 'labsVisit',        active: hasLabs && !!chainAnchor },
+    { id: 'branch-h', from: branchAnchor, to: 'hospitalisations', active: hasHospital && !!branchAnchor },
+    { id: 'branch-p', from: branchAnchor, to: 'procedure',        active: hasProcedure && !!branchAnchor },
+    { id: 'lv-ls',    from: 'labsVisit',  to: 'labsStandalone',   active: hasSecondLab },
   ]
 
-  const visibleLinks  = CONNECTOR_LINKS.filter(l => l.active)
-  const originPoints  = [...new Map(visibleLinks.map(l => [l.from, rightMid(l.from)])).entries()]
-  const destPoints    = [...new Map(visibleLinks.map(l => [l.to, leftMid(l.to)])).entries()]
+  const visibleLinks = CONNECTOR_LINKS.filter(l => l.active)
+
+  const resolvedLinks = visibleLinks
+    .map(l => {
+      const pts = connectorPoints(l.from, l.to)
+      return pts ? { id: l.id, fromKey: l.from, toKey: l.to, fromPoint: pts.from, toPoint: pts.to, direction: pts.direction } : null
+    })
+    .filter(Boolean)
+
+  const originMarkers = [...new Map(resolvedLinks.map(l => [`${l.fromKey}|${l.direction}`, { x: l.fromPoint.x, y: l.fromPoint.y, direction: l.direction }])).entries()]
+  const destMarkers    = [...new Map(resolvedLinks.map(l => [`${l.toKey}|${l.direction}`,   { x: l.toPoint.x,   y: l.toPoint.y,   direction: l.direction }])).entries()]
 
   // ── Timeline swipe ────────────────────────────────────────
   const onTimelinePointerDown = e => {
@@ -381,7 +577,6 @@ export default function NurseOverview() {
   const toggleFilter    = key => { if (key !== 'visits') setLeftFilters(f => ({ ...f, [key]: !f[key] })) }
 
   // ── Calendar props ────────────────────────────────────────
-  // Tasks go into Calendar as dayTasks; agenda is today's real appointments
   const calendarTasks  = tasks.map(t => ({ id: t.id, label: t.label }))
   const calendarAgenda = todayAgenda
 
@@ -389,7 +584,7 @@ export default function NurseOverview() {
 
   return (
     <div className="no-shell">
-      <NurseSidebar onSelectPatient={setSelectedPatient} />
+      <NurseSidebar onSelectPatient={setSelectedPatient} selectedPatient={freshPatientDoc} />
 
       <div className="no-main">
         {/* ── Filter pills ──────────────────────────────── */}
@@ -445,24 +640,34 @@ export default function NurseOverview() {
               <svg className="no-connectors"
                 viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
                 preserveAspectRatio="none">
-                {visibleLinks.map(l => (
-                  <path key={l.id} d={elbowPath(rightMid(l.from), leftMid(l.to))} className="no-line" />
+                {resolvedLinks.map(l => (
+                  <path key={l.id} d={elbowPath(l.fromPoint, l.toPoint)} className="no-line" />
                 ))}
               </svg>
 
-              {originPoints.map(([key, pos]) => <ConnectorNode key={key} x={pos.x} y={pos.y} />)}
-              {destPoints.map(([key, pos])   => <DestTriangle  key={key} x={pos.x} y={pos.y} />)}
+              {originMarkers.map(([key, m]) => <ConnectorNode key={key} x={m.x} y={m.y} direction={m.direction} />)}
+              {destMarkers.map(([key, m])   => <DestTriangle  key={key} x={m.x} y={m.y} direction={m.direction} />)}
 
-              {/* ── Condition card ───────────────────────── */}
-              {leftFilters.visits && patientCondition && (
-                <div className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
+              {/* ── Condition card — from the latest Consultation ── */}
+              {leftFilters.visits && latestConsultation && (
+                <div ref={setCardRef('condition')} className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330, height: 450 }}>
                   <div className="no-card-tags">
-                    <p className="no-card-tag">{patientCondition}</p>
+                    <p className="no-card-tag">{latestConsultation.diagnosisType || 'Consultation'}</p>
                     <img src={lightning} className="no-card-icon inverted" />
                   </div>
                   <h2 className="no-card-title">
-                    {selectedPatient.diagnosis?.name || patientCondition}
+                    {latestConsultation.diagnosisName || 'Undiagnosed'}
                   </h2>
+                  {(latestConsultation.painLevel || latestConsultation.symptoms?.length > 0) && (
+                    <div className="no-card-tags items" style={{ marginTop: 8 }}>
+                      {latestConsultation.painLevel && (
+                        <p className="no-card-tag item">Pain {latestConsultation.painLevel}/10</p>
+                      )}
+                      {(latestConsultation.symptoms || []).slice(0, 3).map(s => (
+                        <p key={s} className="no-card-tag item">{s}</p>
+                      ))}
+                    </div>
+                  )}
                   <div className="no-card-action condition">
                     <button className="no-action-circle"><img src={pencil} className="no-action-icon normal"/></button>
                     <button className="no-action-circle"><img src={notes}  className="no-action-icon"/></button>
@@ -470,42 +675,46 @@ export default function NurseOverview() {
                 </div>
               )}
 
-              {leftFilters.visits && !patientCondition && (
-                <div className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
+              {leftFilters.visits && !latestConsultation && (
+                <div ref={setCardRef('condition')} className="no-card no-card--blue condition" style={{ left: 20, top: 140, width: 330 }}>
                   <p className="no-canvas-empty-text" style={{ padding: '16px 0', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
-                    No conditions on record
+                    No consultation on record — add one from the Patients tab.
                   </p>
                 </div>
               )}
 
-              {/* ── Visit cards (from real appointments) ─── */}
+              {/* ── Visit cards (from real appointments + linked history) ─── */}
               {leftFilters.visits && visitAppts[0] && (
-                <div className="no-card no-card--white" style={{ left: 610, top: 100, width: 250 }}>
+                <div ref={setCardRef('visit1')} className="no-card no-card--white" style={{ left: 620, top: 298, width: 250 }}>
                   <div className="no-visit-head">
                     <div className="no-visit-icon"><img src={notes} className="no-action-icon inverted"/></div>
                     <div>
                       <p className="no-visit-title">{visitAppts[0].type || 'Visit'}</p>
                       <p className="no-visit-sub">{visitAppts[0].notes || 'General appointment'}</p>
                     </div>
+
                     <div className="no-visit-time">{visitAppts[0].appointmentTime || '—'}</div>
                   </div>
+                  
                   {visitAppts[0].type && (
                     <div className="no-visit-tags">
                       <span className="no-visit-tag">{fmtApptDate(visitAppts[0].appointmentDate)}</span>
-                      {visitAppts[0].doctor && <span className="no-visit-tag">{visitAppts[0].doctor}</span>}
+                      {visitAppts[0].doctor && <span className="no-visit-tag">{visitAppts[0].doctor || 'N/A'}</span>}
                     </div>
                   )}
                 </div>
               )}
 
               {leftFilters.visits && visitAppts[1] && (
-                <div className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
+                <div ref={setCardRef('visit2')} className="no-card no-card--white" style={{ left: 610, top: 370, width: 250 }}>
                   <div className="no-visit-head">
                     <div className="no-visit-icon"><img src={notes} className="no-action-icon inverted"/></div>
+
                     <div>
                       <p className="no-visit-title">{visitAppts[1].type || 'Visit'}</p>
                       <p className="no-visit-sub">{visitAppts[1].notes || 'General appointment'}</p>
                     </div>
+                    
                     <div className="no-visit-time">{visitAppts[1].appointmentTime || '—'}</div>
                   </div>
                 </div>
@@ -513,7 +722,7 @@ export default function NurseOverview() {
 
               {/* ── Lab card ─────────────────────────────── */}
               {leftFilters.labs && labAppts[0] && (
-                <div className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
+                <div ref={setCardRef('labsVisit')} className="no-card no-card--white" style={{ left: 610, top: 580, width: 270 }}>
                   <div className="no-visit-head">
                     <div className="no-visit-icon"><img src={notes} className="no-action-icon inverted"/></div>
                     <div>
@@ -527,14 +736,14 @@ export default function NurseOverview() {
 
               {/* ── Hospitalisations card ────────────────── */}
               {leftFilters.hospitalisations && hospitalisationAppts[0] && (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
+                <div ref={setCardRef('hospitalisations')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200 }}>
                   <p className="no-visit-title">Hospitalisation</p>
                   <p className="no-visit-sub">{fmtApptDate(hospitalisationAppts[0].appointmentDate)}</p>
                 </div>
               )}
 
               {leftFilters.hospitalisations && hospitalisationAppts.length === 0 && (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200, opacity: 0.4 }}>
+                <div ref={setCardRef('hospitalisations')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 140, width: 200, opacity: 0.4 }}>
                   <p className="no-visit-title">Hospitalisations</p>
                   <p className="no-visit-sub">None on record</p>
                 </div>
@@ -542,24 +751,28 @@ export default function NurseOverview() {
 
               {/* ── Procedure card ───────────────────────── */}
               {leftFilters.procedure && procedureAppts[0] && (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
+                <div ref={setCardRef('procedure')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200 }}>
                   <p className="no-visit-title">Procedure</p>
                   <p className="no-visit-sub">{procedureAppts[0].notes || fmtApptDate(procedureAppts[0].appointmentDate)}</p>
                 </div>
               )}
 
               {leftFilters.procedure && procedureAppts.length === 0 && (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200, opacity: 0.4 }}>
+                <div ref={setCardRef('procedure')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 230, width: 200, opacity: 0.4 }}>
                   <p className="no-visit-title">Procedure</p>
                   <p className="no-visit-sub">None on record</p>
                 </div>
               )}
 
-              {/* ── Standalone labs card ─────────────────── */}
-              {leftFilters.labs && labAppts[0] && (
-                <div className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
+              {/* ── Standalone labs card — a second, distinct lab
+                    entry beyond the one already shown in the chain
+                    above. Hidden entirely (not "None on record")
+                    when there's only one, since repeating that one
+                    entry twice is the bug this replaced. ────────── */}
+              {leftFilters.labs && labAppts[1] && (
+                <div ref={setCardRef('labsStandalone')} className="no-card no-card--white no-card--extra" style={{ left: 1080, top: 320, width: 200 }}>
                   <p className="no-visit-title">Labs</p>
-                  <p className="no-visit-sub">{labAppts[0].notes || fmtApptDate(labAppts[0].appointmentDate)}</p>
+                  <p className="no-visit-sub">{labAppts[1].notes || fmtApptDate(labAppts[1].appointmentDate)}</p>
                 </div>
               )}
             </div>
@@ -696,7 +909,7 @@ export default function NurseOverview() {
 
             <div className="no-timeline-months">
               {MONTHS_SHORT.map((m, i) => {
-                const activity = timeline[timelineYear]?.[i]
+                const activity = timelineData[timelineYear]?.[i]
                 return (
                   <div key={m} className="no-timeline-month">
                     {activity && (

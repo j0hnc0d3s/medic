@@ -74,6 +74,9 @@
 .apm-add-btn--inline { padding: 13px 22px; }
 
 .apm-history-row { display: grid; grid-template-columns: 1fr 1.2fr 1.4fr; gap: 10px; }
+.apm-med-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.apm-med-row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 8px; }
+.apm-status-tag { font-style: normal; font-size: 10px; color: #0066ff; background: #eef2ff; padding: 2px 8px; border-radius: 50px; margin-left: 4px; }
 
 .apm-history-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
 .apm-history-item {
