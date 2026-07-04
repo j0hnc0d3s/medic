@@ -7,6 +7,12 @@ yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
 
+# Additional
+
+serviceAccountKey.json
+storage.rules
+firestore.rules
+
 # Firebase cache
 .firebase/
 
