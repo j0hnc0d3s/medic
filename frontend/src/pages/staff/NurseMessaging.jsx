@@ -14,7 +14,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import {
-  collection, query, where, getDocs, addDoc, updateDoc,
+  collection, query, where, getDocs, addDoc, updateDoc, deleteDoc,
   doc, orderBy, Timestamp
 } from 'firebase/firestore'
 import { db, auth } from '../../services/firebase'
@@ -110,7 +110,6 @@ export default function NurseMessaging() {
   // ── Calendar (same pattern as NurseOverview) ────────────────
   const [todayAgenda, setTodayAgenda] = useState([])
   const [tasks, setTasks] = useState([])
-  const [newTask, setNewTask] = useState('')
 
   useEffect(() => {
     if (!currentUserId) return
@@ -145,27 +144,38 @@ export default function NurseMessaging() {
     setInfoTab('history')
   }, [selectedConversation, patients, currentUserId])
 
-  // ── Today's appointments + tasks for the Calendar widget ───
-  useEffect(() => {
-    const fetchToday = async () => {
-      try {
-        const today = new Date(); today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
-        const snap = await getDocs(query(
-          collection(db, 'appointments'),
-          where('appointmentDate', '>=', Timestamp.fromDate(today)),
-          where('appointmentDate', '<', Timestamp.fromDate(tomorrow)),
-          orderBy('appointmentDate')
-        ))
-        setTodayAgenda(snap.docs.map(d => ({
-          id: d.id,
-          time: d.data().appointmentTime || '—',
-          label: `${d.data().patientName} — ${d.data().type || 'Appointment'}`,
-        })))
-      } catch { setTodayAgenda([]) }
+  // ── Appointments for whichever day is selected in the Calendar
+  //    widget — scoped to this professional (doctors see only their
+  //    own; other staff see everyone's), matching the same
+  //    convention as NurseOverview.jsx/NurseAppointments.jsx.
+  const isDoctor   = userProfile?.role === 'doctor'
+  const doctorName = isDoctor ? `Dr. ${userProfile.firstName} ${userProfile.lastName}` : null
+
+  const fetchAgendaForDay = async (date) => {
+    try {
+      const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0)
+      const dayEnd   = new Date(dayStart); dayEnd.setDate(dayStart.getDate() + 1)
+
+      const constraints = [
+        where('appointmentDate', '>=', Timestamp.fromDate(dayStart)),
+        where('appointmentDate', '<',  Timestamp.fromDate(dayEnd)),
+      ]
+      if (isDoctor) constraints.push(where('doctor', '==', doctorName))
+      constraints.push(orderBy('appointmentDate'))
+
+      const snap = await getDocs(query(collection(db, 'appointments'), ...constraints))
+      setTodayAgenda(snap.docs.map(d => ({
+        id: d.id,
+        time: d.data().appointmentTime || '—',
+        label: `${d.data().patientName} — ${d.data().type || 'Appointment'}`,
+      })))
+    } catch (err) {
+      console.error('Failed to load agenda:', err)
+      setTodayAgenda([])
     }
-    fetchToday()
-  }, [])
+  }
+
+  useEffect(() => { fetchAgendaForDay(new Date()) }, [])
 
   useEffect(() => {
     if (!currentUserId) return
@@ -178,13 +188,12 @@ export default function NurseMessaging() {
       .catch(() => setTasks([]))
   }, [currentUserId])
 
-  const addTask = async () => {
-    if (!newTask.trim() || !currentUserId) return
-    const data = { userId: currentUserId, label: newTask.trim(), completed: false, createdAt: Timestamp.now() }
+  const addTask = async (label) => {
+    if (!label?.trim() || !currentUserId) return
+    const data = { userId: currentUserId, label: label.trim(), completed: false, createdAt: Timestamp.now() }
     try {
       const ref = await addDoc(collection(db, 'tasks'), data)
       setTasks(t => [{ id: ref.id, ...data }, ...t])
-      setNewTask('')
     } catch (err) { console.error('Add task error:', err) }
   }
   const completeTask = async (taskId) => {
@@ -192,6 +201,14 @@ export default function NurseMessaging() {
       await updateDoc(doc(db, 'tasks', taskId), { completed: true })
       setTasks(t => t.filter(x => x.id !== taskId))
     } catch { setTasks(t => t.filter(x => x.id !== taskId)) }
+  }
+  const deleteTask = async (taskId) => {
+    setTasks(t => t.filter(x => x.id !== taskId))
+    try { await deleteDoc(doc(db, 'tasks', taskId)) } catch (err) { console.error('Delete task error:', err) }
+  }
+  const editTask = async (taskId, newLabel) => {
+    setTasks(t => t.map(x => x.id === taskId ? { ...x, label: newLabel } : x))
+    try { await updateDoc(doc(db, 'tasks', taskId), { label: newLabel }) } catch (err) { console.error('Edit task error:', err) }
   }
 
   // ── Conversation list ────────────────────────────────────────
@@ -476,6 +493,24 @@ export default function NurseMessaging() {
           </div>
         </div>
       )}
+
+      <Calendar
+        currentUser={{
+          firstName: otherPatientRecord?.firstName || otherName.split(' ')[0] || '',
+          lastName:  otherPatientRecord?.lastName  || otherName.split(' ')[1] || '',
+          role: 'Patient',
+          image: otherPatientRecord?.profilePictureUrl || null,
+          online: true,
+        }}
+        viewerUserId={currentUserId}
+        dayTasks={tasks.map(t => ({ id: t.id, label: t.label }))}
+        dayAgenda={todayAgenda}
+        onAddTask={addTask}
+        onCompleteTask={completeTask}
+        onDeleteTask={deleteTask}
+        onEditTask={editTask}
+        onDayChange={fetchAgendaForDay}
+      />
     </div>
   )
 }

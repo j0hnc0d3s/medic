@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import activityService from './activityService'
+import notificationService from './notificationService'
 
 /**
  * Lab Service
@@ -36,6 +37,7 @@ class LabService {
       const data = {
         title:        labData.title || '',
         category:     labData.category || 'Other',
+        status:       'requested', // 'requested' | 'completed'
         results:      labData.results || {},
         notes:        labData.notes || '',
         patientId:    labData.patientId   || null,
@@ -51,6 +53,10 @@ class LabService {
         createdAt:    Timestamp.now(),
         updatedAt:    Timestamp.now(),
         createdBy:    labData.createdBy || 'system',
+        // The uid of the professional who ordered this — needed to
+        // actually notify someone; createdBy above is just a display
+        // name string, not enough to target a notification at.
+        orderedByUid: labData.orderedByUid || null,
       }
 
       const docRef = await addDoc(collection(db, this.collectionName), data)
@@ -62,6 +68,8 @@ class LabService {
         user:        labData.createdBy || 'Admin',
         entity:      docRef.id
       })
+
+      await notificationService.sendLabNotification({ id: docRef.id, ...data }, 'requested')
 
       return {
         success: true,
@@ -144,6 +152,10 @@ class LabService {
   async updateLab(labId, updates) {
     try {
       const docRef = doc(db, this.collectionName, labId)
+
+      const beforeSnap = await getDoc(docRef)
+      const before = beforeSnap.exists() ? beforeSnap.data() : null
+
       await updateDoc(docRef, { ...updates, updatedAt: Timestamp.now() })
 
       await activityService.logActivity({
@@ -153,6 +165,10 @@ class LabService {
         user:        updates.updatedBy || 'Admin',
         entity:      labId
       })
+
+      if (before && updates.status === 'completed' && before.status !== 'completed') {
+        await notificationService.sendLabNotification({ id: labId, ...before, ...updates }, 'completed')
+      }
 
       return { success: true, message: 'Lab updated successfully' }
     } catch (error) {

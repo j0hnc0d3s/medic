@@ -15,6 +15,8 @@ import NurseNotes from './pages/staff/NurseNotes.jsx'
 import NurseDocuments from './pages/staff/NurseDocuments.jsx'
 import NurseImaging from './pages/staff/NurseImaging.jsx'
 import NurseMessaging from './pages/staff/NurseMessaging.jsx'
+import NurseSettings from './pages/staff/NurseSettings.jsx'
+import NurseNotifications from './pages/staff/NurseNotifications.jsx'
 
 /* 
 
@@ -75,6 +77,8 @@ function App() {
           <Route path="documents" element={<NurseDocuments />} />
           <Route path="imaging" element={<NurseImaging />} />
           <Route path="messaging" element={<NurseMessaging />} />
+          <Route path="settings" element={<NurseSettings />} />
+          <Route path="notifications" element={<NurseNotifications />} />
 
           {/*          
               None at the moment.

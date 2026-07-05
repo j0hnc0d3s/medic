@@ -1,0 +1,45 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/staff/NurseNotifications.css
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.no-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
+.no-main { flex: 1; padding: 28px 32px; overflow: auto; }
+
+.nn-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.nn-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; }
+.nn-mark-all { background: none; border: none; color: #0066ff; font-size: 12px; font-weight: 600; cursor: pointer; }
+.nn-mark-all:hover { text-decoration: underline; }
+
+.nn-filters { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.nn-filter-pill {
+  background: #fff; border: none; border-radius: 50px; padding: 9px 18px;
+  font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer;
+}
+.nn-filter-pill.active { background: #1e1e1e; color: #fff; }
+.nn-filter-pill:not(.active):hover { background: #f1f3f5; }
+
+.nn-list { display: flex; flex-direction: column; gap: 10px; max-width: 680px; }
+
+.nn-item {
+  display: flex; align-items: flex-start; gap: 12px; background: #fff; border-radius: 20px;
+  padding: 16px 18px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+.nn-item:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+.nn-item.unread { background: #f5f8ff; }
+
+.nn-item-dot-wrap { width: 8px; flex-shrink: 0; padding-top: 6px; }
+.nn-item-dot { display: block; width: 8px; height: 8px; border-radius: 50%; background: #0066ff; }
+
+.nn-item-body { flex: 1; min-width: 0; }
+.nn-item-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 3px; }
+.nn-item-msg { font-size: 12px; color: #6b7280; margin: 0 0 8px; line-height: 1.5; }
+.nn-item-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9ca3af; background: #f1f3f5; padding: 3px 10px; border-radius: 50px; }
+
+.nn-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.nn-item-time { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+.nn-item-delete {
+  width: 22px; height: 22px; border-radius: 50%; background: none; border: none;
+  color: #9ca3af; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.nn-item-delete:hover { background: #fee2e2; color: #ef4444; }

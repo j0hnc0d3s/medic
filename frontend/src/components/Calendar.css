@@ -135,6 +135,43 @@
   text-align: center;
 }
 
+/* ── Add-task row (new) ──────────────────────────────────── */
+.no-task-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.no-task-add-input {
+  flex: 1;
+  background: #e7e7e711;
+  border: none;
+  border-radius: 40px;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: #ffffff;
+  font-family: inherit;
+  outline: none;
+}
+.no-task-add-input::placeholder { color: rgba(255,255,255,0.5); }
+.no-task-add-input:focus { background: #e7e7e71e; }
+
+.no-task-add-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0066ff;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.no-task-add-btn:hover { background: #0052cc; }
+
 .no-task-item { 
   display: flex; 
   align-items: center; 
@@ -193,6 +230,36 @@
   position: relative; 
   flex-shrink: 0;
 }
+
+.no-bell-wrap { position: relative; margin-left: auto; }
+
+.no-notif-dropdown {
+  position: absolute; bottom: calc(100% + 10px); right: 0; width: 300px;
+  background: #fff; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  padding: 10px; z-index: 30; max-height: 360px; overflow-y: auto;
+}
+.no-notif-dropdown-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 10px; }
+.no-notif-dropdown-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0; }
+.no-notif-dropdown-close { width: 22px; height: 22px; border-radius: 50%; background: #f1f3f5; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+.no-notif-item {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 10px 8px; border-radius: 12px; cursor: pointer; border-bottom: 1px solid #f1f3f5;
+}
+.no-notif-item:hover { background: #f8f9fa; }
+.no-notif-item.unread { background: #eef4ff; }
+.no-notif-item.unread:hover { background: #e4edff; }
+.no-notif-item-title { font-size: 12px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+.no-notif-item-msg { font-size: 11px; color: #6b7280; margin: 0 0 4px; line-height: 1.4; }
+.no-notif-item-time { font-size: 10px; color: #9ca3af; margin: 0; }
+
+.no-notif-viewall {
+  display: block; width: 100%; text-align: center; background: none; border: none;
+  padding: 10px; font-size: 12px; font-weight: 600; color: #0066ff; cursor: pointer; margin-top: 4px;
+}
+.no-notif-viewall:hover { text-decoration: underline; }
+
+.no-notif-empty { font-size: 12px; color: #9ca3af; text-align: center; padding: 20px 8px; margin: 0; }
 
 /* Collapsed reopen tab */
 .no-reopen-tab {

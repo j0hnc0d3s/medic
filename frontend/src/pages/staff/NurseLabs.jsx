@@ -133,11 +133,21 @@ export default function NurseLabs() {
     }
   }
 
+  const markComplete = async (lab) => {
+    setOpenMenuId(null)
+    try {
+      await labService.updateLab(lab.id, { status: 'completed' })
+      loadLabs()
+    } catch (err) {
+      console.error('Failed to mark lab complete:', err)
+    }
+  }
+
   const handleSave = async (payload) => {
     setSaving(true)
     try {
       const staffName = `${userProfile?.firstName || ''} ${userProfile?.lastName || ''}`.trim() || 'Staff'
-      const data = { ...payload, createdBy: staffName, updatedBy: staffName }
+      const data = { ...payload, createdBy: staffName, updatedBy: staffName, orderedByUid: userProfile?.uid || null }
 
       const res = editingLab
         ? await labService.updateLab(editingLab.id, data)
@@ -222,7 +232,14 @@ export default function NurseLabs() {
                           </div>
                         )}
                         <div className="no-lab-card-title-wrap">
-                          <p className="no-lab-title">{l.title || 'Untitled Lab'}</p>
+                          <p className="no-lab-title">
+                            {l.title || 'Untitled Lab'}
+                            {l.status && (
+                              <span className={`no-lab-status-badge${l.status === 'completed' ? ' completed' : ''}`}>
+                                {l.status === 'completed' ? 'Completed' : 'Requested'}
+                              </span>
+                            )}
+                          </p>
                           <p className="no-lab-sub">
                             {l.updatedBy ? `Last edited by ${l.updatedBy}` : (l.createdBy ? `Added by ${l.createdBy}` : '—')}
                           </p>
@@ -233,6 +250,9 @@ export default function NurseLabs() {
                           </button>
                           {openMenuId === l.id && (
                             <div className="no-lab-menu">
+                              {l.status !== 'completed' && (
+                                <button onClick={() => markComplete(l)}>Mark Complete</button>
+                              )}
                               <button onClick={() => openEdit(l)}>Edit</button>
                               <button onClick={() => handleDelete(l)} className="danger">Delete</button>
                             </div>

@@ -4,12 +4,12 @@
 // ─────────────────────────────────────────────────────────
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react'
 import {
-  collection, query, where, getDocs, addDoc, updateDoc,
+  collection, query, where, getDocs, addDoc, updateDoc, deleteDoc,
   doc, orderBy, Timestamp
 } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
-import { patientService } from '../../services'
+import { patientService, notificationService } from '../../services'
 import NurseSidebar from './NurseSidebar'
 import Calendar from '../../components/Calendar'
 import './NurseOverview.css'
@@ -78,26 +78,17 @@ function elbowPath(from, to) {
 // this assumption — swap 'right'/'left' or 'down'/'up' here to match.
 const DIR_ROTATION = { right: 0, down: 90, left: 180, up: 270 }
 
-const DestTriangle = ({ x, y, size = 15, direction = 'right' }) => (
+const DestTriangle = ({ x, y, size = 14, direction = 'right' }) => (
   <img src={reverse_triangle} className="no-dest-triangle" alt=""
     style={{
-      left: x - size / 2, 
-      top: y - size / 2, 
-      width: size, 
-      height: size,
+      left: x - size / 2, top: y - size / 2, width: size, height: size,
       transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)`,
-      zIndex: 1000,
     }} />
 )
-
 const ConnectorNode = ({ x, y, direction = 'right' }) => (
   <div className="no-connector-node" style={{ left: x - 16, top: y - 16 }}>
     <img src={triangle} className="no-connector-triangle" alt=""
-      style={{ 
-        transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)`, 
-        zIndex: 1000,
-      }} 
-    />
+      style={{ transform: `rotate(${DIR_ROTATION[direction] ?? 0}deg)` }} />
   </div>
 )
 
@@ -196,7 +187,6 @@ export default function NurseOverview() {
   // Calendar
   const [todayAgenda, setTodayAgenda] = useState([])
   const [tasks,       setTasks]       = useState([])
-  const [newTask,     setNewTask]     = useState('')
 
   // ── Canvas resize observer ────────────────────────────────
   useEffect(() => {
@@ -298,31 +288,112 @@ export default function NurseOverview() {
       : { from: { x: a.left, y: aCenterY }, to: { x: b.left + b.width, y: bCenterY }, direction: 'left' }
   }
 
-  // ── Fetch today's appointments for calendar ───────────────
-  useEffect(() => {
-    const fetchToday = async () => {
-      try {
-        const today    = new Date(); today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+  // ── Fetch appointments for whichever day is selected in the
+  //    Calendar widget — previously this only ever fetched "today"
+  //    once, so clicking a different day in the mini calendar did
+  //    nothing. Also scoped to this professional specifically
+  //    (doctors see only their own; other staff see everyone's),
+  //    matching NurseAppointments.jsx's existing convention.
+  const isDoctor   = userProfile?.role === 'doctor'
+  const doctorName = isDoctor ? `Dr. ${userProfile.firstName} ${userProfile.lastName}` : null
 
-        const snap = await getDocs(query(
-          collection(db, 'appointments'),
-          where('appointmentDate', '>=', Timestamp.fromDate(today)),
-          where('appointmentDate', '<',  Timestamp.fromDate(tomorrow)),
-          orderBy('appointmentDate')
-        ))
-        setTodayAgenda(snap.docs.map(d => ({
-          id:    d.id,
-          time:  d.data().appointmentTime || '—',
-          label: `${d.data().patientName} — ${d.data().type || 'Appointment'}`,
-        })))
+  const fetchAgendaForDay = async (date) => {
+    try {
+      const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0)
+      const dayEnd   = new Date(dayStart); dayEnd.setDate(dayStart.getDate() + 1)
+
+      const constraints = [
+        where('appointmentDate', '>=', Timestamp.fromDate(dayStart)),
+        where('appointmentDate', '<',  Timestamp.fromDate(dayEnd)),
+      ]
+      if (isDoctor) constraints.push(where('doctor', '==', doctorName))
+      constraints.push(orderBy('appointmentDate'))
+
+      const snap = await getDocs(query(collection(db, 'appointments'), ...constraints))
+      setTodayAgenda(snap.docs.map(d => ({
+        id:    d.id,
+        time:  d.data().appointmentTime || '—',
+        label: `${d.data().patientName} — ${d.data().type || 'Appointment'}`,
+      })))
+    } catch (err) {
+      console.error('Failed to load agenda:', err)
+      setTodayAgenda([])
+    }
+  }
+
+  useEffect(() => { fetchAgendaForDay(new Date()) }, [])
+
+  // ── "Check on load" reminders (stopgap, not a true push) ───
+  // A real reminder system needs something running on a schedule
+  // server-side (a Cloud Function on a Cloud Scheduler trigger, or a
+  // cron endpoint on the Flask backend) — neither exists in this
+  // stack yet. This only fires while the professional has the app
+  // open, checking what's coming up right now. Deduped per-day via
+  // localStorage so a page reload doesn't re-notify the same thing.
+  useEffect(() => {
+    if (!userProfile?.uid) return
+
+    const todayKey = new Date().toISOString().split('T')[0]
+    const notifiedKey = `medic_notified_${userProfile.uid}_${todayKey}`
+    const alreadyNotified = new Set(JSON.parse(localStorage.getItem(notifiedKey) || '[]'))
+    const markNotified = (id) => {
+      alreadyNotified.add(id)
+      localStorage.setItem(notifiedKey, JSON.stringify([...alreadyNotified]))
+    }
+
+    const checkUpcomingAppointments = async () => {
+      try {
+        const now = new Date()
+        const soon = new Date(now.getTime() + 60 * 60 * 1000) // next hour
+
+        const constraints = [
+          where('appointmentDate', '>=', Timestamp.fromDate(now)),
+          where('appointmentDate', '<=', Timestamp.fromDate(soon)),
+        ]
+        if (isDoctor) constraints.push(where('doctor', '==', doctorName))
+
+        const snap = await getDocs(query(collection(db, 'appointments'), ...constraints))
+        for (const d of snap.docs) {
+          const dedupeId = `appt-${d.id}`
+          if (alreadyNotified.has(dedupeId)) continue
+          await notificationService.sendStaffAppointmentReminder(
+            { id: d.id, ...d.data() },
+            userProfile.uid
+          )
+          markNotified(dedupeId)
+        }
       } catch (err) {
-        console.error('Failed to load today appointments:', err)
-        setTodayAgenda([])
+        console.error('Upcoming appointment check failed:', err)
       }
     }
-    fetchToday()
-  }, [])
+
+    const checkOpenTasks = async () => {
+      const dedupeId = 'open-tasks'
+      if (alreadyNotified.has(dedupeId)) return
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'tasks'),
+          where('userId', '==', userProfile.uid),
+          where('completed', '==', false)
+        ))
+        if (snap.size > 0) {
+          await notificationService.createNotification({
+            title: 'Open Tasks',
+            message: `You have ${snap.size} open task${snap.size === 1 ? '' : 's'}.`,
+            type: 'task',
+            userId: userProfile.uid,
+            actionUrl: '/staff/overview',
+          })
+          markNotified(dedupeId)
+        }
+      } catch (err) {
+        console.error('Open tasks check failed:', err)
+      }
+    }
+
+    checkUpcomingAppointments()
+    checkOpenTasks()
+  }, [userProfile?.uid])
 
   // ── Fetch tasks for logged-in user ────────────────────────
   useEffect(() => {
@@ -403,18 +474,17 @@ export default function NurseOverview() {
   }
 
   // ── Task management ───────────────────────────────────────
-  const addTask = async () => {
-    if (!newTask.trim() || !userProfile?.uid) return
+  const addTask = async (label) => {
+    if (!label?.trim() || !userProfile?.uid) return
     const taskData = {
       userId:    userProfile.uid,
-      label:     newTask.trim(),
+      label:     label.trim(),
       completed: false,
       createdAt: Timestamp.now(),
     }
     try {
       const ref = await addDoc(collection(db, 'tasks'), taskData)
       setTasks(t => [{ id: ref.id, ...taskData }, ...t])
-      setNewTask('')
     } catch (err) {
       console.error('Failed to add task:', err)
     }
@@ -426,6 +496,24 @@ export default function NurseOverview() {
       setTasks(t => t.filter(x => x.id !== taskId))
     } catch (err) {
       console.error('Failed to complete task:', err)
+    }
+  }
+
+  const deleteTask = async (taskId) => {
+    setTasks(t => t.filter(x => x.id !== taskId)) // optimistic — this is a delete, not a completion
+    try {
+      await deleteDoc(doc(db, 'tasks', taskId))
+    } catch (err) {
+      console.error('Failed to delete task:', err)
+    }
+  }
+
+  const editTask = async (taskId, newLabel) => {
+    setTasks(t => t.map(x => x.id === taskId ? { ...x, label: newLabel } : x))
+    try {
+      await updateDoc(doc(db, 'tasks', taskId), { label: newLabel })
+    } catch (err) {
+      console.error('Failed to edit task:', err)
     }
   }
 
@@ -954,12 +1042,14 @@ export default function NurseOverview() {
       {/* ── Calendar with real data ─────────────────────── */}
       <Calendar
         currentUser={currentUser}
+        viewerUserId={userProfile?.uid}
         dayTasks={calendarTasks}
         dayAgenda={calendarAgenda}
         onAddTask={addTask}
         onCompleteTask={completeTask}
-        newTaskValue={newTask}
-        onNewTaskChange={setNewTask}
+        onDeleteTask={deleteTask}
+        onEditTask={editTask}
+        onDayChange={fetchAgendaForDay}
       />
     </div>
   )

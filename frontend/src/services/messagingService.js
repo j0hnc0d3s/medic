@@ -18,6 +18,7 @@ import {
   arrayUnion 
 } from 'firebase/firestore'
 import { db } from './firebase'
+import notificationService from './notificationService'
 
 const messagingService = {
   
@@ -226,6 +227,20 @@ const messagingService = {
         lastMessageAt: Timestamp.now(),
         [`unreadCount.${otherUserId}`]: (convoData.unreadCount?.[otherUserId] || 0) + 1
       })
+
+      // Notify the recipient — scoped to professionals (not
+      // patients) since that's what was actually asked for; the
+      // role recorded on the conversation at creation time tells us
+      // which this is without an extra lookup.
+      const otherRole = convoData.participantDetails?.[otherUserId]?.role
+      if (otherRole && otherRole !== 'patient') {
+        await notificationService.sendMessageNotification({
+          recipientUserId: otherUserId,
+          senderName,
+          text: text.trim(),
+          conversationId,
+        })
+      }
       
       return {
         success: true,

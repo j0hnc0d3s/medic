@@ -11,6 +11,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { patientService } from '../../services'
+import notificationService from '../../services/notificationService'
 import './NurseSidebar.css'
 
 import { signOut } from 'firebase/auth'
@@ -37,17 +38,18 @@ import logout from '../../assets/inverted/logout.png';
 import image1 from '../../assets/images/image1.jpeg';
 
 const NAV_ITEMS = [
-  { key: 'overview',     label: 'Overview',     path: '/staff/overview',     icon: 'home'  },
-  { key: 'patients',     label: 'Patients',     path: '/staff/patients',     icon: 'user'  },
-  { key: 'appointments', label: 'Appointments', path: '/staff/appointments', icon: 'clock' },
-  { key: 'messaging',    label: 'Messaging',     path: '/staff/messaging',   icon: 'send'  },
-  { key: 'notes',        label: 'Notes',         path: '/staff/notes',        icon: 'note'  },
-  { key: 'documents',    label: 'Documents',     path: '/staff/documents',   icon: 'folder'},
-  { key: 'imaging',      label: 'Imaging',       path: '/staff/imaging',     icon: 'brain' },
-  { key: 'labs',         label: 'Labs',          path: '/staff/labs',        icon: 'flask' },
+  { key: 'overview',      label: 'Overview',      path: '/staff/overview',      icon: 'home'  },
+  { key: 'patients',      label: 'Patients',      path: '/staff/patients',      icon: 'user'  },
+  { key: 'appointments',  label: 'Appointments',  path: '/staff/appointments',  icon: 'clock' },
+  { key: 'messaging',     label: 'Messaging',     path: '/staff/messaging',     icon: 'send'  },
+  { key: 'notes',         label: 'Notes',         path: '/staff/notes',         icon: 'note'  },
+  { key: 'documents',     label: 'Documents',     path: '/staff/documents',     icon: 'folder'},
+  { key: 'imaging',       label: 'Imaging',       path: '/staff/imaging',       icon: 'brain' },
+  { key: 'labs',          label: 'Labs',          path: '/staff/labs',          icon: 'flask' },
 ]
 
 const ICONS = {
+  bell: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   home: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   user: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   clock: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
@@ -144,6 +146,22 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
   const [loading,     setLoading]     = useState(true)
 
   useEffect(() => { loadAllPatients() }, [])
+
+  // ── Notifications badge (footer, beside Settings) ─────────
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid
+    if (!uid) return
+    const refresh = () => {
+      notificationService.getUnreadCount(uid).then(res => {
+        if (res.success) setUnreadCount(res.count)
+      })
+    }
+    refresh()
+    const interval = setInterval(refresh, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   // The parent (NurseOverview) does its own fresh fetch of the full
   // patient doc every time a selection changes — that's a more
@@ -509,6 +527,11 @@ export default function NurseSidebar({ onSelectPatient, selectedPatient: externa
         <div className="ns-nav-spacer" />
 
         <div className="ns-nav-footer">
+          <button className="ns-icon-btn ns-icon-btn--badge" onClick={() => navigate('/staff/notifications')} aria-label="Notifications">
+            {ICONS.bell}
+            {unreadCount > 0 && <span className="ns-nav-badge" />}
+          </button>
+
           <button className="ns-icon-btn" onClick={() => navigate('/staff/settings')} aria-label="Settings">
             <img src={settings} className="ns-alt-icon"/>
           </button>

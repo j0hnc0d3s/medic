@@ -48,7 +48,9 @@
 .no-lab-av--initials { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
 
 .no-lab-card-title-wrap { flex: 1; min-width: 0; }
-.no-lab-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.no-lab-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px; }
+.no-lab-status-badge { background: #fef3c7; color: #b45309; font-size: 9px; font-weight: 700; padding: 3px 10px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.03em; flex-shrink: 0; }
+.no-lab-status-badge.completed { background: #dcfce7; color: #15803d; }
 .no-lab-sub { font-size: 10px; color: #9ca3af; margin: 2px 0 0; }
 
 .no-lab-menu-wrap { position: relative; flex-shrink: 0; }

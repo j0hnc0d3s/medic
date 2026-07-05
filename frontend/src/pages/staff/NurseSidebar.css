@@ -319,6 +319,11 @@
   transition: all 0.15s;
 }
 .ns-icon-btn:hover { background: #2a2a2a; color: #fff; }
+.ns-icon-btn--badge { position: relative; }
+.ns-nav-badge {
+  position: absolute; top: 8px; right: 9px; width: 9px; height: 9px;
+  border-radius: 50%; background: #0066ff; border: 2px solid #1a1a1a;
+}
 
 .ns-av-initials {
   width          : 100%;

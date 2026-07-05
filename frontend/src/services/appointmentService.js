@@ -36,6 +36,7 @@ class AppointmentService {
         patientName: appointmentData.patientName,
         patientPhone: appointmentData.patientPhone || '',
         patientId: appointmentData.patientId || null,
+        patientRecordId: appointmentData.patientRecordId || null,
         appointmentDate: Timestamp.fromDate(new Date(appointmentData.appointmentDate)),
         appointmentTime: appointmentData.appointmentTime,
         type: appointmentData.type || 'General Checkup',
