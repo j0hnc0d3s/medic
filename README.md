@@ -142,14 +142,3 @@ Log in as the admin account above.
 ## What to Expect: Public Queue (No Login Required)
 
 Anyone can join the queue without an account by filling out the intake form, which asks about symptoms, pain level, and history. Based on that, they're automatically assigned a starting triage priority (A–E) and emailed a 6-digit code. Entering that code (or searching by name/DOB/phone if the code is lost) puts them in the live queue with a running position and estimated wait time. Staff can override the automatic triage level once they've actually assessed the patient.
-
----
-
-## Known Limitations
-
-A few things are intentionally incomplete rather than silently guessed at:
-
-- **Email notifications** aren't wired up yet — the toggle exists in Settings and is saved, but only in-app notifications currently send.
-- **"Tasks due" and "appointments upcoming" reminders** only check in when a staff member has the app open — there's no background job (Cloud Function or cron) driving a true scheduled push yet.
-- **The admin Overview's fourth stat card** ("minutes") is a placeholder — its exact meaning hasn't been finalized.
-- **The lobby display** doesn't show patient names by default, even though an earlier mockup did — that's a deliberate privacy choice already built into the backend (`/api/queue/display` strips personal info on purpose). Turning names on requires an explicit backend change, documented in the relevant commit.
