@@ -1,0 +1,87 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/staff/NurseImaging.css
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.no-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
+.no-main { flex: 1; padding: 28px 32px; overflow: auto; position: relative; display: flex; flex-direction: column; }
+
+.no-content-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-shrink: 0; }
+.no-content-search { flex: 1; background: #fff; border-radius: 50px; padding: 14px 22px; border: none; font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; }
+.no-content-search::placeholder { color: #9ca3af; }
+
+.no-content-filter-wrap { position: relative; flex-shrink: 0; }
+.no-content-filter { display: flex; flex-direction: column; align-items: flex-start; background: #fff; border-radius: 50px; padding: 10px 20px; border: none; cursor: pointer; flex-shrink: 0; min-width: 110px; }
+.no-content-filter-label { font-size: 13px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+.no-content-filter-sub { font-size: 10px; color: #9ca3af; }
+
+.no-filter-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; min-width: 160px;
+  background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 6px; z-index: 5;
+}
+.no-filter-menu-item {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 10px 12px; border-radius: 10px; font-size: 12px; color: #1e293b; cursor: pointer;
+}
+.no-filter-menu-item:hover { background: #f1f3f5; }
+.no-filter-menu-item.active { background: #0066ff; color: #fff; font-weight: 600; }
+
+.no-content-icon-btn { width: 48px; height: 48px; border-radius: 50%; background: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; color: #1e293b; transition: background 0.15s; }
+.no-content-icon-btn:hover { background: #f1f3f5; }
+.no-content-icon-btn.active { background: #1e1e1e; color: #fff; }
+
+.no-pagination { position: sticky; bottom: 0; align-self: flex-end; display: flex; gap: 8px; padding-top: 20px; margin-top: auto; }
+.no-pagination-dot { width: 30px; height: 30px; border-radius: 50%; border: none; background: #fff; color: #1e293b; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.no-pagination-dot.active { background: #1e1e1e; color: #fff; }
+
+/* ── Imaging list (row) view ─────────────────────────────── */
+.no-img-list { display: flex; flex-direction: column; gap: 16px; max-width: 340px; }
+
+.no-img-card {
+  background: #fff; border-radius: 30px; padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.no-img-card-head { display: flex; align-items: center; gap: 12px; }
+.no-img-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.no-img-av--initials { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
+
+.no-img-card-title-wrap { flex: 1; min-width: 0; }
+.no-img-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.no-img-sub { font-size: 10px; color: #9ca3af; margin: 2px 0 0; }
+
+.no-img-menu-wrap { position: relative; flex-shrink: 0; }
+.no-img-menu-btn { width: 30px; height: 30px; border-radius: 50%; background: none; border: none; color: #9ca3af; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.no-img-menu-btn:hover { background: #f1f3f5; color: #1e293b; }
+
+.no-img-menu {
+  position: absolute; top: calc(100% + 4px); right: 0; background: #fff; border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 6px; z-index: 5; min-width: 100px;
+}
+.no-img-menu button {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 8px 12px; border-radius: 8px; font-size: 12px; color: #1e293b; cursor: pointer;
+}
+.no-img-menu button:hover { background: #f1f3f5; }
+.no-img-menu button.danger:hover { background: #fee2e2; color: #ef4444; }
+
+.no-img-body { background: #f1f3f5; border-radius: 18px; padding: 12px 16px; margin-top: 14px; }
+.no-img-body-label { font-size: 9px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 4px; }
+.no-img-body-text { font-size: 12px; color: #1e293b; line-height: 1.5; margin: 0 0 10px; }
+
+.no-img-thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.no-img-thumb { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: #1e293b; }
+
+.no-img-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.no-img-patient { font-size: 11px; font-weight: 600; color: #1e293b; }
+.no-img-date { font-size: 10px; color: #9ca3af; }
+
+/* ── Imaging grid view ────────────────────────────────────── */
+.no-img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.no-img-grid-card {
+  background: #fff; border-radius: 24px; padding: 16px; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 4px;
+}
+.no-img-grid-card:hover { box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+.no-img-grid-thumb { width: 100%; height: 110px; object-fit: cover; border-radius: 16px; margin-bottom: 8px; background: #1e293b; }

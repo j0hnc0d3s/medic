@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
+
+.qd-shell {
+  min-height: 100vh; background: #e9eaec; color: #1e293b; font-family: 'Poppins', sans-serif;
+  padding: 48px 64px; display: flex; flex-direction: column; gap: 48px;
+  position: relative; overflow: hidden;
+}
+
+/* Decorative background shapes — approximating the mockup's faint
+   abstract marks bleeding off the left edge. Not pixel-accurate to
+   a specific brand asset, just texture. */
+.qd-bg-shapes { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.qd-bg-shape { position: absolute; border-radius: 50%; background: rgba(0,0,0,0.03); }
+.qd-bg-shape--1 { width: 340px; height: 340px; left: -140px; top: -80px; }
+.qd-bg-shape--2 { width: 220px; height: 220px; left: -80px; top: 420px; }
+
+.qd-header, .qd-content, .qd-footer { position: relative; z-index: 1; }
+
+.qd-header { display: flex; justify-content: space-between; align-items: center; }
+.qd-wordmark { font-size: 44px; font-weight: 900; color: #0c0d10; margin: 0; letter-spacing: -0.02em; }
+.qd-clock { font-size: 24px; font-weight: 700; color: #9ca3af; }
+
+.qd-error { color: #f59e0b; font-size: 14px; position: relative; z-index: 1; }
+
+.qd-content { flex: 1; display: flex; flex-direction: column; gap: 32px; }
+
+.qd-now-row { display: flex; flex-wrap: wrap; gap: 20px; }
+.qd-waiting-grid { display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start; }
+
+.qd-card {
+  border-radius: 24px; padding: 24px 28px; min-width: 170px;
+  display: flex; flex-direction: column; gap: 6px; color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.qd-card--now { min-width: 190px; }
+
+.qd-card-id { font-size: 34px; font-weight: 800; line-height: 1; }
+.qd-card-name { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.85); }
+
+.qd-empty { color: #9ca3af; font-size: 16px; }
+
+.qd-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+.qd-legend { display: flex; gap: 10px; flex-wrap: wrap; }
+.qd-legend-item {
+  color: #fff; font-size: 11px; font-weight: 700; padding: 8px 16px; border-radius: 50px;
+}
+
+.qd-watermark { font-size: 16px; font-weight: 800; color: rgba(12,13,16,0.15); }

@@ -1,0 +1,1090 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/auth/QueueForm.css
+   ───────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ── Shared ──────────────────────────────────────────────── */
+.qf-input {
+  width: 100%;
+  padding: 20px 20px;
+  font-size: 12px;
+  border: 0px;
+  border-radius: 25px;
+  background: #F1F1F1;
+  color: #2D3748;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.qf-input.tag {
+  background-color: transparent;
+}
+
+.qf-input.tag:focus {
+  background-color: transparent;
+  border: 0px;
+  outline: none;
+}
+
+.qf-input:focus { 
+  outline: none;
+  border-color: #1F4788;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(31, 71, 136, 0.1);
+}
+
+.qf-input::placeholder { 
+  color: #A0AEC0;
+}
+
+.qf-textarea {
+  border-radius: 16px;
+  resize       : vertical;
+  line-height  : 1.6;
+}
+
+.qf-back-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  background-color: transparent;
+  font-size: 12px;
+  gap: 10px;
+}
+
+.qf-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.qf-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2D3748;
+  font-family  : 'Poppins', sans-serif;
+  display      : block;
+  margin-bottom: 15px;
+}
+
+.qf-label-row {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  margin-bottom  : 8px;
+}
+.qf-label-row .qf-label { margin-bottom: 0; }
+.qf-label-hint  { font-size: 11px; color: #b0b7c3; font-family: 'Poppins', sans-serif; }
+.qf-label-eg    { font-weight: 400; color: #9ca3af; }
+.qf-optional    { font-size: 11px; color: #b0b7c3; font-family: 'Poppins', sans-serif; display: block; margin: -4px 0 8px; }
+
+.qf-disclaimer {
+  display    : block;
+  font-size  : 11px;
+  font-weight: 400;
+  color      : #9ca3af;
+  margin-top : 4px;
+  line-height: 1.5;
+}
+
+.qf-terms { font-size: 12px; color: #9ca3af; font-family: 'Poppins', sans-serif; text-align: center; margin: 0; line-height: 1.6; }
+.qf-terms a  { color: #1a56db; text-decoration: none; font-weight: 500; }
+.qf-error    { font-size: 12px; color: #ef4444; font-family: 'Poppins', sans-serif; text-align: center; margin: 0; }
+
+/* ── Form shell ──────────────────────────────────────────── */
+.qf-join {
+  display       : flex;
+  flex-direction: column;
+  gap           : 20px;
+  width         : 100%;
+}
+
+.qf-step-body {
+  display       : flex;
+  flex-direction: column;
+  gap           : 18px;
+  animation     : stepIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+.qf-step-body-search {
+  display       : flex;
+  flex-direction: column;
+  gap           : 18px;
+  animation     : stepIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  padding: 0px; 
+  margin-top: 5px;
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qf-field       { display: flex; flex-direction: column; }
+.qf-field-row   { display: flex; gap: 14px; }
+.qf-field-row .qf-field { flex: 1; }
+
+/* ── Step indicator container ────────────────────────────── */
+.qf-step-indicator {
+  display    : flex;
+  align-items: center;
+  gap        : 6px;
+  padding    : 2px 0;
+  animation  : stepIn 0.2s ease forwards;
+  background-color: #f0f2f5;
+  padding: 5px;
+  border-radius: 50px;
+}
+ 
+/* ── Shared background wrapping Next + remaining steps ───── */
+.qf-si-rest {
+  display      : flex;
+  align-items  : center;
+  gap          : 10px;
+  background   : #ffffff;
+  border-radius: 50px;
+  padding      : 6px;
+  flex         : 1;
+  justify-content: space-around;
+}
+ 
+/* Plain steps inside the shared background need horizontal breathing room */
+.qf-si-rest .qf-si-plain {
+  padding: 8px 10px;
+}
+ 
+/* ── Current step — grey pill with subtitle ──────────────── */
+.qf-si-pill {
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  gap            : 2px;
+  padding        : 8px 28px;
+  border-radius  : 50px;
+  white-space    : nowrap;
+}
+
+.qf-si-pill--all {
+  background-color : #eff6ff;
+  justify-content: space-between;
+}
+ 
+.qf-si-pill--current {
+  background-color : transparent;
+}
+ 
+.qf-si-pill--current .qf-si-num {
+  font-size   : 13px;
+  font-weight : 700;
+  color       : #1e293b;
+  font-family : 'Poppins', sans-serif;
+  line-height : 1.2;
+}
+ 
+.qf-si-sub {
+  font-size   : 10px;
+  color       : #9ca3af;
+  font-family : 'Poppins', sans-serif;
+  line-height : 1;
+}
+ 
+/* ── Next step — blue pill with "Next" label ─────────────── */
+.qf-si-pill--next {
+  background : #1a56db;
+  box-shadow : 0 4px 12px rgba(26, 86, 219, 0.3);
+}
+ 
+.qf-si-next-label {
+  font-size   : 9px;
+  font-weight : 400;
+  color       : rgba(255, 255, 255, 0.65);
+  font-family : 'Poppins', sans-serif;
+  line-height : 1;
+}
+ 
+.qf-si-pill--next .qf-si-num {
+  font-size   : 13px;
+  font-weight : 700;
+  color       : #ffffff;
+  font-family : 'Poppins', sans-serif;
+  line-height : 1.2;
+}
+ 
+/* ── All other steps — plain grey text only ──────────────── */
+.qf-si-plain {
+  font-size   : 12px;
+  font-weight : 500;
+  color       : #b0b7c3;
+  font-family : 'Poppins', sans-serif;
+  white-space : nowrap;
+  padding     : 8px 4px;
+}
+ 
+.qf-si-plain.past { color: #d1d5db; }
+
+/* ── Pill radio ──────────────────────────────────────────── */
+.qf-pill-radio {
+  display : flex;
+  gap     : 10px;
+  flex-wrap: wrap;
+}
+
+.qf-pill-radio-btn {
+  display    : flex;
+  align-items: center;
+  gap        : 7px;
+  padding    : 9px 18px;
+  border-radius: 50px;
+  border     : none;
+  background : #f0f2f5;
+  font-size  : 13px;
+  font-weight: 500;
+  color      : #6b7280;
+  font-family: 'Poppins', sans-serif;
+  cursor     : pointer;
+  transition : all 0.18s;
+}
+
+.qf-pill-radio-btn.selected {
+  background: #1a56db;
+  color     : #ffffff;
+  box-shadow: 0 4px 12px rgba(26,86,219,0.25);
+}
+
+.qf-radio-dot {
+  width        : 10px;
+  height       : 10px;
+  border-radius: 50%;
+  border       : 2px solid #9ca3af;
+  background   : transparent;
+  transition   : all 0.15s;
+  flex-shrink  : 0;
+}
+
+.qf-radio-dot.selected {
+  border-color: #ffffff;
+  background  : #ffffff;
+}
+
+/* ── Tag input ───────────────────────────────────────────── */
+.qf-tag-input-wrap {
+  display       : flex;
+  flex-direction: column;
+  gap           : 8px;
+  
+}
+
+.qf-tags {
+  display : flex;
+  gap     : 6px;
+  flex-wrap: wrap;
+}
+
+.qf-tag {
+  display      : flex;
+  align-items  : center;
+  gap          : 4px;
+  padding      : 5px 12px;
+  border-radius: 50px;
+  background   : #1a56db;
+  color        : #fff;
+  font-size    : 12px;
+  font-weight  : 500;
+  font-family  : 'Poppins', sans-serif;
+}
+
+.qf-tag-remove {
+  background  : transparent;
+  border      : none;
+  color       : rgba(255,255,255,0.7);
+  cursor      : pointer;
+  font-size   : 14px;
+  line-height : 1;
+  padding     : 0;
+  display     : flex;
+  align-items : center;
+}
+
+.qf-tag-remove:hover { color: #fff; }
+
+.qf-tag-input-row {
+  display    : flex;
+  gap        : 8px;
+  align-items: center;
+  border-radius: 25px;
+  background: #F1F1F1;
+}
+
+.qf-tag-add-btn {
+  background   : #0066ff;
+  color        : #fff;
+  border       : none;
+  border-radius: 50px;
+  padding      : 10px 20px;
+  margin-right: 10px;
+  font-size    : 12px;
+  font-weight  : 600;
+  font-family  : 'Poppins', sans-serif;
+  cursor       : pointer;
+  white-space  : nowrap;
+  flex-shrink  : 0;
+  transition   : background 0.15s ease;
+}
+
+.qf-tag-add-btn:hover { background: #0052cc; }
+
+/* ── Chip (time slots etc) ───────────────────────────────── */
+.qf-chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.qf-chip {
+  padding      : 8px 16px;
+  border-radius: 50px;
+  border       : 1.5px solid #e2e8f0;
+  background   : #f0f2f5;
+  font-size    : 12px;
+  font-weight  : 500;
+  color        : #6b7280;
+  font-family  : 'Poppins', sans-serif;
+  cursor       : pointer;
+  transition   : all 0.18s;
+  white-space  : nowrap;
+}
+.qf-chip.selected         { background: #1a56db; color: #fff; border-color: #1a56db; }
+.qf-chip:hover:not(.selected) { border-color: #1a56db; color: #1a56db; }
+
+/* ── Pain slider ─────────────────────────────────────────── */
+.qf-pain-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qf-pain-track {
+  position: relative;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 50px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.qf-pain-fill {
+  position: absolute;
+  height: 100%;
+  left: 0;
+  border-radius: 50px;
+  transition: width 0.1s ease-out;
+  background: #1a56db;
+}
+
+.qf-pain-fill--low {
+  background: #1a56db;
+}
+
+.qf-pain-fill--mid {
+  background: #1a56db;
+}
+
+.qf-pain-fill--high {
+  background: #1a56db;
+}
+
+.qf-pain-ticks {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.qf-pain-tick {
+  width: 1px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.qf-pain-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  background: white;
+  border-radius: 50%;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  transition: all 0.1s ease-out;
+}
+
+.qf-pain-thumb.dragging {
+  cursor: grabbing;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.qf-pain-thumb--low {
+  background: #1a56db;
+}
+
+.qf-pain-thumb--mid {
+  background: #1a56db;
+}
+
+.qf-pain-thumb--high {
+  background: #1a56db;
+}
+
+.qf-pain-bubble {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+  padding: 6px 8px;
+}
+
+.qf-pain-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* ── Drop zone ───────────────────────────────────────────── */
+.qf-dropzone {
+  border       : 2px dashed #d1d5db;
+  border-radius: 20px;
+  background   : #f9fafb;
+  padding      : 40px 20px;
+  display      : flex;
+  flex-direction: column;
+  align-items  : center;
+  justify-content: center;
+  gap          : 10px;
+  cursor       : pointer;
+  transition   : all 0.18s;
+  min-height   : 130px;
+}
+
+.qf-dropzone:hover, .qf-dropzone.drag {
+  border-color: #1a56db;
+  background  : #eff6ff;
+}
+
+.qf-dropzone.has-file {
+  border-color: #22c55e;
+  background  : #f0fdf4;
+}
+
+.qf-dropzone-icon {
+  width : 36px;
+  height: 36px;
+  color : #b0b7c3;
+}
+
+.qf-icon {
+  width : 15px;
+  height: 15px;
+}
+
+.qf-dropzone-label { font-size: 13px; color: #9ca3af; font-family: 'Poppins', sans-serif; margin: 0; }
+.qf-dropzone-name  { font-size: 13px; color: #22c55e; font-family: 'Poppins', sans-serif; margin: 0; font-weight: 500; }
+
+/* ── Calendar ────────────────────────────────────────────── */
+.qf-calendar {
+  background   : #f9fafb;
+  border-radius: 16px;
+  padding      : 14px;
+}
+
+.qf-cal-header {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  margin-bottom  : 12px;
+}
+
+.qf-cal-month {
+  font-size  : 13px;
+  font-weight: 600;
+  color      : #1e293b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-cal-nav {
+  width           : 28px;
+  height          : 28px;
+  border-radius   : 50%;
+  border          : none;
+  background      : transparent;
+  font-size       : 16px;
+  color           : #9ca3af;
+  cursor          : pointer;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  transition      : all 0.15s;
+}
+.qf-cal-nav:hover { background: #e2e8f0; color: #1e293b; }
+
+.qf-cal-days {
+  display              : grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap                  : 2px;
+}
+
+.qf-cal-day-name {
+  font-size  : 10px;
+  font-weight: 600;
+  color      : #9ca3af;
+  text-align : center;
+  padding    : 4px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-cal-cell {
+  width           : 32px;
+  height          : 32px;
+  border-radius   : 50%;
+  border          : none;
+  background      : transparent;
+  font-size       : 12px;
+  font-family     : 'Poppins', sans-serif;
+  color           : #374151;
+  cursor          : pointer;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  margin          : 0 auto;
+  transition      : all 0.15s;
+}
+
+.qf-cal-cell:hover:not(:disabled)  { background: #e2e8f0; }
+.qf-cal-cell.today                 { color: #1a56db; font-weight: 700; }
+.qf-cal-cell.selected              { background: #1a56db; color: #fff; font-weight: 600; }
+.qf-cal-cell.empty                 { pointer-events: none; visibility: hidden; }
+.qf-cal-cell:disabled              { opacity: 0; pointer-events: none; }
+
+/* ── Review accordion ────────────────────────────────────── */
+.qf-review { display: flex; flex-direction: column; gap: 8px; animation: stepIn 0.25s ease forwards; }
+
+.qf-accordion { background: #f0f2f5; border-radius: 18px; overflow: hidden; }
+
+.qf-accordion-head {
+  width          : 100%;
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  padding        : 16px 20px;
+  border         : none;
+  background     : transparent;
+  cursor         : pointer;
+  transition     : background 0.15s;
+}
+.qf-accordion-head:hover { background: #e8ecf2; }
+
+.qf-accordion-title { font-size: 15px; font-weight: 600; color: #1e293b; font-family: 'Poppins', sans-serif; }
+.qf-accordion-arrow { font-size: 16px; color: #6b7280; }
+
+.qf-accordion-body {
+  display       : flex;
+  flex-direction: column;
+  padding       : 4px 20px 16px;
+  gap           : 8px;
+  animation     : stepIn 0.2s ease forwards;
+}
+
+.qf-review-row {
+  display        : flex;
+  justify-content: space-between;
+  align-items    : flex-start;
+  gap            : 16px;
+  padding        : 5px 0;
+  border-bottom  : 1px solid #e2e8f0;
+}
+.qf-review-row:last-child { border-bottom: none; }
+
+.qf-review-q { font-size: 11px; color: #6b7280; font-family: 'Poppins', sans-serif; flex: 1; }
+.qf-review-v { font-size: 12px; color: #1e293b; font-family: 'Poppins', sans-serif; text-align: right; }
+.qf-review-v.danger { color: #ef4444; font-weight: 600; }
+
+/* ── Navigation ──────────────────────────────────────────── */
+.qf-nav      { display: flex; justify-content: flex-end; }
+.qf-nav-btns {
+  display      : flex;
+  gap          : 4px;
+  background   : #f1f1f1;
+  border-radius: 50px;
+  padding      : 4px;
+}
+
+.qf-nav-btn {
+  width           : 60px;
+  height          : 48px;
+  border-radius   : 50px;
+  border          : none;
+  background      : transparent;
+  color           : #9ca3af;
+  cursor          : pointer;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  transition      : all 0.18s;
+}
+.qf-nav-btn:disabled        { opacity: 0.3; cursor: not-allowed; }
+.qf-nav-btn--active         { background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.qf-nav-btn--submit {
+  background   : #1a56db;
+  color        : #fff;
+  font-size    : 12px;
+  font-weight  : 600;
+  font-family  : 'Poppins', sans-serif;
+  padding      : 0 20px;
+  width        : auto;
+  border-radius: 50px;
+  box-shadow   : 0 4px 12px rgba(26,86,219,0.3);
+}
+.qf-nav-btn--submit:hover { opacity: 0.9; }
+
+.nav-icon { width: 18px; height: 18px; object-fit: contain; }
+
+/* ── Code entry ──────────────────────────────────────────── */
+.qf-code { 
+  display: flex; 
+  flex-direction: column;
+  gap: 18px; 
+  width: 100%; 
+  margin-top: 14px; 
+  padding: 10px;
+}
+
+.qf-code-heading { font-size: 20px; font-weight: 600; color: #1e293b; font-family: 'Poppins', sans-serif; margin: 0; }
+.qf-code-sub     { font-size: 13px; color: #6b7280; font-family: 'Poppins', sans-serif; margin: 0; line-height: 1.6; }
+.qf-code-sub-blue { color: #1a56db; font-weight: 500; }
+
+.qf-digits { display: flex; gap: 16px; width: 100%; }
+
+.qf-digit-group {
+  display        : flex;
+  gap            : 6px;
+  flex           : 1;
+  background     : #f0f2f5;
+  border-radius  : 20px;
+  padding        : 12px 16px;
+  align-items    : center;
+  justify-content: center;
+  border         : 2px solid transparent;
+  transition     : border-color 0.18s;
+}
+
+.qf-digit-group--active {
+  background   : #ffffff;
+  border-color : #1a56db;
+  box-shadow   : 0 0 0 3px rgba(26,86,219,0.1);
+}
+
+.qf-digit {
+  width      : 56px;
+  height     : 56px;
+  border     : none;
+  background : transparent;
+  font-size  : 32px;
+  font-weight: 700;
+  color      : #1e293b;
+  font-family: 'Poppins', sans-serif;
+  text-align : center;
+  outline    : none;
+  caret-color: #1a56db;
+}
+
+.qf-digit-group:not(.qf-digit-group--active) .qf-digit { color: #b0b7c3; }
+
+.qf-code-fallback { font-size: 12px; color: #9ca3af; font-family: 'Poppins', sans-serif; margin: 0; }
+.qf-code-fallback a { color: #1a56db; text-decoration: none; font-weight: 500; }
+
+.qf-join-btn {
+  width        : 100%;
+  padding      : 16px;
+  border-radius: 50px;
+  border       : none;
+  background   : #1a56db;
+  color        : #fff;
+  font-size    : 15px;
+  font-weight  : 600;
+  font-family  : 'Poppins', sans-serif;
+  cursor       : pointer;
+  transition   : opacity 0.18s;
+  box-shadow   : 0 4px 14px rgba(26,86,219,0.35);
+}
+.qf-join-btn:hover:not(:disabled) { opacity: 0.9; }
+.qf-join-btn:disabled              { opacity: 0.4; cursor: not-allowed; }
+
+/* ─────────────────────────────────────────────────────────
+   ADD to QueueForm.css
+   Covers: FindAppointmentForm (qf-find-*, qf-appt-*)
+           QueueWaitingScreen  (qw-*)
+   ───────────────────────────────────────────────────────── */
+
+/* ── Link-styled button (replaces the <a> fallback) ──────── */
+.qf-link-btn {
+  background  : none;
+  border      : none;
+  padding     : 0;
+  font-size   : inherit;
+  font-family : 'Poppins', sans-serif;
+  color       : #1e293b;
+  font-weight : 700;
+  cursor      : pointer;
+  text-decoration: none;
+}
+
+.qf-link-btn:hover { text-decoration: underline; }
+
+/* ══════════════════════════════════════════════════════════
+   FIND MY APPOINTMENT
+══════════════════════════════════════════════════════════ */
+.qf-find {
+  display       : flex;
+  flex-direction: column;
+  gap           : 20px;
+  width         : 100%;
+  padding: 10px;
+  margin-top: 15px;
+}
+
+.qf-find-heading {
+  font-size  : 22px;
+  font-weight: 700;
+  color      : #1e293b;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-find-sub {
+  font-size  : 13px;
+  color      : #6b7280;
+  margin     : 0;
+  line-height: 1.6;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-find-sub-blue { color: #1a56db; font-weight: 600; }
+
+/* Appointment result cards */
+.qf-appt-list {
+  display       : flex;
+  flex-direction: column;
+  gap           : 10px;
+}
+
+.qf-appt-card {
+  display      : flex;
+  align-items  : center;
+  gap          : 14px;
+  padding      : 16px 18px;
+  background   : #f0f2f5;
+  border       : 2px solid transparent;
+  border-radius: 18px;
+  cursor       : pointer;
+  transition   : all 0.18s;
+  text-align   : left;
+  width        : 100%;
+}
+
+.qf-appt-card:hover  { background: #e8ecf2; }
+.qf-appt-card.selected {
+  background   : #ffffff;
+  border-color : #1a56db;
+  box-shadow   : 0 4px 14px rgba(26,86,219,0.15);
+}
+
+.qf-appt-avatar {
+  width           : 40px;
+  height          : 40px;
+  border-radius   : 50%;
+  color           : #ffffff;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  font-size       : 13px;
+  font-weight     : 700;
+  font-family     : 'Poppins', sans-serif;
+  flex-shrink     : 0;
+}
+
+.qf-appt-doc {
+  display       : flex;
+  flex-direction: column;
+  flex-shrink   : 0;
+  width         : 100px;
+}
+
+.qf-appt-doctor {
+  font-size  : 13px;
+  font-weight: 700;
+  color      : #1e293b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-appt-role {
+  font-size  : 11px;
+  color      : #9ca3af;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-appt-type {
+  display       : flex;
+  flex-direction: column;
+  flex          : 1;
+  min-width     : 0;
+}
+
+.qf-appt-type-name {
+  font-size     : 13px;
+  font-weight   : 700;
+  color         : #1e293b;
+  font-family   : 'Poppins', sans-serif;
+  white-space   : nowrap;
+  overflow      : hidden;
+  text-overflow : ellipsis;
+}
+
+.qf-appt-patient {
+  font-size  : 11px;
+  color      : #9ca3af;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-appt-time {
+  display       : flex;
+  flex-direction: column;
+  align-items   : flex-end;
+  flex-shrink   : 0;
+}
+
+.qf-appt-time-val {
+  font-size  : 13px;
+  font-weight: 700;
+  color      : #1e293b;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qf-appt-date {
+  font-size  : 11px;
+  color      : #9ca3af;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════
+   YOU'RE IN THE QUEUE
+══════════════════════════════════════════════════════════ */
+.qw-screen {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  gap           : 24px;
+  width         : 100%;
+  text-align    : center;
+}
+
+.qw-heading {
+  font-size  : 36px;
+  font-weight: 800;
+  color      : #d1d5db;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 30px;
+}
+
+.qw-sub {
+  font-size  : 13px;
+  color      : #6b7280;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-sub-blue { color: #1a56db; font-weight: 600; }
+
+.qw-card {
+  width        : 100%;
+  background   : #f5f6f8;
+  border-radius: 24px;
+  padding      : 24px;
+  display      : flex;
+  flex-direction: column;
+  gap          : 18px;
+  position     : relative;
+}
+
+.qw-card-handle {
+  width        : 60px;
+  height       : 5px;
+  border-radius: 50px;
+  background   : #ffffff;
+  margin       : 0 auto;
+}
+
+.qw-appt-row {
+  display        : flex;
+  justify-content: space-between;
+  align-items    : flex-start;
+  text-align     : left;
+}
+
+.qw-appt-type {
+  font-size  : 15px;
+  font-weight: 700;
+  color      : #1e293b;
+  margin     : 0 0 4px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-appt-for {
+  font-size  : 12px;
+  color      : #9ca3af;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-appt-name { color: #1a56db; font-weight: 600; }
+
+.qw-appt-time-block { text-align: right; }
+
+.qw-appt-time-val {
+  font-size  : 14px;
+  font-weight: 700;
+  color      : #1e293b;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-appt-date {
+  font-size  : 11px;
+  color      : #9ca3af;
+  margin     : 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Queue number box */
+.qw-queue-box {
+  background   : #ffffff;
+  border       : 2px solid #1a56db;
+  border-radius: 18px;
+  padding      : 22px;
+  display      : flex;
+  flex-direction: column;
+  align-items  : center;
+  gap          : 6px;
+}
+
+.qw-queue-num {
+  font-size     : 44px;
+  font-weight   : 800;
+  color         : #1e293b;
+  letter-spacing: 6px;
+  font-family   : 'Poppins', sans-serif;
+}
+
+.qw-queue-ahead {
+  font-size  : 12px;
+  color      : #6b7280;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-queue-ahead-blue { color: #1a56db; font-weight: 700; }
+
+/* Timer box */
+.qw-timer-box {
+  background   : #ffffff;
+  border-radius: 18px;
+  padding      : 18px 22px;
+  display      : flex;
+  align-items  : center;
+  gap          : 14px;
+  position     : relative;
+  overflow     : hidden;
+}
+
+.qw-timer-progress {
+  position  : absolute;
+  top: 0; left: 0;
+  height    : 3px;
+  width     : 55%;
+  background: #1a56db;
+  border-radius: 0 50px 50px 0;
+}
+
+.qw-timer-btn {
+  width           : 36px;
+  height          : 36px;
+  border-radius   : 50%;
+  background      : #1e293b;
+  border          : none;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  cursor          : pointer;
+  flex-shrink     : 0;
+  transition      : opacity 0.15s;
+}
+.qw-timer-btn:hover { opacity: 0.8; }
+
+.qw-timer-display {
+  flex       : 1;
+  display    : flex;
+  align-items: center;
+  justify-content: center;
+  gap        : 4px;
+  padding-top: 13px;
+}
+
+.qw-timer-unit {
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+}
+
+.qw-timer-num {
+  font-size  : 32px;
+  font-weight: 800;
+  color      : #1e293b;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1;
+}
+
+.qw-timer-label {
+  font-size  : 10px;
+  color      : #9ca3af;
+  font-family: 'Poppins', sans-serif;
+}
+
+.qw-timer-colon {
+  font-size  : 28px;
+  font-weight: 800;
+  color      : #1e293b;
+  margin     : 0 2px 20px;
+}
+
+.qw-timer-close {
+  width           : 36px;
+  height          : 36px;
+  border-radius   : 50%;
+  background      : #1e293b;
+  border          : none;
+  color           : #ffffff;
+  font-size       : 18px;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  cursor          : pointer;
+  flex-shrink     : 0;
+  transition      : opacity 0.15s;
+}
+.qw-timer-close:hover { opacity: 0.8; }

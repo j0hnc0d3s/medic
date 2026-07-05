@@ -1,0 +1,73 @@
+.no-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(30,41,59,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; backdrop-filter: blur(2px);
+}
+
+.no-modal-card {
+  background: #fff; border-radius: 28px; padding: 28px 32px; width: 480px;
+  max-height: 86vh; overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+}
+
+.no-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.no-modal-title { font-size: 20px; font-weight: 700; color: #1e293b; margin: 0; }
+.no-modal-close {
+  width: 32px; height: 32px; border-radius: 50%; background: #f1f3f5; border: none;
+  font-size: 16px; color: #1e293b; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.no-modal-close:hover { background: #e2e4e7; }
+
+.no-modal-body { display: flex; flex-direction: column; gap: 18px; }
+
+.no-form-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.no-form-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 100%; }
+.no-form-field.half { flex: 1 1 calc(50% - 8px); }
+.no-form-label { font-size: 11px; font-weight: 600; color: #1e293b; }
+
+.no-form-input {
+  background: #f1f3f5; border: none; border-radius: 14px; padding: 14px 16px;
+  font-size: 13px; font-family: 'Poppins', sans-serif; color: #1e293b; outline: none; width: 100%;
+  box-sizing: border-box;
+}
+.no-form-input::placeholder { color: #9ca3af; }
+.no-form-textarea { resize: none; height: 80px; font-family: 'Poppins', sans-serif; }
+
+.no-form-select-wrap { position: relative; }
+.no-form-select { appearance: none; cursor: pointer; padding-right: 36px; }
+.no-form-select-wrap::after {
+  content: '▾'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  color: #9ca3af; font-size: 12px; pointer-events: none;
+}
+
+/* ── Patient search suggestions (appointment form) ────────── */
+.no-form-suggest-list {
+  position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
+  background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 6px; z-index: 20; max-height: 180px; overflow-y: auto;
+}
+.no-form-suggest-item {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 10px 12px; border-radius: 8px; font-size: 13px; color: #1e293b; cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+}
+.no-form-suggest-item:hover { background: #f1f3f5; }
+
+.no-form-hint { font-size: 11px; color: #9ca3af; margin: 4px 2px 0; }
+.no-form-hint--error { color: #ef4444; }
+
+.no-form-dropzone {
+  border: 2px dashed #d1d5db; border-radius: 20px; padding: 30px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; cursor: pointer; background: #fafafb; transition: all 0.15s;
+}
+.no-form-dropzone.dragging { border-color: #0066ff; background: #eef4ff; }
+.no-form-dropzone-icon { font-size: 22px; color: #9ca3af; }
+.no-form-dropzone-text { font-size: 12px; color: #9ca3af; margin: 0; }
+
+.no-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.no-modal-btn { border: none; border-radius: 50px; padding: 12px 28px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+.no-modal-btn.cancel { background: #f1f3f5; color: #9ca3af; }
+.no-modal-btn.save { background: #0066ff; color: #fff; }
+.no-modal-btn.save:hover:not(:disabled) { background: #0052cc; }
+.no-modal-btn.save:disabled { background: #c7d2fe; cursor: default; }

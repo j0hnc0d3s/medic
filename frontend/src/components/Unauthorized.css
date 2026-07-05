@@ -1,0 +1,45 @@
+.unauthorized-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  padding: var(--space-6);
+}
+
+.unauthorized-card {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--card-shadow-lg);
+  padding: var(--space-12);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.unauthorized-icon {
+  margin: 0 auto var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unauthorized-title {
+  font-size: var(--font-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.unauthorized-message {
+  font-size: var(--font-base);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-8);
+}
+
+.unauthorized-actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+}

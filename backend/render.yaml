@@ -1,0 +1,63 @@
+# render.yaml - Render Infrastructure Configuration
+# This file allows you to deploy with a single click from the Render dashboard
+
+services:
+  - type: web
+    name: medic-backend
+    env: python
+    region: oregon  # Choose: oregon, frankfurt, singapore, ohio
+    plan: free  # Change to 'starter' for production ($7/month)
+    branch: main  # Your GitHub branch to deploy from
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    
+    # Environment Variables
+    # You'll set these in the Render dashboard or here (encrypted)
+    envVars:
+      - key: FLASK_SECRET_KEY
+        sync: false  # Set this manually in Render dashboard
+      
+      - key: FIREBASE_TYPE
+        value: service_account
+      
+      - key: FIREBASE_PROJECT_ID
+        sync: false  # Set this manually
+      
+      - key: FIREBASE_PRIVATE_KEY_ID
+        sync: false  # Set this manually
+      
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false  # Set this manually - must be the full key
+      
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false  # Set this manually
+      
+      - key: FIREBASE_CLIENT_ID
+        sync: false  # Set this manually
+      
+      - key: FIREBASE_AUTH_URI
+        value: https://accounts.google.com/o/oauth2/auth
+      
+      - key: FIREBASE_TOKEN_URI
+        value: https://oauth2.googleapis.com/token
+      
+      - key: FIREBASE_AUTH_PROVIDER_X509_CERT_URL
+        value: https://www.googleapis.com/oauth2/v1/certs
+      
+      - key: FIREBASE_CLIENT_X509_CERT_URL
+        sync: false  # Set this manually
+      
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false  # e.g., mirri-6b0ef.firebasestorage.app
+      
+      - key: FLASK_ENV
+        value: production
+      
+      - key: PORT
+        value: 10000  # Render's default internal port
+
+    # Health check endpoint
+    healthCheckPath: /api/health
+    
+    # Auto-deploy on push to main branch
+    autoDeploy: true

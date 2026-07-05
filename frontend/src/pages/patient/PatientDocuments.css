@@ -1,0 +1,41 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/patient/PatientDocuments.css
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.no-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
+.no-main { flex: 1; padding: 28px 32px; overflow: auto; }
+
+.pd-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 20px; }
+
+.pd-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+.pd-tab { background: #fff; border: none; border-radius: 50px; padding: 10px 20px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; }
+.pd-tab.active { background: #1e1e1e; color: #fff; }
+
+.pd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.pd-card { background: #fff; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 10px; }
+
+.pd-card-head { display: flex; align-items: center; justify-content: space-between; }
+.pd-kind-badge {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700;
+  padding: 5px 12px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.pd-kind-badge--documents { background: #eef2f6; color: #475569; }
+.pd-kind-badge--labs { background: #dcfce7; color: #15803d; }
+.pd-kind-badge--imaging { background: #ede9fe; color: #6d28d9; }
+.pd-card-date { font-size: 10px; color: #9ca3af; }
+
+.pd-card-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; }
+
+.pd-card-preview {
+  border-radius: 16px; overflow: hidden; background: #f1f3f5;
+  height: 180px; display: flex; align-items: center; justify-content: center;
+}
+.pd-preview-img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.pd-preview-frame { width: 100%; height: 100%; border: none; }
+.pd-preview-fallback { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #9ca3af; font-size: 11px; }
+
+.pd-lab-results { width: 100%; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.pd-lab-result-row { display: flex; justify-content: space-between; font-size: 12px; color: #1e293b; }
+.pd-lab-result-row span:first-child { font-weight: 600; color: #6b7280; }
+.pd-lab-notes { font-size: 12px; color: #6b7280; text-align: center; margin: 0; }

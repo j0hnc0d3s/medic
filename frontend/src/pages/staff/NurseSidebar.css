@@ -1,0 +1,349 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/staff/NurseSidebar.css
+   ───────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&display=swap');
+
+.ns-shell {
+  width          : 380px;
+  flex-shrink    : 0;
+  display        : flex;
+  flex-direction : column;
+  height         : 100vh;
+  font-family    : 'Poppins', sans-serif;
+  background-color: #1e88ff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   1. PATIENTS LIST (blue) — flexes to fill remaining space
+══════════════════════════════════════════════════════════ */
+.ns-patients {
+  background     : linear-gradient(180deg, #0066ff 0%, #1e88ff 100%);
+  padding        : 24px 24px 10px;
+  flex           : 1;
+  display        : flex;
+  flex-direction : column;
+  min-height     : 0;
+  overflow       : visible;
+  z-index: 0;
+}
+
+.ns-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ns-sml-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.ns-mid-icon {
+  width: 35px;
+  height: 35px;
+}
+
+.ns-alt-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.ns-sub-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.ns-other-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ns-full-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ns-wrap-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50px;
+  background-color: #43434356;
+  padding: 5px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+
+}
+
+.ns-search-row { display: flex; gap: 10px; margin-bottom: 14px; flex-shrink: 0; }
+
+.ns-search {
+  flex: 1; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  background: #40A6FF; 
+  border-radius: 50px; 
+  padding: 0px 18px;
+}
+
+.ns-search-icon { color: #9ca3af; flex-shrink: 0; display: flex; }
+
+.ns-search-input { 
+  flex: 1; 
+  border: none; 
+  background: transparent; 
+  outline: none; 
+  font-weight: 400;
+  font-size: 13px; 
+  font-family: 'Poppins', sans-serif; 
+  color: #ffffff; 
+}
+
+.ns-search-input::placeholder { color: #ffffff; }
+
+.ns-add-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: #40A6FF;
+  border: none; font-size: 20px; color: #0066ff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.ns-add-btn:hover { opacity: 0.85; }
+
+.ns-add-panel {
+  background: rgba(255,255,255,0.12); border-radius: 16px; padding: 12px;
+  margin-bottom: 12px; flex-shrink: 0;
+}
+.ns-add-title { font-size: 11px; color: rgba(255,255,255,0.8); margin: 0 0 8px; font-weight: 600; }
+.ns-add-list { display: flex; flex-direction: column; gap: 4px; max-height: 140px; overflow-y: auto; }
+.ns-add-item { text-align: left; background: rgba(255,255,255,0.08); border: none; color: #fff; padding: 8px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; }
+.ns-add-item:hover { background: rgba(255,255,255,0.18); }
+.ns-add-empty { font-size: 11px; color: rgba(255,255,255,0.6); margin: 0; }
+
+.ns-patient-list {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0;
+}
+.ns-patient-list::-webkit-scrollbar { width: 0; }
+
+.ns-patient-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 2px;
+  border-radius: 16px; cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+}
+.ns-patient-item:hover  { background: rgba(255,255,255,0.12); }
+.ns-patient-item.active { background: transparent; }
+
+.ns-patient-av-wrap { position: relative; flex-shrink: 0; }
+.ns-patient-av {
+  width: 40px; height: 40px; border-radius: 50%; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  overflow: hidden;
+}
+
+.ns-online-dot {
+  position: absolute; bottom: -2px; right: -2px; width: 15px; height: 15px;
+  border-radius: 50%; background: #22c55e; border: 2px solid #0088FF;
+}
+.ns-online-dot--detail { border-color: #232323; }
+
+.ns-patient-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ns-patient-name { font-size: 17px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ns-patient-meta { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+.ns-patient-remove {
+  width: 40px; 
+  height: 40px; 
+  border-radius: 50%; 
+  background: #40A6FF;
+  border: none; 
+  color: #fff; 
+  font-size: 14px; 
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+}
+
+.ns-patient-remove:hover { background: rgba(255,255,255,0.4); }
+
+.ns-patient-count-wrap {
+  align-self: flex-end;
+  background: transparent;
+}
+
+.ns-patient-count {
+  font-size: 10px; 
+  color: rgb(255, 255, 255); 
+  text-align: center;
+  margin: 10px 0 0; flex-shrink: 0;
+  border-radius: 50px;
+  background-color: #0088FF;
+  padding: 10px;
+  width: 80px;
+  right: 0px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. SELECTED PATIENT DETAIL (dark) — fixed, content-sized
+══════════════════════════════════════════════════════════ */
+.ns-detail {
+  background     : #232323;
+  padding        : 20px 20px 16px;
+  flex-shrink    : 0;
+  display        : flex;
+  flex-direction : column;
+  gap            : 14px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  z-index: 1;
+}
+
+.ns-detail-head { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  gap: 10px; }
+
+.ns-detail-av-wrap { position: relative; flex-shrink: 0; }
+.ns-detail-av {
+  width: 44px; height: 44px; border-radius: 50%; background: #3a3a3a; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+}
+
+.ns-detail-info { flex: 1; min-width: 0; }
+.ns-detail-name { font-size: 15px; font-weight: 700; color: #fff; margin: 0; }
+.ns-detail-meta { font-size: 11px; color: #9ca3af; margin: 0; }
+
+.ns-detail-btns {
+  gap: 7px;
+  display: flex;
+  flex-direction: row;
+}
+
+.ns-detail-icon-btns {
+  gap: 7px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.ns-detail-icon-btn {
+  width: 20px; height: 20px; border-radius: 50%; background: #43434345; border: none;
+  color: #fff; font-size: 16px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+
+.ns-detail-icon-btn:hover { background: #4a4a4a; }
+
+.ns-detail-send { 
+  background-color: #ffffff; 
+  width: 45px; 
+  height: 45px; 
+  border-radius: 50%; 
+  border: none;
+  font-size: 16px; 
+  cursor: pointer; 
+  flex-shrink: 0;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: background 0.15s; 
+}
+
+.ns-detail-send:hover { opacity: 0.85; background: #fff; }
+
+.ns-detail-page { display: flex; flex-direction: column; gap: 12px; animation: nsFadeIn 0.2s ease forwards; }
+@keyframes nsFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.ns-diagnosis-row { display: flex; align-items: center; gap: 12px; position: relative; }
+.ns-diagnosis-icon {
+  width: 34px; height: 34px; border-radius: 10px; background: #3a3a3a; color: #93c5fd;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ns-diagnosis-text { flex: 1; min-width: 0; }
+.ns-diagnosis-name { font-size: 14px; font-weight: 700; color: #fff; margin: 0; }
+.ns-diagnosis-sub { font-size: 10px; color: #9ca3af; margin: 0; }
+.ns-severity-badge {
+  background: #3a3a3a; color: #fff; font-size: 9px; font-weight: 600;
+  padding: 3px 10px; border-radius: 50px; flex-shrink: 0;
+}
+
+.ns-stat-row { display: flex; gap: 8px; }
+.ns-stat-box {
+  flex: 1; 
+  background: #ffffff; 
+  border-radius: 30px; 
+  padding: 15px 20px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: flex-start; 
+  gap: 5px; 
+  min-width: 0;
+}
+.ns-stat-icon { color: #1e293b; }
+.ns-stat-label { font-size: 9px; color: #9ca3af; margin: 0; font-weight: 600; }
+.ns-stat-value { font-size: 9px; font-weight: 700; color: #1e293b; margin: 0; }
+.ns-stat-value--sm { font-size: 10.5px; line-height: 1.3; }
+
+.ns-pagination { display: flex; justify-content: center; gap: 6px; }
+.ns-page-dot { width: 4px; height: 4px; border-radius: 50%; background: #4a4a4a; border: none; cursor: pointer; padding: 0; margin-top: 5px; }
+.ns-page-dot.active { width: 30px; border-radius: 4px; background: #ffffff; }
+
+/* ══════════════════════════════════════════════════════════
+   3. NAV (black) — fixed
+══════════════════════════════════════════════════════════ */
+.ns-nav { background: #000000; padding: 20px 16px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+
+.ns-nav-item {
+  display: flex; align-items: center; gap: 14px; padding: 13px 14px;
+  border-radius: 16px; background: transparent; border: none; cursor: pointer;
+  transition: background 0.18s; width: 100%; text-align: left;
+}
+
+.ns-nav-item:hover  { background: rgba(255,255,255,0.06); }
+.ns-nav-item.active {  }
+
+.ns-nav-icon { color: #ffffff; display: flex; align-items: center; transition: color 0.18s; flex-shrink: 0; }
+.ns-nav-icon.active { background-color: #0088FF; padding: 10px; border-radius: 20px; }
+
+.ns-nav-label { font-size: 15px; font-weight: 500; color: #ffffff; font-family: 'Poppins', sans-serif; transition: color 0.18s; }
+.ns-nav-item.active .ns-nav-label { color: #ffffff; font-weight: 600; font-size: 17px; }
+
+.ns-nav-spacer { flex: 1; }
+
+.ns-nav-footer { display: flex; gap: 8px; padding-top: 8px; }
+.ns-icon-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: #1a1a1a; border: none;
+  color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.ns-icon-btn:hover { background: #2a2a2a; color: #fff; }
+.ns-icon-btn--badge { position: relative; }
+.ns-nav-badge {
+  position: absolute; top: 8px; right: 9px; width: 9px; height: 9px;
+  border-radius: 50%; background: #0066ff; border: 2px solid #1a1a1a;
+}
+
+.ns-av-initials {
+  width          : 100%;
+  height         : 100%;
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  font-size      : 12px;
+  font-weight    : 700;
+  color          : #fff;
+  background     : #1F4788;
+  border-radius  : 50%;
+}
+
+.ns-loading-label {
+  font-size   : 11px;
+  color       : rgba(255,255,255,0.45);
+  padding     : 8px 16px;
+  text-align  : center;
+  line-height : 1.5;
+}
+
+@media (max-width: 1100px) { .ns-shell { width: 300px; } }
