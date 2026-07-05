@@ -17,10 +17,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { patientService } from '../../services'
-import NurseSidebar from './NurseSidebar'
+import NurseSidebar from '../staff/NurseSidebar'
 import AdminSidebar from './AdminSidebar'
 import AddPatientModal from '../../components/AddPatientModal'
-import './NursePatients.css'
+import './AdminPatients.css'
 
 const ICONS = {
   add:   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7 1 0 1.9.13 2.75.38" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M17 14v6M14 17h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,

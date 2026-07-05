@@ -28,7 +28,7 @@ class BillingService {
           amount: charge,
           description: `${category} — ${sourceType} for ${patientName || 'patient'}`,
           patientId, patientName,
-          status: 'completed',
+          status: 'completed', // income is auto-finalized, no approval step
           createdBy,
         })
       }
@@ -38,7 +38,8 @@ class BillingService {
           category,
           amount: cost,
           description: `Cost of ${category.toLowerCase()} — ${sourceType} (${sourceId})`,
-          status: 'completed',
+          patientId, patientName, // the service this cost was incurred for, not who it's billed to
+          status: 'pending', // needs admin approval — see AdminFinances' Expenses tab
           createdBy,
         })
       }

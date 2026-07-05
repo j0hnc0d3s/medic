@@ -1,21 +1,20 @@
 // ─────────────────────────────────────────────────────────
-// FILE : src/pages/staff/NurseNotifications.jsx
-// CSS  : src/pages/staff/NurseNotifications.css
+// FILE : src/pages/patient/PatientNotifications.jsx
+// CSS  : src/pages/staff/NurseNotifications.css (shared — same .nn-* classes)
 // ─────────────────────────────────────────────────────────
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import notificationService from '../../services/notificationService'
-import NurseSidebar from '../staff/NurseSidebar'
-import AdminSidebar from './AdminSidebar'
-import './AdminNotifications.css'
+import PatientSidebar from './PatientSidebar'
+import '../staff/NurseNotifications.css'
 
 const TYPE_LABELS = {
-  message: 'Messages', task: 'Tasks', appointment: 'Appointments',
-  lab: 'Labs', system: 'System', alert: 'Alerts', birthday: 'Birthdays',
+  message: 'Messages', appointment: 'Appointments', lab: 'Labs',
+  system: 'System', alert: 'Alerts', birthday: 'Birthdays',
 }
 
-const FILTERS = ['all', 'unread', 'message', 'task', 'appointment', 'lab']
+const FILTERS = ['all', 'unread', 'message', 'appointment', 'lab']
 
 const formatDate = (ts) => {
   const d = ts?.toDate ? ts.toDate() : new Date(ts)
@@ -28,7 +27,7 @@ const formatDate = (ts) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function NurseNotifications() {
+export default function PatientNotifications() {
   const navigate = useNavigate()
   const { userProfile } = useAuth()
 
@@ -80,7 +79,7 @@ export default function NurseNotifications() {
 
   return (
     <div className="no-shell">
-      {userProfile?.role === 'admin' ? <AdminSidebar /> : <NurseSidebar />}
+      <PatientSidebar />
 
       <div className="no-main">
         <div className="nn-header">

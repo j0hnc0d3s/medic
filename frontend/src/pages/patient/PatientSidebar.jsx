@@ -16,10 +16,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import {
-  collection, query, where, getDocs
-} from 'firebase/firestore'
-import { auth, db } from '../../services/firebase'
+import { auth } from '../../services/firebase'
+import { authService } from '../../services'
+import appointmentService from '../../services/appointmentService'
+import messagingService from '../../services/messagingService'
+import notificationService from '../../services/notificationService'
 import { useAuth } from '../../contexts/AuthContext'
 import './PatientSidebar.css'
 
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
 ]
 
 const ICONS = {
+  bell:   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   home:   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   clock:  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
   send:   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
@@ -77,50 +79,57 @@ export default function PatientSidebar() {
     if (userProfile?.uid) loadEligibleDoctors()
   }, [userProfile?.uid])
 
+  // ── Notifications badge (footer, beside Settings) ─────────
+  const [unreadCount, setUnreadCount] = useState(0)
+  useEffect(() => {
+    if (!userProfile?.uid) return
+    const refresh = () => {
+      notificationService.getUnreadCount(userProfile.uid).then(res => {
+        if (res.success) setUnreadCount(res.count)
+      })
+    }
+    refresh()
+    const interval = setInterval(refresh, 30000)
+    return () => clearInterval(interval)
+  }, [userProfile?.uid])
+
   const loadEligibleDoctors = async () => {
     setLoading(true)
     try {
       // 1. Pull every doctor account once so we can match by name/uid.
-      const doctorsSnap = await getDocs(
-        query(collection(db, 'users'), where('role', '==', 'doctor'))
-      )
+      const doctorsRes = await authService.getUsersByRole('doctor')
+      const doctors = doctorsRes.success ? doctorsRes.users : []
+
       const doctorsByName = new Map()
       const doctorsById    = new Map()
-      doctorsSnap.docs.forEach(d => {
-        const data = { uid: d.id, ...d.data() }
-        doctorsByName.set(normalizeDoctorName(`${data.firstName} ${data.lastName}`), data)
-        doctorsById.set(d.id, data)
+      doctors.forEach(d => {
+        doctorsByName.set(normalizeDoctorName(`${d.firstName} ${d.lastName}`), d)
+        doctorsById.set(d.uid, d)
       })
 
       const eligibleIds = new Set()
 
       // 2. Doctors from confirmed appointments (matched by uid, then name).
-      const apptByUid = await getDocs(
-        query(collection(db, 'appointments'), where('patientId', '==', userProfile.uid))
-      )
       const fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()
-      const apptByName = fullName
-        ? await getDocs(query(collection(db, 'appointments'), where('patientName', '==', fullName)))
-        : { docs: [] }
+      const [byUidRes, byNameRes] = await Promise.all([
+        appointmentService.getAppointments({ patientId: userProfile.uid }),
+        fullName ? appointmentService.getAppointments({ patientName: fullName }) : Promise.resolve({ appointments: [] }),
+      ])
+      const appts = [...(byUidRes.appointments || []), ...(byNameRes.appointments || [])]
 
-      ;[...apptByUid.docs, ...apptByName.docs].forEach(d => {
-        const doctorStr = d.data().doctor
-        const match = doctorsByName.get(normalizeDoctorName(doctorStr))
+      appts.forEach(a => {
+        const match = doctorsByName.get(normalizeDoctorName(a.doctor))
         if (match) eligibleIds.add(match.uid)
       })
 
       // 3. Doctors from an existing message thread (they messaged first,
-      //    or a thread already exists for another reason). Best-effort —
-      //    skipped silently if the messages schema doesn't match.
-      try {
-        const msgSnap = await getDocs(
-          query(collection(db, 'messages'), where('participants', 'array-contains', userProfile.uid))
-        )
-        msgSnap.docs.forEach(d => {
-          const participants = d.data().participants || []
-          participants.forEach(pid => { if (doctorsById.has(pid)) eligibleIds.add(pid) })
+      //    or a thread already exists for another reason).
+      const convoRes = await messagingService.getConversations(userProfile.uid, 'patient')
+      if (convoRes.success) {
+        convoRes.conversations.forEach(c => {
+          (c.participants || []).forEach(pid => { if (doctorsById.has(pid)) eligibleIds.add(pid) })
         })
-      } catch { /* messages collection not queryable this way — ignore */ }
+      }
 
       const pool = [...eligibleIds].map(id => doctorsById.get(id)).filter(Boolean)
       setEligible(pool)
@@ -289,6 +298,10 @@ export default function PatientSidebar() {
         <div className="ns-nav-spacer" />
 
         <div className="ns-nav-footer">
+          <button className="ns-icon-btn ns-icon-btn--badge" onClick={() => navigate('/patient/notifications')} aria-label="Notifications">
+            {ICONS.bell}
+            {unreadCount > 0 && <span className="ns-nav-badge" />}
+          </button>
           <button className="ns-icon-btn" onClick={() => navigate('/patient/settings')} aria-label="Settings">
             <img src={settings} className="ns-alt-icon" alt="" />
           </button>

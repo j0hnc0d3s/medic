@@ -1,0 +1,116 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/staff/NurseMessaging.css
+   (conversation-list column styling lives in NurseSidebar.css,
+   imported alongside this file — same .ns-* classes reused)
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.no-msg-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
+
+/* ── Chat thread (center) ─────────────────────────────────── */
+.no-msg-main { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
+
+.no-msg-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+.no-msg-empty-text { color: #9ca3af; font-size: 13px; }
+
+.no-msg-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 32px; flex-shrink: 0;
+}
+.no-msg-header-patient { display: flex; align-items: center; gap: 14px; }
+.no-msg-header-av {
+  width: 44px; height: 44px; border-radius: 50%; background: #1F4788; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.no-msg-header-name { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0; }
+.no-msg-header-sub { font-size: 11px; color: #9ca3af; margin: 2px 0 0; }
+.no-msg-header-actions { display: flex; gap: 10px; }
+.no-msg-icon-btn {
+  width: 42px; height: 42px; border-radius: 50%; background: #fff; border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: #1e293b;
+}
+.no-msg-icon-btn:hover { background: #f1f3f5; }
+
+.no-msg-thread {
+  flex: 1; overflow-y: auto; padding: 0 32px 20px; display: flex; flex-direction: column; gap: 4px;
+}
+
+.no-msg-divider { display: flex; justify-content: center; margin: 18px 0; }
+.no-msg-divider span {
+  background: #000; color: #fff; font-size: 11px; font-weight: 600;
+  padding: 8px 20px; border-radius: 50px;
+}
+
+.no-msg-row { display: flex; justify-content: flex-start; margin-bottom: 10px; }
+.no-msg-row.me { justify-content: flex-end; }
+
+.no-msg-bubble {
+  background: #fff; border-radius: 24px; padding: 12px 18px; max-width: 420px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+.no-msg-bubble-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.no-msg-bubble-name { font-size: 11px; font-weight: 700; color: #1e293b; }
+.no-msg-bubble-time { font-size: 10px; color: #9ca3af; margin-left: auto; }
+.no-msg-bubble-text { font-size: 13px; color: #1e293b; margin: 0; line-height: 1.5; }
+
+.no-msg-input-row {
+  display: flex; align-items: center; gap: 12px; padding: 20px 32px;
+  flex-shrink: 0;
+}
+.no-msg-input {
+  flex: 1; background: #fff; border: none; border-radius: 50px; padding: 16px 24px;
+  font-size: 13px; font-family: 'Poppins', sans-serif; outline: none;
+  color: #000000;
+}
+.no-msg-input::placeholder { color: #5a5a5a; }
+.no-msg-send-btn {
+  width: 48px; height: 48px; border-radius: 50%; background: #0066ff; border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+}
+.no-msg-send-btn:hover { background: #0052cc; }
+.no-msg-send-icon { width: 18px; height: 18px; filter: brightness(0) invert(1); }
+
+.no-msg-unread-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 50px; background: #0066ff; color: #fff; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Patient quick-info panel (right) ────────────────────── */
+.no-msg-info {
+  width: 340px; flex-shrink: 0; background: #fff; padding: 40px 32px;
+  display: flex; flex-direction: column; align-items: center; overflow-y: auto;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.04);
+}
+
+.no-msg-info-avatar-wrap { position: relative; margin-bottom: 20px; }
+.no-msg-info-avatar {
+  width: 120px; height: 120px; border-radius: 30px; object-fit: cover;
+  background: #1F4788; color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 32px; font-weight: 700;
+}
+.no-msg-info-online-dot {
+  position: absolute; bottom: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%;
+  background: #3b82f6; border: 3px solid #fff;
+}
+
+.no-msg-info-name { font-size: 26px; font-weight: 800; color: #1e293b; margin: 0; text-align: center; }
+.no-msg-info-role { font-size: 12px; color: #9ca3af; margin: 4px 0 20px; }
+
+.no-msg-info-quicklinks { display: flex; gap: 10px; margin-bottom: 24px; }
+.no-msg-info-quicklinks button {
+  width: 48px; height: 48px; border-radius: 50%; background: #161c18; border: none;
+  color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.no-msg-info-quicklinks button:hover { background: #2a332d; }
+
+.no-msg-info-toggle {
+  display: inline-flex; background: #f1f3f5; border-radius: 50px; padding: 4px; gap: 2px; margin-bottom: 20px;
+}
+.no-msg-info-toggle span {
+  padding: 8px 16px; border-radius: 50px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer;
+}
+.no-msg-info-toggle span.active { background: #fff; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+.no-msg-info-content { font-size: 12px; color: #475569; line-height: 1.7; text-align: left; width: 100%; }
+.no-msg-info-content p { margin: 0 0 14px; }

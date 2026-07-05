@@ -493,24 +493,6 @@ export default function NurseMessaging() {
           </div>
         </div>
       )}
-
-      <Calendar
-        currentUser={{
-          firstName: otherPatientRecord?.firstName || otherName.split(' ')[0] || '',
-          lastName:  otherPatientRecord?.lastName  || otherName.split(' ')[1] || '',
-          role: 'Patient',
-          image: otherPatientRecord?.profilePictureUrl || null,
-          online: true,
-        }}
-        viewerUserId={currentUserId}
-        dayTasks={tasks.map(t => ({ id: t.id, label: t.label }))}
-        dayAgenda={todayAgenda}
-        onAddTask={addTask}
-        onCompleteTask={completeTask}
-        onDeleteTask={deleteTask}
-        onEditTask={editTask}
-        onDayChange={fetchAgendaForDay}
-      />
     </div>
   )
 }

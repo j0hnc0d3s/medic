@@ -35,10 +35,13 @@ import PatientAppointments from './pages/patient/PatientAppointments.jsx'
 // Admin
 
 import AdminOverview from './pages/admin/AdminOverview.jsx'
-
-/* import AdminFinances from './pages/admin/AdminFinances.jsx'
+import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminPatients from './pages/admin/AdminPatients.jsx'
-import AdminMessaging from './pages/admin/AdminMessaging.jsx' */
+import AdminMessaging from './pages/admin/AdminMessaging.jsx'
+import AdminSettings from './pages/admin/AdminSettings.jsx'
+import AdminNotifications from './pages/admin/AdminNotifications.jsx'
+
+/*  */
 
 // Display
 import QueueDisplay from './display/QueueDisplay.jsx'
@@ -115,9 +118,13 @@ function App() {
         >
           <Route index element={<Navigate to="/admin/overview" replace />} />
           <Route path="overview" element={<AdminOverview />} />
-{/*           <Route path="patients" element={<AdminPatients />} />
           <Route path="finances" element={<AdminFinances />} />
-          <Route path="messages" element={<AdminMessaging />} /> */}
+          <Route path="patients" element={<AdminPatients />} />
+          <Route path="messaging" element={<AdminMessaging />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+          {/*           
+          */}
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

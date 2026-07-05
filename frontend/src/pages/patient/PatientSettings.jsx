@@ -1,21 +1,21 @@
 // ─────────────────────────────────────────────────────────
-// FILE : src/pages/staff/NurseSettings.jsx
-// CSS  : src/pages/staff/NurseSettings.css
+// FILE : src/pages/patient/PatientSettings.jsx
+// CSS  : src/pages/staff/NurseSettings.css (shared — same .ns-settings-* classes)
 // ─────────────────────────────────────────────────────────
 import { useState, useEffect } from 'react'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { updatePassword } from 'firebase/auth'
 import { db, auth } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
-import NurseSidebar from '../staff/NurseSidebar'
-import AdminSidebar from './AdminSidebar'
+import PatientSidebar from './PatientSidebar'
 import './AdminSettings.css'
 
+// No 'task' category — patients don't have a task list the way
+// staff do. Otherwise the same three categories apply.
 const NOTIF_CATEGORIES = [
-  { key: 'message',     label: 'Messages',              hint: 'When someone messages you' },
-  { key: 'task',        label: 'Tasks',                 hint: 'When a task you set is due' },
-  { key: 'appointment', label: 'Appointments',           hint: 'Upcoming appointments assigned to you' },
-  { key: 'lab',         label: 'Labs',                   hint: 'When a lab you ordered is requested or completed' },
+  { key: 'message',     label: 'Messages',     hint: 'When your doctor messages you' },
+  { key: 'appointment', label: 'Appointments', hint: 'Upcoming appointment reminders' },
+  { key: 'lab',         label: 'Labs',         hint: 'When test results or imaging are ready' },
 ]
 
 const CHANNELS = [
@@ -25,27 +25,18 @@ const CHANNELS = [
 
 const DEFAULT_PREFS = {
   message:     { inApp: true, email: false },
-  task:        { inApp: true, email: false },
   appointment: { inApp: true, email: true  },
   lab:         { inApp: true, email: true  },
 }
 
-const VIEW_OPTIONS = [
-  { key: 'list', label: 'List' },
-  { key: 'grid', label: 'Grid' },
-]
-
-export default function NurseSettings() {
+export default function PatientSettings() {
   const { userProfile } = useAuth()
 
   const [prefs, setPrefs] = useState(DEFAULT_PREFS)
-  const [defaultView, setDefaultView] = useState('list')
-  const [landingPage, setLandingPage] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [passwordMsg, setPasswordMsg] = useState(null)
 
@@ -55,15 +46,7 @@ export default function NurseSettings() {
       try {
         const snap = await getDoc(doc(db, 'users', userProfile.uid))
         if (snap.exists()) {
-          const data = snap.data()
-          // notificationPreferences currently stores plain booleans
-          // per category (that's what notificationService.shouldNotify
-          // reads) — the in-app/email split here is additive UI on
-          // top of that same field; email delivery itself isn't wired
-          // to anything yet (no email-sending trigger exists for
-          // notifications), so the email toggle is captured but not
-          // acted on until that's built.
-          const stored = data.notificationPreferences || {}
+          const stored = snap.data().notificationPreferences || {}
           setPrefs(p => {
             const next = { ...p }
             Object.keys(next).forEach(k => {
@@ -72,8 +55,6 @@ export default function NurseSettings() {
             })
             return next
           })
-          setDefaultView(data.preferences?.defaultView || 'list')
-          setLandingPage(data.preferences?.landingPage || 'overview')
         }
       } catch (err) {
         console.error('Failed to load settings:', err)
@@ -92,18 +73,12 @@ export default function NurseSettings() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      // notificationService.shouldNotify only reads the inApp value
-      // per category right now (a plain boolean) — persist that
-      // shape for it, while keeping the fuller {inApp,email} object
-      // under a separate key so the email toggle isn't lost even
-      // though nothing consumes it yet.
       const flatForService = {}
       Object.entries(prefs).forEach(([k, v]) => { flatForService[k] = v.inApp })
 
       await updateDoc(doc(db, 'users', userProfile.uid), {
         notificationPreferences: flatForService,
         notificationChannels: prefs,
-        preferences: { defaultView, landingPage },
       })
       setSaved(true)
     } catch (err) {
@@ -123,14 +98,9 @@ export default function NurseSettings() {
     try {
       await updatePassword(auth.currentUser, newPassword)
       setPasswordMsg({ type: 'success', text: 'Password updated.' })
-      setCurrentPassword('')
       setNewPassword('')
     } catch (err) {
       console.error('Password update failed:', err)
-      // Firebase requires a recent login for this operation — the
-      // common failure case is auth/requires-recent-login, which
-      // needs a re-authentication flow this component doesn't have
-      // yet (would need the current password to re-sign-in first).
       setPasswordMsg({
         type: 'error',
         text: err.code === 'auth/requires-recent-login'
@@ -142,7 +112,7 @@ export default function NurseSettings() {
 
   return (
     <div className="no-shell">
-      {userProfile?.role === 'admin' ? <AdminSidebar /> : <NurseSidebar />}
+      <PatientSidebar />
 
       <div className="no-main">
         <h1 className="ns-settings-title">Settings</h1>
@@ -152,7 +122,6 @@ export default function NurseSettings() {
         ) : (
           <div className="ns-settings-grid">
 
-            {/* ── Notifications ─────────────────────────── */}
             <div className="ns-settings-card">
               <h2 className="ns-settings-card-title">Notifications</h2>
               <p className="ns-settings-card-sub">Choose what you're notified about, and how.</p>
@@ -184,35 +153,6 @@ export default function NurseSettings() {
               </p>
             </div>
 
-            {/* ── Preferences ────────────────────────────── */}
-            <div className="ns-settings-card">
-              <h2 className="ns-settings-card-title">Preferences</h2>
-
-              <div className="ns-pref-row">
-                <p className="ns-notif-label">Default view</p>
-                <div className="ns-segmented">
-                  {VIEW_OPTIONS.map(o => (
-                    <button key={o.key}
-                      className={`ns-segmented-btn${defaultView === o.key ? ' active' : ''}`}
-                      onClick={() => setDefaultView(o.key)}>
-                      {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="ns-pref-row">
-                <p className="ns-notif-label">Landing page</p>
-                <select className="ns-select" value={landingPage} onChange={e => setLandingPage(e.target.value)}>
-                  <option value="overview">Overview</option>
-                  <option value="patients">Patients</option>
-                  <option value="appointments">Appointments</option>
-                  <option value="messaging">Messaging</option>
-                </select>
-              </div>
-            </div>
-
-            {/* ── Security ───────────────────────────────── */}
             <div className="ns-settings-card">
               <h2 className="ns-settings-card-title">Security</h2>
 
