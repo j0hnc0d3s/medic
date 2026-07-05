@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import activityService from './activityService'
+import billingService from './billingService'
 
 /**
  * Appointment Service
@@ -284,7 +285,23 @@ class AppointmentService {
    * @returns {Promise<Object>}
    */
   async updateStatus(appointmentId, newStatus) {
-    return this.updateAppointment(appointmentId, { status: newStatus })
+    const extra = {}
+    if (newStatus === 'in-progress') extra.inProgressAt = Timestamp.now()
+    if (newStatus === 'completed')   extra.completedAt  = Timestamp.now()
+    const result = await this.updateAppointment(appointmentId, { status: newStatus, ...extra })
+
+    if (result.success && newStatus === 'completed') {
+      const fresh = await this.getAppointment(appointmentId)
+      if (fresh.success) {
+        // Best-effort — billing shouldn't be able to fail the status
+        // update itself, which is why this isn't awaited into the
+        // main try/catch above.
+        billingService.billAppointment(fresh.appointment).catch(err =>
+          console.error('Auto-billing failed for appointment', appointmentId, err)
+        )
+      }
+    }
+    return result
   }
 
   /**

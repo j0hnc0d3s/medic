@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import activityService from './activityService'
+import billingService from './billingService'
 
 /**
  * Imaging Service
@@ -52,6 +53,10 @@ class ImagingService {
         user:        data.createdBy || 'Admin',
         entity:      docRef.id
       })
+
+      billingService.billImaging({ id: docRef.id, ...record }).catch(err =>
+        console.error('Auto-billing failed for imaging', docRef.id, err)
+      )
 
       return { success: true, imagingId: docRef.id, message: 'Imaging created successfully' }
     } catch (error) {

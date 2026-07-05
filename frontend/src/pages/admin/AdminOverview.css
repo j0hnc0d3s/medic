@@ -1,46 +1,35 @@
-/* ── Shell base — same pattern every Nurse page defines locally ── */
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/admin/AdminOverview.css
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 .no-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
-.no-main { flex: 1; padding: 28px 32px; overflow: auto; position: relative; display: flex; flex-direction: column; }
+.no-main { flex: 1; padding: 28px 32px; overflow: auto; }
 
-/* ── Shared admin card/table/segment styles ── */
-.admin-card { background: #fff; border-radius: 28px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+.ao-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 24px; }
+.ao-error { background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 14px; font-size: 12px; margin-bottom: 16px; }
 
-.admin-table-head, .admin-table-row { display: grid; align-items: center; padding: 16px 8px; }
-.admin-table-head { font-size: 12px; font-weight: 700; color: #1e293b; border-bottom: 1px solid #f1f3f5; }
-.admin-table-row { border-bottom: 1px solid #f8f9fa; font-size: 13px; color: #1e293b; }
-.admin-table-row:last-child { border-bottom: none; }
+.ao-stat-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.ao-stat-card { background: #fff; border-radius: 24px; padding: 24px; flex: 1; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+.ao-stat-value { font-size: 40px; font-weight: 800; color: #1e293b; margin: 0; }
+.ao-stat-label { font-size: 13px; font-weight: 600; color: #475569; margin: 4px 0 2px; }
+.ao-stat-hint { font-size: 11px; color: #9ca3af; margin: 0; }
 
-.admin-pill { display: inline-block; padding: 5px 14px; border-radius: 50px; font-size: 10px; font-weight: 700; color: #fff; }
-.admin-pill.green { background: #22c55e; }
-.admin-pill.gray { background: #d1d5db; color: #6b7280; }
+.ao-breakdown-row { display: flex; gap: 16px; margin-bottom: 32px; }
+.ao-mini-stat { background: #fff; border-radius: 18px; padding: 16px 20px; flex: 1; display: flex; flex-direction: column; box-shadow: 0 6px 20px rgba(0,0,0,0.04); }
+.ao-mini-label { font-size: 11px; color: #9ca3af; font-weight: 600; }
+.ao-mini-value { font-size: 22px; font-weight: 700; color: #1e293b; }
+.ao-mini-sub { font-size: 10px; color: #9ca3af; }
 
-.admin-segment { display: inline-flex; background: #f1f3f5; border-radius: 50px; padding: 4px; gap: 2px; }
-.admin-segment-btn { border: none; background: transparent; padding: 10px 20px; border-radius: 50px; font-size: 12px; font-weight: 600; color: #9ca3af; cursor: pointer; font-family: 'Poppins', sans-serif; }
-.admin-segment-btn.active { background: #fff; color: #0066ff; }
+.ao-section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
 
-/* ── Overview-specific ── */
-.ao-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
-
-.ao-stats-col { display: flex; flex-direction: column; gap: 16px; }
-
-.ao-stat-card { background: #eaf2ff; border-radius: 28px; padding: 20px; }
-.ao-stat-top { display: flex; align-items: center; gap: 14px; }
-.ao-stat-icon { width: 48px; height: 48px; border-radius: 16px; background: #0066ff; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ao-stat-figures { flex: 1; min-width: 0; }
-.ao-stat-value { font-size: 28px; font-weight: 800; color: #1e293b; margin: 0; }
-.ao-stat-unit { font-size: 11px; color: #6b7280; margin: 0; }
-
-.ao-donut-wrap { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ao-donut-label { position: absolute; font-size: 11px; font-weight: 700; color: #1e293b; }
-
-.ao-stat-delta { font-size: 11px; color: #6b7280; margin: 14px 0 0; }
-.ao-stat-delta b { color: #1e293b; }
-
-.ao-queue-card { display: flex; flex-direction: column; }
-.ao-table { display: flex; flex-direction: column; }
-.ao-override-note { font-size: 10px; color: #0066ff; margin: 2px 0 0; }
-
-.ao-summary-row { display: flex; align-items: center; gap: 24px; margin-top: 28px; padding-top: 24px; border-top: 1px solid #f1f3f5; }
-.ao-summary-text { flex: 1; }
-.ao-summary-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 6px; }
-.ao-summary-body { font-size: 11px; color: #6b7280; line-height: 1.6; margin: 0; }
+.ao-triage-list { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.ao-triage-row {
+  background: #fff; border-radius: 20px; padding: 14px 20px; display: flex;
+  align-items: center; justify-content: space-between; box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+}
+.ao-triage-name { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0; }
+.ao-triage-meta { font-size: 11px; color: #9ca3af; margin: 2px 0 0; }
+.ao-triage-durations { display: flex; gap: 8px; }
+.ao-duration-chip { background: #f1f3f5; color: #6b7280; font-size: 10px; font-weight: 600; padding: 6px 12px; border-radius: 50px; }
+.ao-duration-chip--total { background: #0066ff; color: #fff; }

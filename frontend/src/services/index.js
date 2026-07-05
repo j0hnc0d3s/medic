@@ -16,6 +16,9 @@ export { default as reportService } from './reportService'
 export { default as labService } from './labService'
 export { default as imagingService } from './imagingService'
 export { default as noteService } from './noteService'
+export { default as queueService } from './queueService'
+export { default as pricingService } from './pricingService'
+export { default as billingService } from './billingService'
 
 // Firebase exports
 export { db, auth, storage, functions } from './firebase'

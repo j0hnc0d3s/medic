@@ -1,0 +1,62 @@
+/* ─────────────────────────────────────────────────────────
+   FILE: src/pages/admin/AdminFinances.css
+   ───────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+.no-shell { display: flex; height: 100vh; width: 100%; background: #e9eaec; font-family: 'Poppins', sans-serif; overflow: hidden; }
+.no-main { flex: 1; padding: 28px 32px; overflow: auto; }
+
+.af-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.af-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0; }
+
+.af-tabs { display: inline-flex; background: #fff; border-radius: 50px; padding: 4px; gap: 2px; }
+.af-tab { border: none; background: none; padding: 9px 20px; border-radius: 50px; font-size: 12px; font-weight: 600; color: #6b7280; cursor: pointer; }
+.af-tab.active { background: #1e1e1e; color: #fff; }
+
+.af-value--income { color: #22c55e; }
+.af-value--expense { color: #ef4444; }
+
+.af-stat-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.af-stat-card { background: #fff; border-radius: 24px; padding: 24px; flex: 1; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+.af-stat-value { font-size: 32px; font-weight: 800; margin: 0; }
+.af-stat-label { font-size: 12px; color: #9ca3af; margin: 4px 0 0; }
+
+.af-breakdown-cols { display: flex; gap: 16px; margin-bottom: 32px; }
+.af-breakdown-card { background: #fff; border-radius: 20px; padding: 20px; flex: 1; box-shadow: 0 6px 20px rgba(0,0,0,0.04); }
+.af-breakdown-title { font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 12px; }
+.af-breakdown-row { display: flex; justify-content: space-between; font-size: 12px; padding: 8px 0; border-bottom: 1px solid #f1f3f5; }
+.af-breakdown-row:last-child { border-bottom: none; }
+.af-empty { font-size: 12px; color: #9ca3af; margin: 0; }
+
+.af-section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
+
+.af-tx-list { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
+.af-tx-row { background: #fff; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); }
+.af-tx-type { font-size: 10px; font-weight: 700; padding: 5px 12px; border-radius: 50px; flex-shrink: 0; }
+.af-tx-type--income { background: #dcfce7; color: #15803d; }
+.af-tx-type--expense { background: #fee2e2; color: #b91c1c; }
+.af-tx-desc { flex: 1; min-width: 0; }
+.af-tx-category { font-size: 12px; font-weight: 700; color: #1e293b; margin: 0; }
+.af-tx-detail { font-size: 11px; color: #9ca3af; margin: 2px 0 0; }
+
+/* ── Pricing editor ───────────────────────────────────────── */
+.af-pricing { max-width: 640px; }
+.af-pricing-hint { font-size: 12px; color: #6b7280; line-height: 1.6; margin: 0 0 20px; }
+
+.af-pricing-card { background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.04); }
+.af-pricing-card-title { font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 14px; }
+
+.af-pricing-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f3f5; }
+.af-pricing-row:last-child { border-bottom: none; }
+.af-pricing-cat { font-size: 12px; font-weight: 600; color: #1e293b; }
+
+.af-pricing-inputs { display: flex; gap: 12px; }
+.af-pricing-inputs label { display: flex; flex-direction: column; font-size: 10px; color: #9ca3af; gap: 4px; }
+.af-pricing-inputs input {
+  width: 80px; background: #f1f3f5; border: none; border-radius: 10px; padding: 8px 10px;
+  font-size: 12px; font-family: 'Poppins', sans-serif; color: #1e293b; outline: none;
+}
+
+.af-save-btn { background: #0066ff; color: #fff; border: none; border-radius: 50px; padding: 12px 28px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.af-save-btn:hover:not(:disabled) { background: #0052cc; }
+.af-save-btn:disabled { background: #c7d2fe; cursor: default; }

@@ -15,6 +15,7 @@ import {
 import { db } from './firebase'
 import activityService from './activityService'
 import notificationService from './notificationService'
+import billingService from './billingService'
 
 /**
  * Lab Service
@@ -167,7 +168,11 @@ class LabService {
       })
 
       if (before && updates.status === 'completed' && before.status !== 'completed') {
-        await notificationService.sendLabNotification({ id: labId, ...before, ...updates }, 'completed')
+        const completedLab = { id: labId, ...before, ...updates }
+        await notificationService.sendLabNotification(completedLab, 'completed')
+        billingService.billLab(completedLab).catch(err =>
+          console.error('Auto-billing failed for lab', labId, err)
+        )
       }
 
       return { success: true, message: 'Lab updated successfully' }

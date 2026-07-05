@@ -419,6 +419,84 @@ def register_routes(app):
             return jsonify({'success': False, 'error': 'Failed to load queue'}), 500
 
     # =====================================================================
+    # STAFF: completed queue history for a given day — powers
+    # AdminOverview's "how many left triage" + duration metrics. The
+    # live queue endpoint above deliberately excludes completed
+    # entries (it's for the active board), so this is a separate,
+    # purpose-built route rather than overloading that one.
+    # =====================================================================
+    @app.route('/api/queue/history', methods=['GET', 'OPTIONS'])
+    @auth_required
+    @staff_required
+    def queue_history():
+        if request.method == 'OPTIONS':
+            return ('', 204)
+        try:
+            date_str = request.args.get('date')  # YYYY-MM-DD, defaults to today (UTC)
+            db = get_db()
+
+            if date_str:
+                day = datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            else:
+                day = datetime.now(timezone.utc)
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+
+            docs = db.collection('queueEntries') \
+                .where(filter=FieldFilter('status', '==', 'completed')) \
+                .where(filter=FieldFilter('completedAt', '>=', day_start)) \
+                .where(filter=FieldFilter('completedAt', '<', day_end)) \
+                .stream()
+
+            entries = []
+            total_wait = total_service = total_overall = 0
+            wait_n = service_n = overall_n = 0
+
+            for d in docs:
+                e = d.to_dict()
+                e['id'] = d.id
+
+                queued_at    = e.get('queuedAt')
+                called_at    = e.get('calledAt')
+                completed_at = e.get('completedAt')
+
+                wait_minutes = service_minutes = total_minutes = None
+                if queued_at and called_at:
+                    wait_minutes = round((called_at - queued_at).total_seconds() / 60)
+                    total_wait += wait_minutes; wait_n += 1
+                if called_at and completed_at:
+                    service_minutes = round((completed_at - called_at).total_seconds() / 60)
+                    total_service += service_minutes; service_n += 1
+                if queued_at and completed_at:
+                    total_minutes = round((completed_at - queued_at).total_seconds() / 60)
+                    total_overall += total_minutes; overall_n += 1
+
+                for f in ['createdAt', 'updatedAt', 'queuedAt', 'calledAt', 'completedAt', 'codeExpiresAt']:
+                    if f in e and hasattr(e[f], 'isoformat'):
+                        e[f] = e[f].isoformat()
+
+                entries.append({
+                    **e,
+                    'waitMinutes': wait_minutes,
+                    'serviceMinutes': service_minutes,
+                    'totalMinutes': total_minutes,
+                })
+
+            summary = {
+                'count': len(entries),
+                'avgWaitMinutes': round(total_wait / wait_n) if wait_n else None,
+                'avgServiceMinutes': round(total_service / service_n) if service_n else None,
+                'avgTotalMinutes': round(total_overall / overall_n) if overall_n else None,
+            }
+
+            return jsonify({'success': True, 'data': {'entries': entries, 'summary': summary}}), 200
+
+        except Exception as e:
+            logger.error(f"❌ Queue history error: {str(e)}")
+            import traceback; traceback.print_exc()
+            return jsonify({'success': False, 'error': 'Failed to load queue history'}), 500
+
+    # =====================================================================
     # STAFF: override triage / assign doctor & room
     # =====================================================================
     @app.route('/api/queue/<entry_id>/triage', methods=['PATCH', 'OPTIONS'])
