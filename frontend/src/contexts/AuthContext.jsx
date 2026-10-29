@@ -50,12 +50,31 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // BUG FIX (Oct 2026): `loading` only ever starts true once, at
+      // mount. On a SECOND onAuthStateChanged event -- i.e. signing in
+      // as a different account without a full page reload, which is
+      // exactly what happens when switching between the doctor/nurse/
+      // receptionist/admin/patient test accounts -- setCurrentUser(user)
+      // below updates synchronously to the new account, but userProfile
+      // still holds the PREVIOUS account's data during this `await
+      // getDoc(...)` gap, while loading stayed false the whole time.
+      // ProtectedRoute renders in that gap with a mismatched
+      // currentUser/userProfile pair (e.g. currentUser = doctor,
+      // userProfile = patient), fails the role check, and incorrectly
+      // bounces to /unauthorized -- confirmed live, reproducible on
+      // every account switch. Resetting loading to true at the start
+      // of every callback (not just the first) makes ProtectedRoute
+      // show its loading state through the gap instead of rendering
+      // (and redirecting) on stale data.
+      setLoading(true)
       setCurrentUser(user)
       
       if (user) {
         const profileDoc = await getDoc(doc(db, 'users', user.uid))
         if (profileDoc.exists()) {
           setUserProfile({ uid: user.uid, ...profileDoc.data() })
+        } else {
+          setUserProfile(null)
         }
       } else {
         setUserProfile(null)
