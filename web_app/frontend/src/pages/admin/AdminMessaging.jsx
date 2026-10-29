@@ -27,7 +27,7 @@ import './AdminMessaging.css'
 
 import add     from '../../assets/inverted/plus.png'
 import close   from '../../assets/inverted/close.png'
-import sendImg from '../../assets/black/send.png'
+import sendImg from '../../assets/inverted/send.png'
 import settings from '../../assets/inverted/settings.png'
 import logout    from '../../assets/inverted/logout.png'
 

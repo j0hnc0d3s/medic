@@ -26,7 +26,7 @@ import './PatientSidebar.css'
 
 import add   from '../../assets/inverted/plus.png'
 import close from '../../assets/inverted/close.png'
-import send  from '../../assets/black/send.png'
+import send  from '../../assets/inverted/send.png'
 import settings from '../../assets/inverted/settings.png'
 import logout    from '../../assets/inverted/logout.png'
 
