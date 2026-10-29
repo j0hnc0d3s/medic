@@ -285,12 +285,22 @@ class AppointmentService {
    * @returns {Promise<Object>}
    */
   async updateStatus(appointmentId, newStatus) {
+    // BUG FIX (Oct 2026): billing used to fire every time newStatus
+    // was 'completed', with no check on what the status already was.
+    // A re-save, an accidental double-click, or an edit that resubmits
+    // status: 'completed' would create a second income/expense
+    // transaction for the same appointment. labService.js already
+    // guards this correctly (before.status !== 'completed') -- mirror
+    // that here: only bill on the actual requested -> completed flip.
+    const before = await this.getAppointment(appointmentId)
+    const wasAlreadyCompleted = before.success && before.appointment.status === 'completed'
+
     const extra = {}
     if (newStatus === 'in-progress') extra.inProgressAt = Timestamp.now()
     if (newStatus === 'completed')   extra.completedAt  = Timestamp.now()
     const result = await this.updateAppointment(appointmentId, { status: newStatus, ...extra })
 
-    if (result.success && newStatus === 'completed') {
+    if (result.success && newStatus === 'completed' && !wasAlreadyCompleted) {
       const fresh = await this.getAppointment(appointmentId)
       if (fresh.success) {
         // Best-effort — billing shouldn't be able to fail the status

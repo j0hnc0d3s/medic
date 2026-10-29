@@ -32,10 +32,15 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />
   }
 
-  // If roles are specified, check if user has permission
-  if (allowedRoles && userProfile) {
-    if (!allowedRoles.includes(userProfile.role)) {
-      console.log('❌ Role mismatch - user has:', userProfile.role, 'needs:', allowedRoles)
+  // If roles are specified, check if user has permission.
+  // BUG FIX (Oct 2026): this used to be `if (allowedRoles && userProfile)`,
+  // which SKIPPED the role check entirely (rendering the protected page)
+  // whenever userProfile was still null/missing -- e.g. a Firebase Auth
+  // user whose users/{uid} Firestore doc doesn't exist. Deny-by-default:
+  // no profile to check against means no access, not a free pass.
+  if (allowedRoles) {
+    if (!userProfile || !allowedRoles.includes(userProfile.role)) {
+      console.log('❌ Role mismatch or missing profile - user has:', userProfile?.role, 'needs:', allowedRoles)
       return <Navigate to="/unauthorized" replace />
     }
   }
