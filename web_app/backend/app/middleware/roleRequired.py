@@ -83,8 +83,13 @@ def admin_required(f):
 
 
 def staff_required(f):
-    """Shorthand decorator for staff-only endpoints (includes doctor, nurse, receptionist)"""
-    return role_required(['admin', 'staff', 'doctor', 'nurse', 'receptionist'])(f)
+    """Shorthand decorator for staff-only endpoints (includes doctor, nurse, receptionist, triage)"""
+    return role_required(['admin', 'staff', 'doctor', 'nurse', 'receptionist', 'triage'])(f)
+
+
+def triage_required(f):
+    """Shorthand decorator for TriageNurse-only endpoints"""
+    return role_required(['admin', 'triage'])(f)
 
 
 def patient_required(f):

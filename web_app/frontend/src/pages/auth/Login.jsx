@@ -66,8 +66,16 @@ const Login = () => {
       case 'staff':
       case 'doctor':
       case 'nurse':
-      case 'receptionist':
         return '/staff/overview'
+      case 'triage':
+        // Lands on the same shared staff overview -- the extra Vitals
+        // tab shows up in the sidebar because NurseSidebar checks the
+        // signed-in role itself.
+        return '/staff/overview'
+      case 'receptionist':
+        // Receptionist gets its own narrower page set, not the
+        // doctor/nurse pages at /staff/*.
+        return '/reception/overview'
       case 'patient':
         return '/patient/overview'
       default:

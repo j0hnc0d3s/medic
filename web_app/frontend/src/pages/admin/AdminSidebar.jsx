@@ -30,7 +30,6 @@ const NAV_ITEMS = [
   { key: 'overview',  label: 'Overview',  path: '/admin/overview',  icon: 'home'    },
   { key: 'finances',  label: 'Finances',  path: '/admin/finances',  icon: 'finance' },
   { key: 'patients',  label: 'Patients',  path: '/admin/patients',  icon: 'user'    },
-  { key: 'messaging', label: 'Messaging', path: '/admin/messaging', icon: 'send'    },
 ]
 
 const ICONS = {

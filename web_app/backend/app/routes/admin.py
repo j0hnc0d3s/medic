@@ -284,7 +284,7 @@ def register_routes(app):
                 return jsonify({'success': False, 'error': 'userId and role are required'}), 400
             
             # Validate role
-            valid_roles = ['admin', 'staff', 'doctor', 'nurse', 'receptionist', 'patient']
+            valid_roles = ['admin', 'staff', 'doctor', 'nurse', 'receptionist', 'triage', 'patient']
             if new_role not in valid_roles:
                 return jsonify({'success': False, 'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}'}), 400
             
@@ -302,7 +302,7 @@ def register_routes(app):
             }
             
             # If assigning staff role, optionally add department
-            if new_role in ['staff', 'doctor', 'nurse', 'receptionist']:
+            if new_role in ['staff', 'doctor', 'nurse', 'receptionist', 'triage']:
                 department = data.get('department')
                 if department:
                     update_data['department'] = department

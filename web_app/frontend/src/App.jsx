@@ -18,6 +18,15 @@ import NurseMessaging from './pages/staff/NurseMessaging.jsx'
 import NurseSettings from './pages/staff/NurseSettings.jsx'
 import NurseNotifications from './pages/staff/NurseNotifications.jsx'
 
+// Triage (TriageNurse role -- same Nurse*.jsx pages above, plus this)
+import TriageVitals from './pages/triage/TriageVitals.jsx'
+
+// Reception (receptionist role -- its own narrower page set)
+import StaffOverview from './pages/reception/StaffOverview.jsx'
+import StaffPatients from './pages/reception/StaffPatients.jsx'
+import StaffAppointments from './pages/reception/StaffAppointments.jsx'
+import StaffSettings from './pages/reception/StaffSettings.jsx'
+
 /* 
 
 */
@@ -37,7 +46,6 @@ import PatientNotifications from './pages/patient/PatientNotifications.jsx'
 import AdminOverview from './pages/admin/AdminOverview.jsx'
 import AdminFinances from './pages/admin/AdminFinances.jsx'
 import AdminPatients from './pages/admin/AdminPatients.jsx'
-import AdminMessaging from './pages/admin/AdminMessaging.jsx'
 import AdminSettings from './pages/admin/AdminSettings.jsx'
 import AdminNotifications from './pages/admin/AdminNotifications.jsx'
 
@@ -62,7 +70,13 @@ function App() {
         <Route
           path="/staff/*"
           element={
-            <ProtectedRoute allowedRoles={['staff', 'doctor', 'nurse', 'receptionist']}>
+            // 'triage' included so TriageNurse can use these same
+            // Nurse*.jsx pages (doctor/nurse parity) -- see
+            // pages/staff/NurseSidebar.jsx for the extra Vitals tab
+            // that shows only when the signed-in user is 'triage'.
+            // 'receptionist' is NOT here -- it gets its own, narrower
+            // page set under /reception/* below.
+            <ProtectedRoute allowedRoles={['staff', 'doctor', 'nurse', 'triage']}>
               <StaffOutlet />
             </ProtectedRoute>
           }
@@ -78,13 +92,43 @@ function App() {
           <Route path="messaging" element={<NurseMessaging />} />
           <Route path="settings" element={<NurseSettings />} />
           <Route path="notifications" element={<NurseNotifications />} />
+        </Route>
 
-          {/*          
-              None at the moment.
-           */}
+        {/* ========== TRIAGE ROUTES ========== */}
+        {/* TriageNurse-only extra: live wearable vitals for everyone in
+            the queue, plus a link out to the standalone bedside_monitor
+            app. Everything else TriageNurse needs lives under /staff/*
+            above, which now allows the 'triage' role too. */}
+        <Route
+          path="/triage/*"
+          element={
+            <ProtectedRoute allowedRoles={['triage']}>
+              <StaffOutlet />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/triage/vitals" replace />} />
+          <Route path="vitals" element={<TriageVitals />} />
+        </Route>
 
-          {/* Doctors also get access to the patients directory, per the
-              AdminPatients page being shared between admin + doctor roles */}
+        {/* ========== RECEPTION ROUTES ========== */}
+        {/* Receptionist's own, narrower page set: patient lookup,
+            appointments/booking, doctor availability. Settings is
+            reused straight from NurseSettings.jsx since there's
+            nothing role-specific about a password-change screen. */}
+        <Route
+          path="/reception/*"
+          element={
+            <ProtectedRoute allowedRoles={['receptionist']}>
+              <StaffOutlet />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/reception/overview" replace />} />
+          <Route path="overview" element={<StaffOverview />} />
+          <Route path="patients" element={<StaffPatients />} />
+          <Route path="appointments" element={<StaffAppointments />} />
+          <Route path="settings" element={<StaffSettings />} />
         </Route>
 
         {/* ========== PATIENT ROUTES ========== */}
@@ -118,11 +162,12 @@ function App() {
           <Route path="overview" element={<AdminOverview />} />
           <Route path="finances" element={<AdminFinances />} />
           <Route path="patients" element={<AdminPatients />} />
-          <Route path="messaging" element={<AdminMessaging />} />
+          {/* No messaging route here on purpose -- Admin is HR/finance-facing
+              (finances, patient records) and deliberately has no direct
+              patient-messaging capability. See AdminSettings/AdminPatients
+              for what Admin keeps. */}
           <Route path="settings" element={<AdminSettings />} />
           <Route path="notifications" element={<AdminNotifications />} />
-          {/*           
-          */}
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

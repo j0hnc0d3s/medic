@@ -24,10 +24,10 @@ service cloud.firestore {
       return hasRole('admin');
     }
     
-    // Helper function - check if staff (doctor, nurse, receptionist, staff)
+    // Helper function - check if staff (doctor, nurse, receptionist, staff, triage)
     function isStaff() {
       return isAuthenticated() && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'doctor', 'nurse', 'receptionist', 'staff'];
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'doctor', 'nurse', 'receptionist', 'staff', 'triage'];
     }
     
     // Helper function - check if patient owns the document
