@@ -215,14 +215,27 @@ export default function PatientOverview() {
   const loadAppointments = async () => {
     setApptsLoading(true)
     try {
-      const fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()
-      const [byUidRes, byNameRes] = await Promise.all([
-        appointmentService.getAppointments({ patientId: userProfile.uid }),
-        fullName ? appointmentService.getAppointments({ patientName: fullName }) : Promise.resolve({ appointments: [] }),
-      ])
+      // BUG FIX (Oct 2026): this used to also call
+      // getAppointments({ patientName: fullName }) as a fallback to
+      // catch appointments made before this patient's account was
+      // linked. getAppointments() never actually implemented a
+      // patientName filter, though, so that call silently executed
+      // as an UNFILTERED scan of the whole appointments collection --
+      // which Firestore's security rules correctly reject for a
+      // patient (allow read: if isOwner(resource.data.patientId)
+      // can't be satisfied by an unscoped query). It never returned a
+      // single appointment; it only threw a permissions error into
+      // the console on every Overview load. Removed rather than
+      // "fixed" -- making name-based lookup actually work would mean
+      // loosening the rule to let any patient query by name, which
+      // would let them see other patients' pre-link appointments too.
+      // The real fix for legacy unlinked appointments is staff using
+      // the existing "Link Patient to Account" tool to backfill
+      // patientId, not a client-side name match.
+      const byUidRes = await appointmentService.getAppointments({ patientId: userProfile.uid })
 
       const seen = new Set()
-      const all = [...(byUidRes.appointments || []), ...(byNameRes.appointments || [])]
+      const all = [...(byUidRes.appointments || [])]
         .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true })
         .filter(a => a.status !== 'cancelled')
         .sort((a, b) => {
