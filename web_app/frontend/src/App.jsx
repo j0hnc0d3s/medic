@@ -17,6 +17,7 @@ import NurseImaging from './pages/staff/NurseImaging.jsx'
 import NurseMessaging from './pages/staff/NurseMessaging.jsx'
 import NurseSettings from './pages/staff/NurseSettings.jsx'
 import NurseNotifications from './pages/staff/NurseNotifications.jsx'
+import NurseAvailability from './pages/staff/NurseAvailability.jsx'
 
 // Triage (TriageNurse role -- same Nurse*.jsx pages above, plus this)
 import TriageVitals from './pages/triage/TriageVitals.jsx'
@@ -92,6 +93,7 @@ function App() {
           <Route path="messaging" element={<NurseMessaging />} />
           <Route path="settings" element={<NurseSettings />} />
           <Route path="notifications" element={<NurseNotifications />} />
+          <Route path="availability" element={<NurseAvailability />} />
         </Route>
 
         {/* ========== TRIAGE ROUTES ========== */}

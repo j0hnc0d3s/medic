@@ -202,8 +202,30 @@ export default function NurseAppointments() {
     },
   })
 
+  const CONFLICT_MESSAGES = {
+    'double-booked':  (d, t) => `${d} already has an appointment at ${t}. Pick a different time or doctor.`,
+    'blocked-date':   (d)    => `${d} has marked this date as unavailable.`,
+    'day-off':        (d)    => `${d} isn't scheduled to work that day.`,
+    'outside-hours':  (d, t) => `${d} isn't working at ${t} that day — check their Availability tab.`,
+  }
+
   const handleSubmit = async values => {
     try {
+      // Editing only moves an existing appointment's own details (and
+      // checkConflicts excludes the record being edited via its id),
+      // so the same check applies to both add and edit.
+      const conflictCheck = await appointmentService.checkConflicts({
+        id: modal.mode === 'edit' ? modal.record.id : undefined,
+        doctor: values.doctor,
+        appointmentDate: values.appointmentDate,
+        appointmentTime: values.appointmentTime,
+      })
+      if (conflictCheck.success && conflictCheck.hasConflict) {
+        const msg = CONFLICT_MESSAGES[conflictCheck.reason]
+        alert(msg ? msg(values.doctor, values.appointmentTime) : 'That slot is unavailable.')
+        return
+      }
+
       if (modal.mode === 'edit') {
         await appointmentService.updateAppointment(modal.record.id, {
           ...values,

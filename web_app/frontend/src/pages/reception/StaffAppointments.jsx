@@ -35,6 +35,8 @@ const STATUS_COLORS = {
   completed: '#22C55E', cancelled: '#EF4444', 'no-show': '#6B7280',
 }
 
+const STATUS_OPTIONS = ['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show']
+
 const labelize = s => (s || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
 const formatDate = ts => {
@@ -123,6 +125,26 @@ export default function StaffAppointments() {
       })
   }, [appointments])
 
+  const CONFLICT_MESSAGES = {
+    'double-booked':  (d, t) => `${d} already has an appointment at ${t}. Pick a different time or doctor.`,
+    'blocked-date':   (d)    => `${d} has marked this date as unavailable.`,
+    'day-off':        (d)    => `${d} isn't scheduled to work that day.`,
+    'outside-hours':  (d, t) => `${d} isn't working at ${t} that day — check their Availability tab.`,
+  }
+
+  // Marking a no-show (or cancelling) is what frees a slot back up --
+  // checkConflicts only treats 'scheduled'/'confirmed' as booked, so
+  // the very next booking attempt for that doctor/date/time will go
+  // through once this status change lands.
+  const handleStatusChange = async (appt, newStatus) => {
+    try {
+      await appointmentService.updateStatus(appt.id, newStatus)
+      loadAppointments()
+    } catch (err) {
+      console.error('Error updating status:', err)
+    }
+  }
+
   const handleSubmit = async (values) => {
     try {
       const conflictCheck = await appointmentService.checkConflicts({
@@ -131,7 +153,8 @@ export default function StaffAppointments() {
         appointmentTime: values.appointmentTime,
       })
       if (conflictCheck.success && conflictCheck.hasConflict) {
-        alert(`${values.doctor} already has an appointment at ${values.appointmentTime} on ${values.appointmentDate}. Pick a different time or doctor.`)
+        const msg = CONFLICT_MESSAGES[conflictCheck.reason]
+        alert(msg ? msg(values.doctor, values.appointmentTime) : 'That slot is unavailable.')
         return
       }
 
@@ -230,9 +253,17 @@ export default function StaffAppointments() {
                   <p className="no-patient-row-col-label">Type</p>
                   <p className="no-patient-row-col-value">{a.type || '—'}</p>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: STATUS_COLORS[a.status] || '#6B7280' }}>
-                  {labelize(a.status)}
-                </span>
+                <select
+                  value={a.status}
+                  onChange={e => handleStatusChange(a, e.target.value)}
+                  style={{
+                    fontSize: 11, fontWeight: 700, color: STATUS_COLORS[a.status] || '#6B7280',
+                    border: `1px solid ${STATUS_COLORS[a.status] || '#6B7280'}`, borderRadius: 20,
+                    padding: '3px 8px', background: 'transparent', cursor: 'pointer',
+                  }}
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s} value={s}>{labelize(s)}</option>)}
+                </select>
               </div>
             ))}
 

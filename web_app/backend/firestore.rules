@@ -70,6 +70,19 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // AVAILABILITY COLLECTION
+    // Doctor/nurse working-hours + blocked dates, keyed by a
+    // slugified doctor name (see availabilityService.js). Same
+    // staff-wide read/write grant as patients/appointments below --
+    // this app enforces "edit only your own schedule" client-side,
+    // the same level the rest of the staff portal already relies on.
+    // ==========================================
+    match /availability/{availabilityId} {
+      allow read: if isStaff();
+      allow create, update, delete: if isStaff();
+    }
+
+    // ==========================================
     // STAFF COLLECTION
     // ==========================================
     match /staff/{staffId} {

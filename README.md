@@ -47,6 +47,7 @@ Built by **FlowState**.
 - **Patient portal** — appointments, a connected visual overview of diagnosis/visits/labs, messaging with your care team, a combined documents/lab-results/imaging feed, and notifications.
 - **Staff portal** — a shared portal for doctors, nurses, and triage nurses with role-based permissions (e.g. doctors see only their own appointments; reassigning a doctor or editing appointment details is reserved for nursing/admin). Covers Patients, Appointments, Notes, Documents, Imaging, Labs, and Messaging. Triage nurses get one extra tab — **Vitals** — showing live wearable readings for everyone currently in the queue, with a link out to the standalone bedside-monitor display for a full trend view.
 - **Reception portal** — a separate, narrower front-desk portal: looking up a patient and telling them their queue position, booking appointments, and checking a doctor's booked slots for a day before offering a time (with a conflict check that blocks an exact doctor/date/time double-booking).
+- **Doctor availability & double-booking protection** — doctors set their own weekly hours and blocked dates; every appointment booking (staff or reception) is checked against that schedule and existing bookings, and a no-show frees its slot immediately for rebooking.
 - **Consultation-linked records** — labs and imaging can't be created independently; they're always tied back to a specific consultation, so there's always a clinical reason on file for why a test exists.
 - **Admin portal** — a daily operations summary (queue size by priority, patients seen, patient growth), and a Finances section with separate Income/Expense views, filterable by time period/type/patient, plus a pricing table that drives automatic billing when appointments/labs/imaging complete.
 - **Notifications** — in-app alerts for new messages, lab results, and appointment activity, with per-category on/off preferences in Settings.
@@ -67,10 +68,10 @@ medic/
 │       │   ├── admin/       # AdminOverview, AdminFinances, AdminPatients, AdminNotifications, AdminSettings, AdminSidebar (no messaging -- see Roles below)
 │       │   ├── auth/        # Login, ForgotPasswordForm, QueueForm
 │       │   ├── patient/     # PatientOverview, PatientAppointments, PatientMessaging, PatientDocuments, PatientNotifications, PatientSettings, PatientSidebar
-│       │   ├── staff/       # NurseOverview, NursePatients, NurseAppointments, NurseMessaging, NurseNotes, NurseDocuments, NurseImaging, NurseLabs, NurseNotifications, NurseSettings, NurseSidebar -- shared by doctor, nurse, and triage roles
+│       │   ├── staff/       # NurseOverview, NursePatients, NurseAppointments, NurseAvailability, NurseMessaging, NurseNotes, NurseDocuments, NurseImaging, NurseLabs, NurseNotifications, NurseSettings, NurseSidebar -- shared by doctor, nurse, and triage roles
 │       │   ├── triage/      # TriageVitals -- the one page triage nurses get beyond the shared staff/* pages above
 │       │   └── reception/   # StaffOverview, StaffPatients, StaffAppointments, StaffSettings, StaffSidebar -- the receptionist's own, narrower page set
-│       └── services/        # one file per Firestore collection/concern — appointmentService, patientService, labService, imagingService, noteService, documentService, messagingService, notificationService, billingService, pricingService, queueService, staffService, activityService, reportService, authService, firebase.js, api.js
+│       └── services/        # one file per Firestore collection/concern — appointmentService, availabilityService, patientService, labService, imagingService, noteService, documentService, messagingService, notificationService, billingService, pricingService, queueService, staffService, activityService, reportService, authService, firebase.js, api.js
 │
 └── backend/
     └── app/
@@ -125,8 +126,10 @@ Log in as the doctor account above — the portal is the same for doctor, nurse,
   - **Doctors** see only appointments assigned to them, and can move their own appointments through Confirm → Start → Complete.
   - **Nurse/Triage/Admin** see every appointment, and can additionally reassign which doctor an appointment belongs to, edit its details, or delete it — doctors can't do either of those two things themselves.
   - Every appointment must be linked to a real patient record — there's no free-text "just type a name" option anymore.
+  - Booking (from either the staff or reception portal) is checked against the assigned doctor's declared Availability and existing bookings first, and is blocked on an exact double-booking or a time outside that doctor's working hours. Marking an appointment **No-show** frees its slot immediately — the check only treats `scheduled`/`confirmed` appointments as taken, so a receptionist can mark a no-show and rebook that same slot for someone else right away.
 - **Messaging** — same messaging system as the patient side, from the staff perspective: a full conversation list, plus a quick-info panel on the right showing that patient's current diagnosis and medications, with shortcuts to their Notes/Documents/Labs/Imaging.
 - **Vitals** *(TriageNurse only)* — every active queue entry alongside its latest wearable reading (heart rate, SpO2, resp. rate, temp, blood pressure), flagged when a value is outside normal range, with a link out to the standalone bedside-monitor app for the full trend-line view of one patient.
+- **Availability** — a doctor sets their own weekly working hours and any blocked (vacation/unavailable) dates; nurse/admin/triage get a doctor picker to manage it on someone's behalf. This is what every appointment booking now checks before going through.
 - **Notes / Documents / Imaging / Labs** — each of these is its own tab with a searchable list and an "Add" flow. Labs and Imaging both require linking to a specific consultation (same reasoning as above — a test doesn't exist independently of the visit that ordered it); Notes and Documents don't have that requirement, since they're not "ordered tests."
   - **Labs** has a full library of common test types (vitals, blood panels, imaging-as-a-test, cardiac, microbiology, etc.), each with its own relevant result fields, plus a "Custom" option for anything not on the list.
   - Every lab starts as **Requested** and needs to be marked **Completed** once results are in — that's also the moment it becomes visible to the patient and the moment it gets billed (see Finances, below).
@@ -139,7 +142,7 @@ Log in as the receptionist account above.
 
 - **Overview** — the live queue, with a name-search so the front desk can tell a waiting patient their position without scanning the full board, plus today's appointment count.
 - **Patients** — the same patient directory as the staff portal (look up, add, edit), with a one-click "Book appointment" shortcut per patient.
-- **Appointments** — view/book appointments, plus a doctor-availability panel: pick a doctor and a date to see their booked slots for that day before offering a time. Booking checks for an exact doctor/date/time collision and blocks it — a scoped preview of the full double-booking protection planned for doctor/nurse self-scheduling.
+- **Appointments** — view/book appointments, plus a doctor-availability panel: pick a doctor and a date to see their booked slots for that day before offering a time. Booking is checked against that doctor's declared Availability (working hours + blocked dates) and existing bookings, and blocked on a collision. Each appointment row has a status dropdown, including **No-show** — marking one frees that slot immediately for a different patient.
 - **Settings** — notification toggles (appointments only) and password change.
 
 ## What to Expect: Admin Portal

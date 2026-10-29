@@ -15,6 +15,7 @@ import {
 import { db } from './firebase'
 import activityService from './activityService'
 import billingService from './billingService'
+import availabilityService from './availabilityService'
 
 /**
  * Appointment Service
@@ -407,9 +408,21 @@ class AppointmentService {
   }
 
   /**
-   * Check for appointment conflicts
-   * @param {Object} appointmentData 
-   * @returns {Promise<Object>}
+   * Check for appointment conflicts (same doctor, date, time) AND
+   * that the doctor is actually declared available then (see
+   * availabilityService -- a doctor with no availability doc yet is
+   * unrestricted, so this never blocks bookings for anyone who
+   * hasn't set a schedule).
+   *
+   * A 'no-show' (or cancelled/completed) appointment is deliberately
+   * excluded from the conflict query below (only 'scheduled'/
+   * 'confirmed' count) -- that's what lets a receptionist mark a
+   * no-show and immediately rebook that same slot for someone else
+   * without this flagging it as a double-booking.
+   *
+   * @param {Object} appointmentData
+   * @returns {Promise<Object>} { success, hasConflict, reason, conflicts }
+   *   reason is 'double-booked' | 'blocked-date' | 'day-off' | 'outside-hours' when hasConflict is true.
    */
   async checkConflicts(appointmentData) {
     try {
@@ -430,7 +443,7 @@ class AppointmentService {
 
       const querySnapshot = await getDocs(q)
       const conflicts = []
-      
+
       querySnapshot.forEach((doc) => {
         // Exclude current appointment if updating
         if (appointmentData.id && doc.id === appointmentData.id) {
@@ -442,10 +455,23 @@ class AppointmentService {
         })
       })
 
+      if (conflicts.length > 0) {
+        return { success: true, hasConflict: true, reason: 'double-booked', conflicts }
+      }
+
+      const avail = await availabilityService.isWithinAvailability(
+        appointmentData.doctor,
+        appointmentData.appointmentDate,
+        appointmentData.appointmentTime
+      )
+      if (!avail.withinAvailability) {
+        return { success: true, hasConflict: true, reason: avail.reason, conflicts: [] }
+      }
+
       return {
         success: true,
-        hasConflict: conflicts.length > 0,
-        conflicts
+        hasConflict: false,
+        conflicts: []
       }
     } catch (error) {
       console.error('Check conflicts error:', error)

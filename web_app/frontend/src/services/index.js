@@ -19,6 +19,7 @@ export { default as noteService } from './noteService'
 export { default as queueService } from './queueService'
 export { default as pricingService } from './pricingService'
 export { default as billingService } from './billingService'
+export { default as availabilityService } from './availabilityService'
 
 // Firebase exports
 export { db, auth, storage, functions } from './firebase'

@@ -40,12 +40,14 @@ const NAV_ITEMS = [
   { key: 'documents',    label: 'Documents',     path: '/staff/documents',   icon: 'folder'},
   { key: 'imaging',      label: 'Imaging',       path: '/staff/imaging',     icon: 'brain' },
   { key: 'labs',         label: 'Labs',          path: '/staff/labs',        icon: 'flask' },
+  { key: 'availability', label: 'Availability',  path: '/staff/availability', icon: 'calendarCheck' },
 ]
 
 // Appended for TriageNurse only -- see NurseSidebar.jsx for the same pattern.
 const TRIAGE_NAV_ITEM = { key: 'vitals', label: 'Vitals', path: '/triage/vitals', icon: 'monitor' }
 
 const ICONS = {
+  calendarCheck: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M8.5 14.5l2 2 4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   monitor: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 16V5a1 1 0 011-1h16a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M4 10l3 3 2.5-4L12 13l2-2.5 2 1.5L20 9M8 21h8M12 17v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   home: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   user: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>,
