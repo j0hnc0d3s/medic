@@ -110,12 +110,18 @@ export default function PatientSidebar() {
       const eligibleIds = new Set()
 
       // 2. Doctors from confirmed appointments (matched by uid, then name).
-      const fullName = `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()
-      const [byUidRes, byNameRes] = await Promise.all([
+      // (BUG FIX Oct 2026: this used to also run
+      // getAppointments({ patientName: fullName }) — but 'patientName'
+      // isn't a filter getAppointments() supports, so that call was an
+      // unscoped query over the whole appointments collection, which
+      // Firestore's rules reject outright for a patient. It never
+      // actually filtered by name, so dropping it changes nothing
+      // functionally except removing the permission error on every
+      // patient page load — same root cause as the PatientOverview fix.)
+      const [byUidRes] = await Promise.all([
         appointmentService.getAppointments({ patientId: userProfile.uid }),
-        fullName ? appointmentService.getAppointments({ patientName: fullName }) : Promise.resolve({ appointments: [] }),
       ])
-      const appts = [...(byUidRes.appointments || []), ...(byNameRes.appointments || [])]
+      const appts = [...(byUidRes.appointments || [])]
 
       appts.forEach(a => {
         const match = doctorsByName.get(normalizeDoctorName(a.doctor))
