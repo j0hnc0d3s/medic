@@ -1,0 +1,14 @@
+# macOS cruft
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+# Python bytecode/caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Vite dependency cache (regenerated automatically)
+.vite/
