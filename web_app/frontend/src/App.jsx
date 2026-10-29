@@ -43,9 +43,6 @@ import AdminNotifications from './pages/admin/AdminNotifications.jsx'
 
 /*  */
 
-// Display
-import QueueDisplay from './display/QueueDisplay.jsx'
-
 function StaffOutlet() {
   return <Outlet />
 }
@@ -60,7 +57,6 @@ function App() {
 
         {/* Redirect root to login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/display" element={<QueueDisplay />} />
 
         {/* ========== STAFF ROUTES ========== */}
         <Route
