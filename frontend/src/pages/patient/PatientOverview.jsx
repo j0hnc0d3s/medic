@@ -194,8 +194,19 @@ export default function PatientOverview() {
   const [allergyPage, setAllergyPage]   = useState(0)
   const [medicationPage, setMedicationPage] = useState(0)
 
-  const [allergyPos, allergyDrag]     = useDraggable({ left: 60, top: 360 })
-  const [medicationPos, medicationDrag] = useDraggable({ left: 610, top: 230 })
+  // BUG FIX (Oct 2026): these used to default-spawn at (60, 360) and
+  // (610, 230), which land squarely inside the fixed canvas nodes'
+  // bounding boxes -- (60,360) sits inside the 'headaches' card
+  // (20,140, 330x350) and (610,230) sits inside the visit1/visit2
+  // column (610, 100-800). Confirmed live: the Allergies and
+  // Medication panels rendered directly on top of the medical-history
+  // canvas on every page load, for every patient, obscuring both.
+  // They're user-draggable, so the fix is just spawning them clear of
+  // every canvas node's box instead -- open space to the right of the
+  // rightmost column (hospitalisations/procedure/labsStandalone end
+  // at x=1280) -- not changing the drag behavior itself.
+  const [allergyPos, allergyDrag]     = useDraggable({ left: 1320, top: 140 })
+  const [medicationPos, medicationDrag] = useDraggable({ left: 1320, top: 520 })
 
   const { userProfile } = useAuth()
 
