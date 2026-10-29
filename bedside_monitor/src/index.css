@@ -1,0 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+/*
+  Bedside clinical monitors are black-background, bright-channel-color
+  instruments by convention (ECG green, SpO2 cyan, resp yellow) — this app
+  mimics that real instrument genre deliberately, not the Medic product's
+  patient-facing paper/teal look used in kiosk_handheld and wearable.
+*/
+
+:root {
+  --bg: #050807;
+  --panel: #0c1210;
+  --panel-border: #1c2522;
+  --text: #e9efec;
+  --text-dim: #7c8d87;
+  --hr: #3ee87a;
+  --spo2: #3fc7f4;
+  --resp: #f2c94c;
+  --temp: #f28c4c;
+  --bp: #f2f2f2;
+  --alert: #ff5a52;
+  --ok: #3ee87a;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+button, input {
+  font-family: inherit;
+}
+
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--spo2);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---- pairing screen ---- */
+
+.pair-shell {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pair-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.pair-card h1 {
+  font-size: 1.3rem;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.pair-card p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.pair-card input {
+  width: 100%;
+  padding: 14px 15px;
+  border-radius: 10px;
+  border: 1.5px solid var(--panel-border);
+  background: #090d0c;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 14px;
+}
+
+.pair-card button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--spo2);
+  color: #04141c;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.pair-card button:disabled {
+  opacity: 0.4;
+}
+
+.pair-error {
+  background: rgba(255, 90, 82, 0.1);
+  border: 1px solid rgba(255, 90, 82, 0.3);
+  color: var(--alert);
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+/* ---- monitor shell ---- */
+
+.monitor-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 26px;
+}
+
+.monitor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 18px;
+}
+
+.monitor-patient {
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-patient .name {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.monitor-patient .meta {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.monitor-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 4px rgba(62, 232, 122, 0.18);
+  animation: dot-pulse 1.6s ease-in-out infinite;
+}
+
+.live-dot.stale {
+  background: var(--text-dim);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+}
+
+.vital-block {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
+.vital-block .v-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+
+.vital-block .v-num {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.05;
+  margin-top: 6px;
+}
+
+.vital-block .v-num .unit {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: 4px;
+  color: var(--text-dim);
+}
+
+.vital-block .v-range {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.vital-block svg {
+  margin-top: auto;
+  width: 100%;
+  height: 46px;
+}
+
+.vital-block.flag {
+  border-color: var(--alert);
+  box-shadow: 0 0 0 1px var(--alert) inset;
+}
+
+.vital-block.flag .v-head { color: var(--alert); }
+
+.monitor-footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.unpair-link {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  text-decoration: underline;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
