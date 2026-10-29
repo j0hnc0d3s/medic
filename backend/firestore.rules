@@ -192,6 +192,24 @@ service cloud.firestore {
     }
 
     // ==========================================
+    // NOTES COLLECTION
+    // (BUG FIX Oct 2026: same missing-rule issue as imaging/labs
+    // above — notes had no rule at all, so every read was
+    // default-denied, confirmed live via "Get notes error: Missing
+    // or insufficient permissions" on /staff/notes.)
+    // ==========================================
+    match /notes/{noteId} {
+      // Staff can read all notes
+      allow read: if isStaff();
+      
+      // Patients can read their own notes
+      allow read: if isOwner(resource.data.patientId);
+      
+      // Staff can create/update/delete notes
+      allow create, update, delete: if isStaff();
+    }
+
+    // ==========================================
     // ACTIVITIES COLLECTION (AUDIT LOG)
     // ==========================================
     match /activities/{activityId} {
