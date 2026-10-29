@@ -41,6 +41,15 @@ service cloud.firestore {
     match /users/{userId} {
       // Anyone can read their own user document
       allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // Any authenticated user can read a doctor's directory entry.
+      // (BUG FIX Oct 2026: patients need this to see/message their
+      // assigned doctor — authService.getUsersByRole('doctor') is
+      // called from PatientSidebar and PatientOverview to build the
+      // doctor-contacts list, and with no rule covering it, every
+      // call failed with "Missing or insufficient permissions",
+      // confirmed live.)
+      allow read: if isAuthenticated() && resource.data.role == 'doctor';
       
       // Only admins can create/update/delete users
       allow write: if isAdmin();
