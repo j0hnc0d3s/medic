@@ -20,7 +20,7 @@ import { auth } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import messagingService from '../../services/messagingService'
 import '../staff/NurseSidebar.css'
-import './PatienteMessaging.css'
+import './PatientMessaging.css'
 
 import settings from '../../assets/inverted/settings.png'
 import logout from '../../assets/inverted/logout.png'

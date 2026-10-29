@@ -8,7 +8,7 @@ import { updatePassword } from 'firebase/auth'
 import { db, auth } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import PatientSidebar from './PatientSidebar'
-import './AdminSettings.css'
+import '../admin/AdminSettings.css'
 
 // No 'task' category — patients don't have a task list the way
 // staff do. Otherwise the same three categories apply.

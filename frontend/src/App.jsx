@@ -26,11 +26,11 @@ import NurseNotifications from './pages/staff/NurseNotifications.jsx'
 
 import PatientOverview from './pages/patient/PatientOverview.jsx'
 
-/* 
 import PatientMessaging from './pages/patient/PatientMessaging.jsx'
 import PatientDocuments from './pages/patient/PatientDocuments.jsx'
-import PatientAppointments from './pages/patient/PatientAppointments.jsx' 
-*/
+import PatientAppointments from './pages/patient/PatientAppointments.jsx'
+import PatientSettings from './pages/patient/PatientSettings.jsx'
+import PatientNotifications from './pages/patient/PatientNotifications.jsx'
 
 // Admin
 
@@ -102,9 +102,11 @@ function App() {
         >
           <Route index element={<Navigate to="/patient/overview" replace />} />
           <Route path="overview" element={<PatientOverview />} />
-{/*           <Route path="appointments" element={<PatientAppointments />} />
+          <Route path="appointments" element={<PatientAppointments />} />
           <Route path="documents" element={<PatientDocuments />} />
-          <Route path="messaging" element={<PatientMessaging />} /> */}
+          <Route path="messaging" element={<PatientMessaging />} />
+          <Route path="settings" element={<PatientSettings />} />
+          <Route path="notifications" element={<PatientNotifications />} />
         </Route>
 
         {/* ========== ADMIN ROUTES ========== */}
