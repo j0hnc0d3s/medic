@@ -114,7 +114,7 @@ export default function NurseAvailability() {
         {!isDoctor && (
           <div className="av-doctor-picker">
             <label>Doctor</label>
-            <select value={selectedDoctor} onChange={e => setSelectedDoctor(e.target.value)}>
+            <select className={selectedDoctor ? '' : 'is-empty'} value={selectedDoctor} onChange={e => setSelectedDoctor(e.target.value)}>
               {doctorsList.length === 0 && <option value="">No doctors on file</option>}
               {doctorsList.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
@@ -143,9 +143,9 @@ export default function NurseAvailability() {
                     </label>
                     {weeklyHours[day].enabled ? (
                       <div className="av-day-times">
-                        <input type="time" value={weeklyHours[day].start} onChange={e => setDayTime(day, 'start', e.target.value)} />
+                        <input type="time" className={`av-input${weeklyHours[day].start ? '' : ' is-empty'}`} value={weeklyHours[day].start} onChange={e => setDayTime(day, 'start', e.target.value)} />
                         <span>to</span>
-                        <input type="time" value={weeklyHours[day].end} onChange={e => setDayTime(day, 'end', e.target.value)} />
+                        <input type="time" className={`av-input${weeklyHours[day].end ? '' : ' is-empty'}`} value={weeklyHours[day].end} onChange={e => setDayTime(day, 'end', e.target.value)} />
                       </div>
                     ) : (
                       <span className="av-day-off">Day off</span>
@@ -159,7 +159,7 @@ export default function NurseAvailability() {
               <h2 className="av-card-title">Blocked dates</h2>
               <p className="av-card-sub">Vacation, conferences, anything that overrides a normal working day.</p>
               <div className="av-add-date">
-                <input type="date" value={newBlockedDate} onChange={e => setNewBlockedDate(e.target.value)} />
+                <input type="date" className={`av-input${newBlockedDate ? '' : ' is-empty'}`} aria-label="Date to block" value={newBlockedDate} onChange={e => setNewBlockedDate(e.target.value)} />
                 <button className="av-btn av-btn--secondary" onClick={addBlockedDate}>Add</button>
               </div>
               <div className="av-date-list">
