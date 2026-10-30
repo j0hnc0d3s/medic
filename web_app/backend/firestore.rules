@@ -53,6 +53,14 @@ service cloud.firestore {
       
       // Only admins can create/update/delete users
       allow write: if isAdmin();
+
+      // Everyone may save their OWN settings (notification choices and
+      // display preferences) from the Settings page. Limited to exactly
+      // those fields, so nobody can change their own role, name, etc.
+      allow update: if isAuthenticated()
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['notificationPreferences', 'notificationChannels', 'preferences']);
     }
 
     // ==========================================
