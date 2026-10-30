@@ -39,6 +39,15 @@ const deltaLabel = (today, yesterday) => {
   return `${diff > 0 ? diff : Math.abs(diff)} ${diff > 0 ? 'up' : 'down'} from yesterday`
 }
 
+// appointmentDate on a queue entry can arrive as a raw ISO string
+// (e.g. "2026-10-29T00:00:00+00:00"); show a readable date instead.
+const formatQueueDate = (val) => {
+  if (!val) return '—'
+  const d = new Date(val)
+  if (isNaN(d)) return String(val)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function AdminOverview() {
   const [viewMode, setViewMode] = useState('grid')
   const [loading, setLoading] = useState(true)
@@ -168,7 +177,7 @@ export default function AdminOverview() {
                       <p className="ao-queue-field-value">{e.assignedDoctor || 'Unassigned'}</p>
                     </div>
                     <div className="ao-queue-time">
-                      <p className="ao-queue-date">{e.appointmentDate || '—'}</p>
+                      <p className="ao-queue-date">{formatQueueDate(e.appointmentDate)}</p>
                       <p className="ao-queue-clock">{e.appointmentTime || '—'}</p>
                     </div>
                     <button className="ao-queue-dismiss" onClick={() => dismiss(e.id)} aria-label="Dismiss">
