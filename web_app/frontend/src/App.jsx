@@ -50,7 +50,7 @@ import AdminPatients from './pages/admin/AdminPatients.jsx'
 import AdminSettings from './pages/admin/AdminSettings.jsx'
 import AdminNotifications from './pages/admin/AdminNotifications.jsx'
 
-/*  */
+/* General */
 
 function StaffOutlet() {
   return <Outlet />
