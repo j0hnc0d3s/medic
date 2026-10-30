@@ -334,10 +334,12 @@
   max-height: 50vh;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: #8b93a1 #1a1a1a;
 }
 .ns-nav > * { flex-shrink: 0; }
 .ns-detail ~ .ns-nav { min-height: 130px; max-height: max(130px, calc(50vh - 330px)); }
-.ns-nav::-webkit-scrollbar { width: 4px; }
-.ns-nav::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+.ns-nav::-webkit-scrollbar { width: 8px; }
+.ns-nav::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 8px; margin: 6px 0; }
+.ns-nav::-webkit-scrollbar-thumb { background: #8b93a1; border-radius: 8px; }
+.ns-nav::-webkit-scrollbar-thumb:hover { background: #b8bfcb; }
 .ns-nav-footer { position: sticky; bottom: 0; z-index: 2; background: #000000; margin-top: auto; padding: 8px 0 2px; }
