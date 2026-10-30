@@ -1,14 +1,49 @@
 # Medic
 
-Medic is a clinic management system with separate portals for patients, clinical staff (doctors, nurses, and triage nurses), front-desk receptionists, and administrators, plus a public queue/check-in flow and a lobby display screen.
+Medic is a clinic and hospital management system built around one idea: nobody should have to guess where they are in the line, and nobody on staff should have to guess who needs help first. It has separate portals for patients, clinical staff (doctors, nurses, and triage nurses), front-desk receptionists, and administrators, plus a public check-in and queue flow, a lobby display screen, a self-check-in kiosk, and a live vitals feed from a wearable to a bedside monitor.
 
 Feel free to access our website link here `https://the-medic-system.vercel.app`, and read through our README, to get a grasp on what to expect and look out for.
 
 ---
 
+## The Story So Far
+
+Medic has grown in three stages.
+
+**1. The capstone (team FlowState, UWI Mona).** Medic began as our final-year capstone project. The first version, "Medic Hospital", was a queue management system for the emergency department at UWI Hospital (UHWI). Patients join a queue from a symptom form, get a starting priority from A (most urgent) to E (least urgent), and staff run the queue from role-based portals. We wrote a full Software Requirements Specification (SRS) alongside it and talked to two real stakeholders: a public hospital (UWI Hospital) and a private clinic (Dr. Eikens). The capstone team is listed under "Meet the Team" below.
+
+**2. CariSurg MedTech Pathways, with Med AI.** Josiah then took Medic into the CariSurg MedTech Pathways 2026 programme, a 13-week clinical AI engineering intensive based in an emergency department, and worked on it with his CariSurg group. There, the idea behind "Med AI" grew: an AI model that helps spot the most urgent emergency patients (the ESI-1 level, the top of a five-level emergency scale). It is built as a flag that supports a nurse's judgment, not a system that decides on its own. Med AI started from concern for a friend, became a capstone project with supervisory backing, and then a project inside CariSurg. The capstone's queue and hospital system and Med AI's triage work are being combined into one product.
+
+**3. Future Caribbean, solo.** Josiah is now pursuing Medic on his own through Future Caribbean, pitching it as a digital queue and hospital management system that uses AI to support emergency department triage. His strongest asset is a live, fully working demo. As part of that, the project was reorganised from one web app into a set of connected apps that all share one backend (see "Project Structure").
+
+An honest note on where the AI stands today: the automatic A–E priority in this repository is a rule-based starting score (keywords and pain level) that staff can override. The Med AI triage model is the AI layer being combined with it, and is not yet wired into this codebase.
+
+---
+
+## What Medic Aims to Solve
+
+Many emergency departments and clinics still run waiting rooms and triage by hand. In practice that means:
+
+- **Patients can't see where they are in line.** They wait without knowing how long it will take, and ask the front desk over and over.
+- **Staff have no single live picture.** Who is waiting, how urgent each person is, and who has been seen are spread across paper, memory, and separate tools.
+- **Different jobs need different tools.** A receptionist, a nurse, a doctor, and an administrator each need a different view of the same patient, and mixing them creates mistakes (for example, an administrator who can message patients directly, or a receptionist who can see clinical notes).
+- **Double-booking and no-shows waste time.** Two patients get the same slot, or a missed appointment leaves an empty slot nobody fills.
+- **Deterioration can go unnoticed.** A waiting patient's vitals can change with nobody watching.
+
+Medic's answer, point by point:
+
+- **Self check-in.** A walk-in joins the queue without an account (on the web, or at a kiosk or tablet) and gets a starting priority, a queue position, and an estimated wait.
+- **One live view for staff.** Everyone in the queue, sorted by priority, with a lobby screen for the waiting room.
+- **Role-specific portals.** Each role sees only what its job needs.
+- **Schedule protection.** Doctors set their own working hours, bookings can't collide or fall outside those hours, and a no-show frees its slot right away.
+- **Live vitals for triage nurses.** A wearable sends readings that triage nurses watch on a bedside monitor, with out-of-range values flagged.
+- **One connected record.** Consultations, labs, imaging, notes, and billing all link back to each other, so there is always a reason on file for every test.
+
+---
+
 ## Meet the Team
 
-Built by **FlowState**.
+The original capstone was built by **FlowState**.
 
 | Name | ID Number | School Email | Role |
 |---|---|---|---|
@@ -17,36 +52,44 @@ Built by **FlowState**.
 | Josiah-John Green | 620149044 | josiah-john.green@mymona.uwi.edu | Team Lead — Frontend & Backend Development; Stakeholder Liaison, Public Hospital (UWI Hospital) |
 | Willando Blair | 620165358 | willando.blair@mymona.uwi.edu | Frontend & Backend Development; Stakeholder Liaison, Private Clinic (Dr. Eikens) |
 
+Medic is now being taken forward by Josiah-John Green, Founder of 3urek4, as a solo venture through Future Caribbean.
+
 ---
 
 ## Tech Stack
 
-**Frontend**
+**Web apps (portals, kiosk, display, wearable, bedside monitor)**
 - React (Vite)
 - React Router
 - Firebase SDK — Authentication, Firestore, Storage
 - Plain CSS per component (no framework)
 
+**Mobile app (patient)**
+- Expo and React Native (TypeScript), with Expo Router
+- Same Firebase project and same backend as the web portals
+
 **Backend**
-- Flask (Python)
+- Flask (Python), served with Gunicorn
 - Firebase Admin SDK (Firestore, Storage, Auth)
 - SMTP-based email service (queue verification codes, etc.)
 
 **Infrastructure**
 - Firebase Authentication, Firestore, and Storage as the primary data layer
-- Firestore security rules + Storage rules committed alongside the app (`firestore.rules`, `storage.rules`, `firestore.indexes.json`)
-- Frontend deploys to Vercel (`vercel.json`)
-- Backend is Procfile/`render.yaml`-based (Render or any Heroku-style host)
+- Firestore security rules + Storage rules committed alongside the app (`firestore.rules`, `storage.rules`, `firestore.indexes.json`). Rules are not deployed automatically: after changing `firestore.rules`, paste the file into the Firebase console (Firestore Database, then Rules) and publish it.
+- Web frontends deploy to Vercel (`vercel.json` in each app)
+- Backend deploys to Railway from the `main` branch (`Procfile`, root directory `web_app/backend`)
 
 ---
 
 ## Features
 
 - **Public queue & check-in** — join without an account, get auto-triaged (levels A–E) from a symptom intake form, receive a verification code by email, and track a live queue position with an estimated wait time.
+- **Kiosk and handheld check-in** — the same walk-in intake as a self-service screen for a kiosk or a staff tablet, with a "Lookup Code" tab for people already in the queue and a "New Intake" tab for new arrivals.
 - **Lobby display** — an unauthenticated, auto-refreshing TV screen showing who's currently being served and who's waiting, by priority.
-- **Patient portal** — appointments, a connected visual overview of diagnosis/visits/labs, messaging with your care team, a combined documents/lab-results/imaging feed, and notifications.
-- **Staff portal** — a shared portal for doctors, nurses, and triage nurses with role-based permissions (e.g. doctors see only their own appointments; reassigning a doctor or editing appointment details is reserved for nursing/admin). Covers Patients, Appointments, Notes, Documents, Imaging, Labs, and Messaging. Triage nurses get one extra tab — **Vitals** — showing live wearable readings for everyone currently in the queue, with a link out to the standalone bedside-monitor display for a full trend view.
-- **Reception portal** — a separate, narrower front-desk portal: looking up a patient and telling them their queue position, booking appointments, and checking a doctor's booked slots for a day before offering a time (with a conflict check that blocks an exact doctor/date/time double-booking).
+- **Patient portal (web and native app)** — appointments, a connected visual overview of diagnosis/visits/labs, messaging with your care team, a combined documents/lab-results/imaging feed, and notifications.
+- **Staff portal** — a shared portal for doctors, nurses, and triage nurses with role-based permissions (e.g. doctors see only their own appointments; reassigning a doctor or editing appointment details is reserved for nursing/admin). Covers Patients, Appointments, Notes, Documents, Imaging, Labs, Messaging, and Availability.
+- **Triage vitals** — a wearable (simulated for now) sends heart rate, oxygen level, breathing rate, temperature, and blood pressure. Triage nurses see the latest reading for everyone in the queue on a **Vitals** tab, flagged when a value is out of range, and can open a full trend view for one patient on the bedside monitor.
+- **Reception portal** — a separate, narrower front-desk portal: looking up a patient and telling them their queue position, booking appointments, and checking a doctor's booked slots for a day before offering a time.
 - **Doctor availability & double-booking protection** — doctors set their own weekly hours and blocked dates; every appointment booking (staff or reception) is checked against that schedule and existing bookings, and a no-show frees its slot immediately for rebooking.
 - **Consultation-linked records** — labs and imaging can't be created independently; they're always tied back to a specific consultation, so there's always a clinical reason on file for why a test exists.
 - **Admin portal** — a daily operations summary (queue size by priority, patients seen, patient growth), and a Finances section with separate Income/Expense views, filterable by time period/type/patient, plus a pricing table that drives automatic billing when appointments/labs/imaging complete.
@@ -56,31 +99,78 @@ Built by **FlowState**.
 
 ## Project Structure
 
+Medic is a set of small apps that share one backend, so each screen type can be deployed and updated on its own.
+
 ```
 medic/
-├── frontend/
-│   └── src/
-│       ├── assets/          # icons and images (black / inverted variants, etc.)
-│       ├── components/      # shared UI: modals, Calendar, form components, shared record views
-│       ├── contexts/        # AuthContext
-│       ├── display/         # QueueDisplay — the public lobby screen
-│       ├── pages/
-│       │   ├── admin/       # AdminOverview, AdminFinances, AdminPatients, AdminNotifications, AdminSettings, AdminSidebar (no messaging -- see Roles below)
-│       │   ├── auth/        # Login, ForgotPasswordForm, QueueForm
-│       │   ├── patient/     # PatientOverview, PatientAppointments, PatientMessaging, PatientDocuments, PatientNotifications, PatientSettings, PatientSidebar
-│       │   ├── staff/       # NurseOverview, NursePatients, NurseAppointments, NurseAvailability, NurseMessaging, NurseNotes, NurseDocuments, NurseImaging, NurseLabs, NurseNotifications, NurseSettings, NurseSidebar -- shared by doctor, nurse, and triage roles
-│       │   ├── triage/      # TriageVitals -- the one page triage nurses get beyond the shared staff/* pages above
-│       │   └── reception/   # StaffOverview, StaffPatients, StaffAppointments, StaffSettings, StaffSidebar -- the receptionist's own, narrower page set
-│       └── services/        # one file per Firestore collection/concern — appointmentService, availabilityService, patientService, labService, imagingService, noteService, documentService, messagingService, notificationService, billingService, pricingService, queueService, staffService, activityService, reportService, authService, firebase.js, api.js
+├── web_app/
+│   ├── frontend/            # the main web site: patient, staff, triage, reception, and admin portals
+│   │   └── src/
+│   │       ├── assets/      # icons and images (black / inverted variants, etc.)
+│   │       ├── components/  # shared UI: modals, Calendar, form components, shared record views
+│   │       ├── contexts/    # AuthContext
+│   │       ├── pages/
+│   │       │   ├── admin/       # AdminOverview, AdminFinances, AdminPatients, AdminNotifications, AdminSettings, AdminSidebar (no messaging; see Roles at a Glance)
+│   │       │   ├── auth/        # Login, ForgotPasswordForm, QueueForm
+│   │       │   ├── patient/     # PatientOverview, PatientAppointments, PatientMessaging, PatientDocuments, PatientNotifications, PatientSettings, PatientSidebar
+│   │       │   ├── staff/       # NurseOverview, NursePatients, NurseAppointments, NurseAvailability, NurseMessaging, NurseNotes, NurseDocuments, NurseImaging, NurseLabs, NurseNotifications, NurseSettings, NurseSidebar -- shared by doctor, nurse, and triage roles
+│   │       │   ├── triage/      # TriageVitals -- the one page triage nurses get beyond the shared staff pages above
+│   │       │   └── reception/   # StaffOverview, StaffPatients, StaffAppointments, StaffSettings, StaffSidebar -- the receptionist's own, narrower page set
+│   │       └── services/    # one file per Firestore collection/concern — appointmentService, availabilityService, patientService, labService, imagingService, noteService, documentService, messagingService, notificationService, billingService, pricingService, queueService, staffService, activityService, reportService, authService, firebase.js, api.js
+│   └── backend/             # the one backend every app talks to
+│       └── app/
+│           ├── assets/      # icons, stores
+│           ├── config/      # firebase.py, smtp.py
+│           ├── middleware/  # authRequired.py, roleRequired.py
+│           ├── routes/      # admin.py, auth.py, health.py, patient_linking.py, queue.py, staff.py, user.py, vitals.py
+│           └── utils/       # emailTemplates.py, passwordReset.py, triage.py
 │
-└── backend/
-    └── app/
-        ├── assets/          # icons, stores
-        ├── config/          # firebase.py, smtp.py
-        ├── middleware/      # authRequired.py, roleRequired.py
-        ├── routes/          # admin.py, auth.py, health.py, patient_linking.py, queue.py, staff.py, user.py
-        └── utils/           # emailTemplates.py, passwordReset.py, triage.py
+├── display/                 # the public lobby screen (its own app, port 5174)
+├── kiosk_handheld/          # walk-in self check-in for kiosks and tablets (port 5175)
+├── wearable/                # simulated wearable that sends vitals (port 5176)
+├── bedside_monitor/         # live vitals screen for triage nurses (port 5177)
+└── mobile_app/              # native patient app (Expo), same Firebase project and backend
 ```
+
+---
+
+## Roles at a Glance
+
+| Role | Where they land after login | What they can do |
+|---|---|---|
+| Patient | `/patient/*` (or the mobile app) | Own appointments, records, messaging with their care team, notifications |
+| Doctor | `/staff/*` | Own appointments, patients, notes, documents, imaging, labs, messaging, own Availability |
+| Nurse | `/staff/*` | Everything a doctor has, plus all appointments and reassigning doctors |
+| Triage nurse | `/staff/*` | Everything a nurse has, plus the **Vitals** tab and the bedside monitor |
+| Receptionist | `/reception/*` | Queue position lookups, patient lookup, booking appointments, doctor availability, marking no-shows |
+| Admin | `/admin/*` | Operations summary, finances, patient records. No direct patient messaging (it is a business role, not a clinical one) |
+
+An admin assigns roles from the user-management flow (or with `PUT /api/admin/users/assign-role`).
+
+---
+
+## Running It Locally
+
+Each app is run from its own folder. First time only, run `npm install`; after that, `npm run dev`.
+
+| App | Folder | Address |
+|---|---|---|
+| Main web site | `web_app/frontend` | `http://localhost:5173` |
+| Lobby display | `display` | `http://localhost:5174` |
+| Kiosk / tablet check-in | `kiosk_handheld` | `http://localhost:5175` |
+| Wearable simulator | `wearable` | `http://localhost:5176` |
+| Bedside monitor | `bedside_monitor` | `http://localhost:5177` |
+| Native patient app | `mobile_app` | `npx expo start`, then press `i` for the iOS simulator or scan the QR code in Expo Go |
+
+**Backend:** `cd web_app/backend`, activate the virtual environment (`source venv/bin/activate`), then `python run.py`. It listens on port 5001. Each app points at a backend through its `.env` file (`VITE_PUBLIC_API_URL` for the web apps, `EXPO_PUBLIC_API_URL` for the mobile app).
+
+**Allowed origins:** the backend only accepts requests from addresses listed in its `ALLOWED_ORIGINS` setting. Add each app's address (local or deployed) there, or the browser will block its requests.
+
+**Trying the vitals feature end to end:**
+1. Check someone in through the kiosk (or the web queue form).
+2. Copy that queue entry's ID (the document ID in the `queueEntries` collection in Firestore).
+3. Open the wearable app, paste the ID, pick Normal, Elevated or Critical, and press Start.
+4. Open the bedside monitor with `?entry=<that id>` on the end of its address, or open the **Vitals** tab as a triage nurse.
 
 ---
 
@@ -93,15 +183,13 @@ medic/
 | Receptionist | `receptionist@medic.com` | `password123` |
 | Admin | `admin@medic.com` | `password123` |
 
-A **TriageNurse** account can be created the same way as any other — an admin assigns the `triage` role from the Admin Patients/Users flow (or via `PUT /api/admin/users/assign-role`) — there's no seeded demo account for it yet.
+There is no seeded triage nurse account yet. To try one, have an admin change a test user's role to `triage`.
 
 Log in through the normal sign-in screen — the system reads each account's role and routes you to the correct portal automatically (patient → `/patient/*`, doctor/nurse/triage → `/staff/*`, receptionist → `/reception/*`, admin → `/admin/*`).
 
 ## Lobby Display
 
-`https://the-medic-system.vercel.app/display`
-
-This is a public, unauthenticated screen meant to run full-screen on a physical TV in a waiting room — it shows who's currently being served and who's waiting, colored by triage priority. It doesn't require login and refreshes on its own every few seconds.
+This is a public, unauthenticated screen meant to run full-screen on a physical TV in a waiting room — it shows who's currently being served and who's waiting, colored by triage priority. It doesn't require login and refreshes on its own every few seconds. It lives in the `display/` folder and is deployed as its own site (it is no longer a page inside the main web app).
 
 ---
 
@@ -116,7 +204,9 @@ Log in as the patient account above.
 - **Notifications** — messages, appointment reminders, and "your results are ready" alerts land here, with a live unread-count badge in the sidebar.
 - **Settings** — turn notification categories on/off, and change your password.
 
-## What to Expect: Staff Portal (Doctor / Nurse / TriageNurse)
+The native app (`mobile_app`) gives patients the same Overview, Appointments, Messaging, Documents, and Profile screens on a phone. Its Overview shows the same information as a simple scrolling list instead of the web version's draggable diagram, which suits a touch screen better.
+
+## What to Expect: Staff Portal (Doctor / Nurse / Triage Nurse)
 
 Log in as the doctor account above — the portal is the same for doctor, nurse, and triage roles, with a few permissions that differ by role (noted below). Receptionist has moved to its own portal — see "Reception Portal" below.
 
@@ -128,7 +218,7 @@ Log in as the doctor account above — the portal is the same for doctor, nurse,
   - Every appointment must be linked to a real patient record — there's no free-text "just type a name" option anymore.
   - Booking (from either the staff or reception portal) is checked against the assigned doctor's declared Availability and existing bookings first, and is blocked on an exact double-booking or a time outside that doctor's working hours. Marking an appointment **No-show** frees its slot immediately — the check only treats `scheduled`/`confirmed` appointments as taken, so a receptionist can mark a no-show and rebook that same slot for someone else right away.
 - **Messaging** — same messaging system as the patient side, from the staff perspective: a full conversation list, plus a quick-info panel on the right showing that patient's current diagnosis and medications, with shortcuts to their Notes/Documents/Labs/Imaging.
-- **Vitals** *(TriageNurse only)* — every active queue entry alongside its latest wearable reading (heart rate, SpO2, resp. rate, temp, blood pressure), flagged when a value is outside normal range, with a link out to the standalone bedside-monitor app for the full trend-line view of one patient.
+- **Vitals** *(Triage nurse only)* — every active queue entry alongside its latest wearable reading (heart rate, SpO2, resp. rate, temp, blood pressure), flagged when a value is outside normal range, with a link out to the standalone bedside-monitor app for the full trend-line view of one patient.
 - **Availability** — a doctor sets their own weekly working hours and any blocked (vacation/unavailable) dates; nurse/admin/triage get a doctor picker to manage it on someone's behalf. This is what every appointment booking now checks before going through.
 - **Notes / Documents / Imaging / Labs** — each of these is its own tab with a searchable list and an "Add" flow. Labs and Imaging both require linking to a specific consultation (same reasoning as above — a test doesn't exist independently of the visit that ordered it); Notes and Documents don't have that requirement, since they're not "ordered tests."
   - **Labs** has a full library of common test types (vitals, blood panels, imaging-as-a-test, cardiac, microbiology, etc.), each with its own relevant result fields, plus a "Custom" option for anything not on the list.
@@ -157,6 +247,6 @@ Log in as the admin account above.
 - **Patients** — same directory as the staff portal. (Admin deliberately has no direct patient-messaging — it's an HR/finance-facing role, not a clinical one.)
 - **Notifications / Settings** — same pattern as the other portals.
 
-## What to Expect: Public Queue (No Login Required)
+## What to Expect: Public Queue and Kiosk (No Login Required)
 
-Anyone can join the queue without an account by filling out the intake form, which asks about symptoms, pain level, and history. Based on that, they're automatically assigned a starting triage priority (A–E) and emailed a 6-digit code. Entering that code (or searching by name/DOB/phone if the code is lost) puts them in the live queue with a running position and estimated wait time. Staff can override the automatic triage level once they've actually assessed the patient.
+Anyone can join the queue without an account by filling out the intake form, which asks about symptoms, pain level, and history — on the web, or at the kiosk/handheld app. Based on that, they're automatically assigned a starting triage priority (A–E) and emailed a 6-digit code. Entering that code (or searching by name/DOB/phone if the code is lost) puts them in the live queue with a running position and estimated wait time. Staff can override the automatic triage level once they've actually assessed the patient.
