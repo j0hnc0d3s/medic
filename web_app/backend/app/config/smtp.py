@@ -106,10 +106,7 @@ class EmailService:
             traceback.print_exc()
             
             # Try SendGrid or SMTP as fallback
-            if self.sendgrid_api_key:
-                print("🔄 Falling back to SendGrid...")
-                return self._send_via_sendgrid(to_email, subject, html_content)
-            elif self.smtp_username and self.smtp_password:
+            if self.smtp_username and self.smtp_password:
                 print("🔄 Falling back to Gmail SMTP...")
                 return self._send_via_smtp(to_email, subject, html_content)
             

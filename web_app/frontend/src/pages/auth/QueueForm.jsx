@@ -11,7 +11,7 @@
 // Step 7  : Review           (accordion summary)
 // ─────────────────────────────────────────────────────────
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import './QueueForm.css'
 
 import left  from '../../assets/black/left.png'
@@ -372,7 +372,7 @@ export function QueueJoinForm({ onStepChange }) {
       })
       const data = await response.json()
       if (!response.ok || !data.success) throw new Error(data.error || 'Something went wrong submitting your information.')
-      navigate('/queue/confirmation', { state: { queueEntryId: data.data.queueEntryId } })
+      navigate('/queue/confirmation', { state: { queueEntryId: data.data.queueEntryId, emailSent: data.data.emailSent } })
     } catch (err) {
       setSubmitError(err.message)
     } finally {
@@ -1037,6 +1037,8 @@ function QueueWaitingScreen({ appointment, onExit }) {
 //  stage: 'code' | 'find' | 'waiting'
 // ══════════════════════════════════════════════════════════
 export function QueueCodeForm() {
+  const location = useLocation()
+  const emailFailed = location.state?.emailSent === false
   const inputRefs = useRef([])
   const [stage,   setStage]   = useState('code')
   const [digits,  setDigits]  = useState(Array(6).fill(''))
@@ -1115,8 +1117,10 @@ export function QueueCodeForm() {
     <div className="qf-code">
       <h3 className="qf-code-heading">Enter your code</h3>
       <p className="qf-code-sub">
-        We sent a 6-digit code to your email.{' '}
-        <span className="qf-code-sub-blue">Enter it below to join the queue.</span>
+        {emailFailed
+          ? "We couldn't send the code to your email. Check the address you entered, or use the search link below."
+          : 'We sent a 6-digit code to your email.'}{' '}
+        <span className="qf-code-sub-blue">{emailFailed ? '' : 'Enter it below to join the queue.'}</span>
       </p>
       <div className="qf-digits">
         <div className="qf-digit-group qf-digit-group--active">
