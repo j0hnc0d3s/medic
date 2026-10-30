@@ -18,7 +18,7 @@
 .av-card { background: #fff; border-radius: 16px; padding: 20px 22px; }
 .av-card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 4px; }
 .av-card-sub { font-size: 12px; color: #6b7280; margin: 0 0 14px; }
-.av-note { font-size: 12px; color: #92400e; background: #fef3c7; border-radius: 10px; padding: 8px 12px; margin: 0 0 14px; }
+.av-note { font-size: 12px; color: #1a56db; background: #e8f0fe; border-radius: 10px; padding: 8px 12px; margin: 0 0 14px; }
 
 .av-week { display: flex; flex-direction: column; gap: 10px; }
 .av-day-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f1f3f5; }
@@ -33,10 +33,10 @@
 .av-add-date input { padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e7eb; font-size: 12px; }
 
 .av-date-list { display: flex; flex-wrap: wrap; gap: 8px; }
-.av-date-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #92400e; background: #fef3c7; padding: 5px 10px; border-radius: 20px; }
-.av-date-chip button { border: none; background: transparent; color: #92400e; font-size: 14px; cursor: pointer; line-height: 1; padding: 0; }
+.av-date-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #1a56db; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; }
+.av-date-chip button { border: none; background: transparent; color: #1a56db; font-size: 14px; cursor: pointer; line-height: 1; padding: 0; }
 
 .av-footer { display: flex; justify-content: flex-end; }
 .av-btn { font-size: 13px; font-weight: 600; border-radius: 20px; padding: 10px 20px; cursor: pointer; border: none; }
-.av-btn--primary { background: #1F4788; color: #fff; }
-.av-btn--secondary { background: #fff; color: #2D9C9C; border: 1px solid #2D9C9C; }
+.av-btn--primary { background: #1a56db; color: #fff; }
+.av-btn--secondary { background: #fff; color: #1a56db; border: 1px solid #1a56db; }

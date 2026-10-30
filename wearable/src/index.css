@@ -1,23 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* Medic palette: blue and white, with black and grey accents */
-  --ink: #111827;
-  --ink-soft: #4b5563;
-  --paper: #f3f4f6;
+  --ink: #1e293b;
+  --ink-soft: #6b7280;
+  --paper: #e9eaec;
   --surface: #ffffff;
   --border: #e5e7eb;
   --blue: #1a56db;
-  --blue-dark: #0b0d12;
-  --blue-deep: #0b0d12;
+  --blue-dark: #1e1e1e;
+  --blue-deep: #1e1e1e;
   --on-dark: #f9fafb;
   --on-dark-soft: #9ca3af;
   --grey-strong: #374151;
   --grey-soft: #e5e7eb;
   --danger: #dc2626;
-  --radius-lg: 22px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 50px;
+  --field-bg: #f1f1f1;
 }
 
 * { box-sizing: border-box; }
@@ -30,14 +31,14 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Poppins', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3 {
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-weight: 600;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-weight: 700;
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -96,7 +97,7 @@ a:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Source Serif 4', serif;
+  font-family: 'Poppins', system-ui, sans-serif;
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -112,7 +113,7 @@ a:focus-visible {
   max-width: 460px;
   background: var(--surface);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -229,19 +230,21 @@ a:focus-visible {
 .field-group select,
 .field-group textarea {
   width: 100%;
-  padding: 15px 16px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 1rem;
+  padding: 16px 20px;
+  border: 1.5px solid transparent;
+  border-radius: 25px;
+  font-size: 0.95rem;
   color: var(--ink);
-  background: var(--surface);
-  transition: border-color 0.15s ease;
+  background: var(--field-bg);
+  transition: all 0.3s ease;
 }
 
 .field-group input:focus,
 .field-group select:focus,
 .field-group textarea:focus {
   border-color: var(--blue);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
   outline: none;
 }
 
@@ -326,13 +329,13 @@ a:focus-visible {
   width: 100%;
   padding: 17px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 50px;
   background: var(--blue);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1rem;
-  letter-spacing: 0.01em;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.3);
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
 }
 
 .btn-primary:disabled {
@@ -341,7 +344,11 @@ a:focus-visible {
 }
 
 .btn-primary:not(:disabled):hover {
-  background: #1e40af;
+  background: #0052cc;
+}
+
+.btn-primary:not(:disabled):active {
+  transform: scale(0.98);
 }
 
 .btn-primary.on-dark {

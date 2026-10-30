@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /*
   Bedside monitor, in the Medic palette: blue and white, with black and
@@ -8,13 +8,13 @@
 
 :root {
   --blue: #1a56db;
-  --bg: #f3f4f6;
+  --bg: #e9eaec;
   --panel: #ffffff;
   --panel-border: #e5e7eb;
-  --text: #111827;
+  --text: #1e293b;
   --text-dim: #6b7280;
   --hr: #1a56db;
-  --spo2: #111827;
+  --spo2: #1e293b;
   --resp: #6b7280;
   --temp: #3b82f6;
   --bp: #1e3a8a;
@@ -30,7 +30,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Poppins', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -66,9 +66,9 @@ button:focus-visible, input:focus-visible {
   width: 100%;
   max-width: 420px;
   background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  padding: 28px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  padding: 32px;
 }
 
 .pair-card h1 {
@@ -86,10 +86,10 @@ button:focus-visible, input:focus-visible {
 
 .pair-card input {
   width: 100%;
-  padding: 14px 15px;
-  border-radius: 10px;
-  border: 1.5px solid var(--panel-border);
-  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: 25px;
+  border: 1.5px solid transparent;
+  background: #f1f1f1;
   color: var(--text);
   font-size: 0.95rem;
   margin-bottom: 14px;
@@ -97,12 +97,13 @@ button:focus-visible, input:focus-visible {
 
 .pair-card button {
   width: 100%;
-  padding: 14px;
+  padding: 15px;
   border: none;
-  border-radius: 10px;
+  border-radius: 50px;
   background: var(--blue);
   color: #ffffff;
-  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.3);
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
@@ -191,9 +192,10 @@ button:focus-visible, input:focus-visible {
 
 .vital-block {
   background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  padding: 18px 20px;
+  border: 1px solid transparent;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   min-height: 150px;
