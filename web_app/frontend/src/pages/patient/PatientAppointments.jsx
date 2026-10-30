@@ -106,7 +106,7 @@ export default function PatientAppointments() {
             ))}
 
             {filtered.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, padding: '40px 0' }}>
+              <p className="no-empty-state">
                 No {filterDate === 'all' ? '' : filterDate} appointments found.
               </p>
             )}
