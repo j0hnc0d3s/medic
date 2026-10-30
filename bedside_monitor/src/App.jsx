@@ -27,10 +27,10 @@ export default function App() {
     setPairing(true)
     setPairError('')
     try {
-      const data = await vitalsApi.latest(target)
+      const data = await vitalsApi.resolve(target)
       setPatient({ name: data.patient, queueId: data.queueId, room: data.room })
+      setEntryId(data.entryId)
       setPaired(true)
-      setEntryId(target)
     } catch (err) {
       setPairError(err.message)
     } finally {
@@ -92,11 +92,11 @@ export default function App() {
       <div className="pair-shell">
         <div className="pair-card">
           <h1>Pair bedside monitor</h1>
-          <p>Enter the patient's queue entry ID to display their live vitals from the paired wearable.</p>
+          <p>Enter the patient's queue code (for example A012) to display their live vitals from the paired wearable.</p>
           {pairError && <div className="pair-error">{pairError}</div>}
           <input
             type="text"
-            placeholder="e.g. 8f3a1c2e-..."
+            placeholder="e.g. A012"
             value={entryId}
             onChange={(e) => setEntryId(e.target.value)}
             autoComplete="off"

@@ -5,7 +5,8 @@ import { SCENARIOS, seedReading, stepReading, round } from './simulate.js'
 const TICK_MS = 2500
 
 export default function App() {
-  const [entryId, setEntryId] = useState('')
+  const [code, setCode] = useState('') // what the nurse types: queue code (A012) or full id
+  const [entryId, setEntryId] = useState('') // resolved channel id used for streaming
   const [connected, setConnected] = useState(null) // { patient, queueId } once verified
   const [connectError, setConnectError] = useState('')
   const [connecting, setConnecting] = useState(false)
@@ -24,11 +25,12 @@ export default function App() {
 
   const handleConnect = async (e) => {
     e.preventDefault()
-    if (!entryId.trim() || connecting) return
+    if (!code.trim() || connecting) return
     setConnecting(true)
     setConnectError('')
     try {
-      const data = await vitalsApi.checkChannel(entryId.trim())
+      const data = await vitalsApi.resolve(code)
+      setEntryId(data.entryId)
       setConnected({ patient: data.patient, queueId: data.queueId })
     } catch (err) {
       setConnectError(err.message)
@@ -44,13 +46,14 @@ export default function App() {
     setReading(null)
     setLog([])
     setEntryId('')
+    setCode('')
   }
 
   const pushTick = async () => {
     const next = round(stepReading(readingRef.current, scenarioRef.current))
     setReading(next)
     try {
-      await vitalsApi.push(entryId.trim(), next)
+      await vitalsApi.push(entryId, next)
       setLog((l) => [{ ok: true, time: new Date(), hr: next.heartRate }, ...l].slice(0, 8))
     } catch (err) {
       setLog((l) => [{ ok: false, time: new Date(), error: err.message }, ...l].slice(0, 8))
@@ -87,23 +90,23 @@ export default function App() {
           <div className="channel-card">
             <h1 style={{ fontSize: '1.4rem' }}>Pair this device</h1>
             <p style={{ color: 'var(--ink-soft)', fontSize: '0.92rem', marginTop: '8px', lineHeight: 1.5 }}>
-              Enter the patient's queue entry ID to start streaming simulated vitals for them.
-              This is the same ID assigned at check-in.
+              Enter the patient's queue code (for example A012) to start streaming
+              simulated vitals for them. It's the code they were given when they joined the queue.
             </p>
             <form onSubmit={handleConnect} style={{ marginTop: '20px' }}>
               <div className="field-group">
-                <label htmlFor="entryId">Queue entry ID</label>
+                <label htmlFor="queueCode">Queue code</label>
                 <input
-                  id="entryId"
+                  id="queueCode"
                   type="text"
-                  placeholder="e.g. 8f3a1c2e-..."
-                  value={entryId}
-                  onChange={(e) => setEntryId(e.target.value)}
+                  placeholder="e.g. A012"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
                   autoComplete="off"
                 />
               </div>
               {connectError && <div className="banner error">{connectError}</div>}
-              <button className="btn-primary" type="submit" disabled={connecting || !entryId.trim()}>
+              <button className="btn-primary" type="submit" disabled={connecting || !code.trim()}>
                 {connecting ? <span className="spinner" /> : 'Connect'}
               </button>
             </form>

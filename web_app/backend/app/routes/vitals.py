@@ -2,9 +2,9 @@
 #
 # Live vitals telemetry. A wearable device (real or simulated) pushes
 # readings for a specific patient, identified by the same queueEntries id
-# used everywhere else in the queue flow — so "pairing" a wearable or a
-# bedside monitor to a patient is just entering/scanning that id, same as
-# how the kiosk already ties a patient to that id at intake.
+# used everywhere else in the queue flow. Staff pair a wearable or bedside
+# monitor by typing the patient's short queue code (e.g. A012), which
+# /api/vitals/lookup turns into that id. The full id still works too.
 #
 # No staff auth on ingest/latest: a wearable or bedside monitor is a
 # device at the bedside, not a logged-in staff member. The channel id
@@ -12,6 +12,7 @@
 from flask import request, jsonify
 from datetime import datetime, timezone
 import logging
+import re
 
 from app.config.firebase import get_db
 
@@ -19,6 +20,19 @@ logger = logging.getLogger(__name__)
 
 VITALS_HISTORY_LIMIT_DEFAULT = 30
 VITALS_HISTORY_LIMIT_MAX = 200
+
+ACTIVE_STATUSES = ('queued', 'called', 'in_progress')
+QUEUE_CODE_RE = re.compile(r'^([A-Z])(\d{1,4})$')
+
+
+def _normalise_queue_code(raw):
+    """'a1', 'A-001', 'a 001' -> 'A001'. Returns None if it isn't a queue code."""
+    cleaned = re.sub(r'[\s-]', '', (raw or '')).upper()
+    m = QUEUE_CODE_RE.match(cleaned)
+    if not m:
+        return None
+    return f"{m.group(1)}{m.group(2).zfill(3)}"
+
 
 VITAL_FIELDS = [
     'heartRate', 'spo2', 'respRate', 'tempF', 'systolicBP', 'diastolicBP',
@@ -71,6 +85,53 @@ def register_routes(app):
         except Exception as e:
             logger.error(f"❌ Vitals ingest error: {str(e)}")
             return jsonify({'success': False, 'error': 'Failed to record vitals'}), 500
+
+    # =====================================================================
+    # PUBLIC-ish: turn a short queue code (e.g. A012) into the channel id,
+    # so a nurse can pair a wearable / bedside monitor without typing the
+    # long entry id. Only ACTIVE entries match (queued / called / in
+    # progress). Queue codes restart every day, so if an old entry somehow
+    # still looks active, the most recently queued one wins.
+    # =====================================================================
+    @app.route('/api/vitals/lookup', methods=['GET', 'OPTIONS'])
+    def vitals_lookup():
+        if request.method == 'OPTIONS':
+            return ('', 204)
+        try:
+            code = _normalise_queue_code(request.args.get('code'))
+            if not code:
+                return jsonify({'success': False, 'error': "That doesn't look like a queue code. Codes look like A012."}), 400
+
+            db = get_db()
+            matches = [
+                d for d in db.collection('queueEntries').where('queueNumber', '==', code).stream()
+                if (d.to_dict() or {}).get('status') in ACTIVE_STATUSES
+            ]
+            if not matches:
+                return jsonify({
+                    'success': False,
+                    'error': f'No active patient with queue code {code}. Check the code, and make sure the patient has been verified and queued.',
+                }), 404
+
+            def queued_at(doc):
+                v = (doc.to_dict() or {}).get('queuedAt')
+                return v.timestamp() if hasattr(v, 'timestamp') else 0
+
+            doc = max(matches, key=queued_at)
+            data = doc.to_dict()
+            return jsonify({
+                'success': True,
+                'data': {
+                    'entryId': doc.id,
+                    'patient': data.get('fullName'),
+                    'queueId': data.get('queueNumber'),
+                    'room': data.get('assignedRoom'),
+                },
+            }), 200
+
+        except Exception as e:
+            logger.error(f"❌ Vitals lookup error: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to look up queue code'}), 500
 
     # =====================================================================
     # PUBLIC-ish: most recent reading for a patient (bedside monitor poll)

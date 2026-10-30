@@ -123,6 +123,7 @@ export default function TriageVitals() {
                     <div>
                       <p className="tv-name">{entry.fullName || 'Unnamed patient'}</p>
                       <p className="tv-meta">
+                        {entry.queueNumber ? `Code ${entry.queueNumber} · ` : ''}
                         {entry.priorityLetter ? `Priority ${entry.priorityLetter}` : 'Priority —'}
                         {entry.room ? ` · ${entry.room}` : ''}
                       </p>

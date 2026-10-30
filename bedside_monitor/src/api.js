@@ -22,4 +22,15 @@ export const vitalsApi = {
   history(entryId, limit = 30) {
     return request(`/api/vitals/${entryId}/history?limit=${limit}`)
   },
+
+  // Accepts a short queue code (e.g. A012) or a full entry id, and returns
+  // { entryId, patient, queueId, room } for a known, active patient.
+  async resolve(input) {
+    const value = input.trim()
+    if (/^[A-Za-z]\s*-?\s*\d{1,4}$/.test(value)) {
+      return request(`/api/vitals/lookup?code=${encodeURIComponent(value)}`, { method: 'GET' })
+    }
+    const data = await request(`/api/vitals/${encodeURIComponent(value)}/latest`, { method: 'GET' })
+    return { ...data, entryId: value }
+  },
 }
