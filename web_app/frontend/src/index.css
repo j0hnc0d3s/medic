@@ -436,3 +436,21 @@ label {
 .slide-up {
   animation: slideUp var(--transition-base);
 }
+
+/* ─── Empty-state message ("No labs found." etc.) ─────────────────
+   Fills the list area and centres the message in the middle of it,
+   both across and down, instead of leaving it stuck near the top.   */
+.no-empty-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 55vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  padding: 24px;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+}

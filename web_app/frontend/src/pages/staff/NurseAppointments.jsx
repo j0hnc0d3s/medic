@@ -455,7 +455,7 @@ export default function NurseAppointments() {
             ))}
 
             {filtered.length === 0 && !loading && (
-              <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: 13, padding: '40px 0' }}>
+              <p className="no-empty-state">
                 {isDoctor
                   ? `No appointments found for ${doctorName}.`
                   : 'No appointments found.'}
