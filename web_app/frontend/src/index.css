@@ -438,12 +438,12 @@ label {
 }
 
 /* ─── Empty-state message ("No labs found." etc.) ─────────────────
-   Fills the list area and centres the message in the middle of it,
-   both across and down, instead of leaving it stuck near the top.   */
+   Pinned to the true middle of the page's main area (every page
+   that uses it wraps its content in .no-main, which is position:
+   relative). pointer-events:none so it never blocks the toolbar. */
 .no-empty-state {
-  grid-column: 1 / -1;
-  width: 100%;
-  min-height: 55vh;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,4 +453,5 @@ label {
   color: #9ca3af;
   font-size: 14px;
   font-weight: 500;
+  pointer-events: none;
 }
