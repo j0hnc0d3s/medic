@@ -28,9 +28,16 @@ def _normalize_phone(phone):
     """Strip everything except digits so +1 (876) 123-4567 and 8761234567 match."""
     return ''.join(c for c in (phone or '') if c.isdigit())
 
+# Jamaica is UTC-5 all year (no daylight saving). Using it for the "day" means the
+# numbering restarts at local midnight, not at 7 PM local time like UTC would.
+JAMAICA_TZ = timezone(timedelta(hours=-5))
+
+
 def _next_queue_number(db, letter: str) -> str:
-    today_key = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    counter_ref = db.collection('queueCounters').document(f'{today_key}_{letter}')
+    """One counter per day, shared by every priority letter, so each code is unique
+    for the day and always counts up: A001, C002, B003, A004 ..."""
+    today_key = datetime.now(JAMAICA_TZ).strftime('%Y-%m-%d')
+    counter_ref = db.collection('queueCounters').document(f'{today_key}_all')
 
     @transactional
     def bump(transaction, ref):
