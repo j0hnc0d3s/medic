@@ -1,8 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
 
+html, body { margin: 0; }
+
 .qd-shell {
-  min-height: 100vh; background: #e9eaec; color: #1e293b; font-family: 'Poppins', sans-serif;
-  padding: 48px 64px; display: flex; flex-direction: column; gap: 48px;
+  height: 100vh; box-sizing: border-box; background: #e9eaec; color: #1e293b; font-family: 'Poppins', sans-serif;
+  padding: 40px 64px 28px; display: flex; flex-direction: column; gap: 32px;
   position: relative; overflow: hidden;
 }
 
@@ -22,7 +24,7 @@
 
 .qd-error { color: #f59e0b; font-size: 14px; position: relative; z-index: 1; }
 
-.qd-content { flex: 1; display: flex; flex-direction: column; gap: 32px; }
+.qd-content { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 32px; padding: 6px 4px 12px; }
 
 .qd-now-row { display: flex; flex-wrap: wrap; gap: 20px; }
 .qd-waiting-grid { display: flex; flex-wrap: wrap; gap: 20px; align-content: flex-start; }
@@ -39,10 +41,10 @@
 
 .qd-empty { color: #9ca3af; font-size: 16px; }
 
-.qd-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+.qd-footer { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(12,13,16,0.08); }
 .qd-legend { display: flex; gap: 10px; flex-wrap: wrap; }
 .qd-legend-item {
-  color: #fff; font-size: 11px; font-weight: 700; padding: 8px 16px; border-radius: 50px;
+  color: #fff; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 50px;
 }
 
 .qd-watermark { font-size: 16px; font-weight: 800; color: rgba(12,13,16,0.15); }
