@@ -8,7 +8,7 @@
 
 .ns-settings-title { font-size: 28px; font-weight: 700; color: #1e293b; margin: 0 0 24px; }
 
-.ns-settings-grid { display: flex; flex-direction: column; gap: 20px; max-width: 640px; }
+.ns-settings-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: none; }
 
 .ns-settings-card { background: #fff; border-radius: 28px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
 .ns-settings-card-title { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 4px; }

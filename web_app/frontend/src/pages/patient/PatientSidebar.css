@@ -343,3 +343,20 @@
 .ns-nav::-webkit-scrollbar-thumb { background: #8b93a1; border-radius: 8px; }
 .ns-nav::-webkit-scrollbar-thumb:hover { background: #b8bfcb; }
 .ns-nav-footer { position: sticky; bottom: 0; z-index: 2; background: #000000; margin-top: auto; padding: 8px 0 2px; }
+
+/* ══════════════════════════════════════════════════════════
+   Selected-patient panel must never cover the menu tabs.
+   Layout rules: the blue list keeps a minimum height, the dark
+   panel and the menu keep their own size, and if the window is
+   too short for all three the whole sidebar scrolls instead of
+   letting them overlap. The panel is also a bit more compact.
+══════════════════════════════════════════════════════════ */
+.ns-shell { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #8b93a1 transparent; }
+.ns-shell::-webkit-scrollbar { width: 6px; }
+.ns-shell::-webkit-scrollbar-thumb { background: #8b93a1; border-radius: 6px; }
+.ns-patients { flex: 1 1 0; min-height: 130px; }
+.ns-detail { flex: 0 0 auto; position: relative; padding: 14px 18px 12px; gap: 10px; }
+.ns-detail-page { gap: 10px; }
+.ns-stat-box { padding: 10px 14px; border-radius: 22px; gap: 3px; }
+.ns-nav { flex: 0 0 auto; }
+.ns-detail ~ .ns-nav { min-height: 0; max-height: max(220px, 45vh); }

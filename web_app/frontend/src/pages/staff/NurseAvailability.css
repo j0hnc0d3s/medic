@@ -13,7 +13,7 @@
 .av-empty, .av-empty-sm { color: #9ca3af; font-size: 13px; }
 .av-empty-sm { margin: 4px 0; }
 
-.av-grid { display: flex; flex-direction: column; gap: 16px; max-width: 560px; }
+.av-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: none; }
 
 .av-card { background: #fff; border-radius: 16px; padding: 20px 22px; }
 .av-card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 4px; }
