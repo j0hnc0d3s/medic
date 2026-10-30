@@ -1,25 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 /*
-  Bedside clinical monitors are black-background, bright-channel-color
-  instruments by convention (ECG green, SpO2 cyan, resp yellow) — this app
-  mimics that real instrument genre deliberately, not the Medic product's
-  patient-facing paper/teal look used in kiosk_handheld and wearable.
+  Bedside monitor, in the Medic palette: blue and white, with black and
+  grey accents. Each vital keeps its own tone so it can be told apart at a
+  glance, but red is kept only for out-of-range alerts.
 */
 
 :root {
-  --bg: #050807;
-  --panel: #0c1210;
-  --panel-border: #1c2522;
-  --text: #e9efec;
-  --text-dim: #7c8d87;
-  --hr: #3ee87a;
-  --spo2: #3fc7f4;
-  --resp: #f2c94c;
-  --temp: #f28c4c;
-  --bp: #f2f2f2;
-  --alert: #ff5a52;
-  --ok: #3ee87a;
+  --blue: #1a56db;
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --panel-border: #e5e7eb;
+  --text: #111827;
+  --text-dim: #6b7280;
+  --hr: #1a56db;
+  --spo2: #111827;
+  --resp: #6b7280;
+  --temp: #3b82f6;
+  --bp: #1e3a8a;
+  --alert: #dc2626;
+  --ok: #1a56db;
 }
 
 * { box-sizing: border-box; }
@@ -44,7 +44,7 @@ button, input {
 }
 
 button:focus-visible, input:focus-visible {
-  outline: 2px solid var(--spo2);
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -89,7 +89,7 @@ button:focus-visible, input:focus-visible {
   padding: 14px 15px;
   border-radius: 10px;
   border: 1.5px solid var(--panel-border);
-  background: #090d0c;
+  background: #ffffff;
   color: var(--text);
   font-size: 0.95rem;
   margin-bottom: 14px;
@@ -100,8 +100,8 @@ button:focus-visible, input:focus-visible {
   padding: 14px;
   border: none;
   border-radius: 10px;
-  background: var(--spo2);
-  color: #04141c;
+  background: var(--blue);
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.95rem;
 }
@@ -111,8 +111,8 @@ button:focus-visible, input:focus-visible {
 }
 
 .pair-error {
-  background: rgba(255, 90, 82, 0.1);
-  border: 1px solid rgba(255, 90, 82, 0.3);
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.3);
   color: var(--alert);
   padding: 10px 13px;
   border-radius: 8px;
@@ -167,7 +167,7 @@ button:focus-visible, input:focus-visible {
   height: 9px;
   border-radius: 50%;
   background: var(--ok);
-  box-shadow: 0 0 0 4px rgba(62, 232, 122, 0.18);
+  box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.18);
   animation: dot-pulse 1.6s ease-in-out infinite;
 }
 

@@ -108,7 +108,7 @@ export default function LookupCode({ onStartIntake }) {
         <p style={{ fontSize: '0.88rem', color: 'var(--ink-soft)', margin: '0 0 10px' }}>
           Haven't registered yet?
         </p>
-        <button className="btn-ghost" style={{ color: 'var(--teal)' }} onClick={onStartIntake}>
+        <button className="btn-ghost" style={{ color: 'var(--blue)' }} onClick={onStartIntake}>
           Start new patient intake
         </button>
       </div>

@@ -1,19 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --ink: #16231f;
-  --ink-soft: #4b5c56;
-  --paper: #f5f6f4;
+  /* Medic palette: blue and white, with black and grey accents */
+  --ink: #111827;
+  --ink-soft: #4b5563;
+  --paper: #f3f4f6;
   --surface: #ffffff;
-  --border: #dadfda;
-  --teal: #2f6f62;
-  --teal-dark: #10201d;
-  --teal-deep: #0c1816;
-  --on-dark: #f5f6f4;
-  --on-dark-soft: #aebcb6;
-  --amber: #c97a2b;
-  --amber-soft: #fbeedf;
-  --danger: #b4452f;
+  --border: #e5e7eb;
+  --blue: #1a56db;
+  --blue-dark: #0b0d12;
+  --blue-deep: #0b0d12;
+  --on-dark: #f9fafb;
+  --on-dark-soft: #9ca3af;
+  --grey-strong: #374151;
+  --grey-soft: #e5e7eb;
+  --danger: #dc2626;
   --radius-lg: 22px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -52,7 +53,7 @@ button {
 button:focus-visible,
 input:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--teal);
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -83,14 +84,14 @@ a:focus-visible {
   gap: 10px;
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--teal-dark);
+  color: var(--blue-dark);
 }
 
 .app-brand-mark {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: var(--teal-dark);
+  background: var(--blue-dark);
   color: var(--on-dark);
   display: flex;
   align-items: center;
@@ -140,12 +141,12 @@ a:focus-visible {
 }
 
 .tabbar button[aria-selected="true"] {
-  background: var(--teal-dark);
+  background: var(--blue-dark);
   color: var(--on-dark);
 }
 
 .panel-dark {
-  background: var(--teal-dark);
+  background: var(--blue-dark);
   color: var(--on-dark);
   padding: 30px 26px 26px;
 }
@@ -158,7 +159,7 @@ a:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(245, 246, 244, 0.12);
+  background: rgba(249, 250, 251, 0.12);
   color: var(--on-dark-soft);
   padding: 7px 13px;
   border-radius: 999px;
@@ -195,7 +196,7 @@ a:focus-visible {
 .step-track-bar {
   height: 5px;
   border-radius: 999px;
-  background: rgba(245, 246, 244, 0.16);
+  background: rgba(249, 250, 251, 0.16);
   overflow: hidden;
 }
 
@@ -240,7 +241,7 @@ a:focus-visible {
 .field-group input:focus,
 .field-group select:focus,
 .field-group textarea:focus {
-  border-color: var(--teal);
+  border-color: var(--blue);
   outline: none;
 }
 
@@ -267,8 +268,8 @@ a:focus-visible {
 }
 
 .pill-option[aria-pressed="true"] {
-  background: var(--teal);
-  border-color: var(--teal);
+  background: var(--blue);
+  border-color: var(--blue);
   color: #fff;
 }
 
@@ -289,8 +290,8 @@ a:focus-visible {
 }
 
 .yesno-row button[aria-pressed="true"] {
-  background: var(--teal-dark);
-  border-color: var(--teal-dark);
+  background: var(--blue-dark);
+  border-color: var(--blue-dark);
   color: var(--on-dark);
 }
 
@@ -316,8 +317,8 @@ a:focus-visible {
 }
 
 .pain-scale button[aria-pressed="true"] {
-  background: var(--amber);
-  border-color: var(--amber);
+  background: var(--blue);
+  border-color: var(--blue);
   color: #fff;
 }
 
@@ -326,7 +327,7 @@ a:focus-visible {
   padding: 17px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--teal);
+  background: var(--blue);
   color: #fff;
   font-weight: 700;
   font-size: 1rem;
@@ -340,16 +341,16 @@ a:focus-visible {
 }
 
 .btn-primary:not(:disabled):hover {
-  background: #275a4f;
+  background: #1e40af;
 }
 
 .btn-primary.on-dark {
   background: var(--on-dark);
-  color: var(--teal-dark);
+  color: var(--blue-dark);
 }
 
 .btn-primary.on-dark:not(:disabled):hover {
-  background: #e3e6e1;
+  background: #e5e7eb;
 }
 
 .btn-ghost {
@@ -483,7 +484,7 @@ a:focus-visible {
 }
 
 .code-boxes input:focus {
-  border-color: var(--teal);
+  border-color: var(--blue);
   outline: none;
 }
 
@@ -496,20 +497,20 @@ a:focus-visible {
 }
 
 .banner.error {
-  background: #fbeae5;
+  background: #fef2f2;
   color: var(--danger);
-  border: 1px solid #f0c9bd;
+  border: 1px solid #fecaca;
 }
 
 .banner.info {
-  background: var(--amber-soft);
-  color: #8a5420;
-  border: 1px solid #efd6b0;
+  background: var(--grey-soft);
+  color: var(--grey-strong);
+  border: 1px solid #d1d5db;
 }
 
 .confirm-code {
-  background: rgba(245, 246, 244, 0.08);
-  border: 1px solid rgba(245, 246, 244, 0.18);
+  background: rgba(249, 250, 251, 0.08);
+  border: 1px solid rgba(249, 250, 251, 0.18);
   border-radius: var(--radius-md);
   padding: 22px;
   text-align: center;
@@ -545,8 +546,8 @@ a:focus-visible {
 }
 
 .status-tile {
-  background: rgba(245, 246, 244, 0.07);
-  border: 1px solid rgba(245, 246, 244, 0.16);
+  background: rgba(249, 250, 251, 0.07);
+  border: 1px solid rgba(249, 250, 251, 0.16);
   border-radius: var(--radius-sm);
   padding: 14px;
   text-align: center;
@@ -588,8 +589,8 @@ a:focus-visible {
   font-weight: 700;
   padding: 5px 11px;
   border-radius: 999px;
-  background: var(--amber-soft);
-  color: #8a5420;
+  background: var(--grey-soft);
+  color: var(--grey-strong);
   text-transform: capitalize;
 }
 
