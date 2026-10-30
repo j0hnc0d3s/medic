@@ -14,7 +14,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useAuth } from '../../contexts/AuthContext'
-import availabilityService, { WEEKDAYS } from '../../services/availabilityService'
+import availabilityService, { WEEKDAYS, DEFAULT_WEEKLY_HOURS } from '../../services/availabilityService'
 import NurseSidebar from './NurseSidebar'
 import './NurseAvailability.css'
 
@@ -27,7 +27,7 @@ export default function NurseAvailability() {
 
   const [doctorsList, setDoctorsList] = useState([])
   const [selectedDoctor, setSelectedDoctor] = useState(ownName || '')
-  const [weeklyHours, setWeeklyHours] = useState(null)
+  const [weeklyHours, setWeeklyHours] = useState(DEFAULT_WEEKLY_HOURS)
   const [blockedDates, setBlockedDates] = useState([])
   const [newBlockedDate, setNewBlockedDate] = useState('')
   const [loading, setLoading] = useState(true)
@@ -57,7 +57,7 @@ export default function NurseAvailability() {
     if (!activeDoctor) { setLoading(false); return }
     setLoading(true)
     availabilityService.getAvailability(activeDoctor).then(res => {
-      setWeeklyHours(res.weeklyHours)
+      setWeeklyHours(res.weeklyHours || DEFAULT_WEEKLY_HOURS)
       setBlockedDates(res.blockedDates)
       setConfigured(res.configured)
       setLoading(false)
@@ -123,7 +123,7 @@ export default function NurseAvailability() {
 
         {!activeDoctor ? (
           <p className="av-empty">Select a doctor to manage their availability.</p>
-        ) : loading ? (
+        ) : loading || !weeklyHours ? (
           <p className="av-empty">Loading…</p>
         ) : (
           <div className="av-grid">
