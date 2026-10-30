@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import LookupCode from './components/LookupCode.jsx'
 import NewIntake from './components/NewIntake.jsx'
+import logo from './assets/logo.png'
 
 const IDLE_RESET_MS = 90_000
 
@@ -38,7 +39,7 @@ export default function App() {
     <div className="app-shell">
       <div className="app-topbar">
         <div className="app-brand">
-          <span className="app-brand-mark">M</span>
+          <img className="app-brand-logo" src={logo} alt="" />
           Medic
         </div>
         <span className="app-mode">Self check-in</span>

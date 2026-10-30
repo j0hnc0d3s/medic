@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { vitalsApi } from './api.js'
 import { SCENARIOS, seedReading, stepReading, round } from './simulate.js'
+import logo from './assets/logo.png'
 
 const TICK_MS = 2500
 
@@ -81,7 +82,7 @@ export default function App() {
       <div className="app-shell">
         <div className="app-topbar">
           <div className="app-brand">
-            <span className="app-brand-mark">M</span>
+            <img className="app-brand-logo" src={logo} alt="" />
             Medic
           </div>
           <span className="app-mode">Wearable simulator</span>
@@ -120,7 +121,7 @@ export default function App() {
     <div className="app-shell">
       <div className="app-topbar">
         <div className="app-brand">
-          <span className="app-brand-mark">M</span>
+          <img className="app-brand-logo" src={logo} alt="" />
           Medic
         </div>
         <span className="app-mode">
